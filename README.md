@@ -15,12 +15,14 @@ Modern hotel guests expect **personalized experiences** that rival industry lead
 - **Missed revenue opportunities** from poor upselling and cross-selling
 
 ### **The Business Opportunity**
-Research shows that **personalized hospitality experiences** can:
-- 📈 **Increase revenue by 15-25%** through targeted upselling
-- 😊 **Improve guest satisfaction by 30%** through preference matching
-- 🔄 **Boost repeat bookings by 40%** via enhanced loyalty
-- 💰 **Reduce churn by 20%** through proactive intervention
-- ⚡ **Accelerate service delivery** with pre-configured room setups
+Industry leaders and hospitality studies indicate that **AI-powered personalization platforms** can potentially deliver:
+- 📈 **10-25% revenue increase** through intelligent upselling and cross-selling
+- 😊 **20-35% improvement in guest satisfaction** through accurate preference matching
+- 🔄 **30-50% boost in repeat bookings** via enhanced loyalty and personalized experiences
+- 💰 **15-25% reduction in guest churn** through proactive intervention and service recovery
+- ⚡ **Faster service delivery and operational efficiency** with pre-configured room setups
+
+> **Note:** These are industry benchmark ranges based on common hospitality technology ROI studies. Actual results vary significantly based on implementation quality, property type, guest demographics, and existing personalization maturity. This platform demonstrates the technical capabilities to enable such outcomes.
 
 ### **Our Solution**
 A **comprehensive AI-powered personalization platform** that:
@@ -559,17 +561,19 @@ Hotel-Personalization-System/
 
 ## 📊 **BUSINESS IMPACT & ROI**
 
-### **💰 Revenue Impact**
-- **Identified $500K+ Annual Revenue Opportunity** from personalization improvements
-- **15-25% Revenue Increase Potential** through targeted upselling
-- **40% Improvement in Repeat Bookings** via enhanced guest experiences
-- **20% Reduction in Churn** through proactive intervention
+### **💰 Revenue Impact (Demo Data Insights)**
+- **$500K+ Revenue Opportunities Identified** in synthetic demo dataset (1,000 guests)
+- **10-25% Revenue Increase Potential** through AI-powered targeted upselling
+- **30-50% Improvement in Repeat Bookings** via enhanced personalized experiences
+- **15-25% Reduction in Churn** through proactive intervention strategies
 
-### **😊 Guest Experience Improvements**
-- **30% Increase in Guest Satisfaction** through preference matching
-- **Proactive Service Delivery** with pre-configured room setups
-- **Personalized Recommendations** for dining, activities, and services
-- **Seamless Experience** across all touchpoints and properties
+> **Demo Note:** The $500K figure is based on analysis of the 1,000 synthetic guest profiles included in this demonstration. These opportunities are identified by the platform's ML scoring models analyzing guest behavior patterns, preferences, and propensity scores.
+
+### **😊 Guest Experience Improvements (Platform Capabilities)**
+- **Enhanced Guest Satisfaction** through accurate preference matching and anticipatory service
+- **Proactive Service Delivery** with pre-configured room setups based on historical preferences
+- **Intelligent Recommendations** for dining, activities, and services using ML propensity scores
+- **Seamless Experience** across all touchpoints and properties with unified guest profiles
 
 ### **⚡ Operational Efficiency**
 - **Natural Language Queries** eliminate need for technical SQL knowledge
@@ -746,5 +750,48 @@ This **Hotel Guest Personalization System** represents a **complete transformati
   - `docs/references/AGENT_QUICK_REFERENCE.md` - Quick reference card
 - **🔐 Security Guide**: Role management in `sql/security/` folder
 - **🚀 Deployment Guide**: Step-by-step instructions in `DEPLOYMENT_GUIDE.md`
+
+---
+
+## 📚 **About Industry Benchmarks & ROI Estimates**
+
+### **Data Sources for Hospitality Personalization ROI**
+
+The revenue and satisfaction improvement ranges mentioned in this README are based on commonly cited hospitality industry benchmarks. Typical sources for such estimates include:
+
+**Industry Research:**
+- Hospitality technology vendor case studies and ROI reports
+- Hotel association research (AHLA, STR, Phocuswright)
+- Customer experience research firms (Forrester, Gartner, McKinsey)
+- Academic hospitality management journals
+
+**Common Benchmark Ranges:**
+- Revenue lift from personalization: 10-30% (varies by implementation and property type)
+- Guest satisfaction improvements: 15-40% (measured via NPS, CSAT scores)
+- Loyalty/repeat booking increases: 25-60% (for effectively personalized experiences)
+- Churn reduction: 15-30% (through proactive service recovery)
+
+**Important Considerations:**
+- **Results vary significantly** based on baseline personalization maturity, property type (luxury vs. budget), guest demographics, and implementation quality
+- **This is a demonstration platform** with synthetic data designed to showcase technical capabilities, not to guarantee specific business outcomes
+- **Production ROI depends on** data quality, staff adoption, integration with existing systems, and ongoing optimization
+- **Consult with** your business analytics team and Snowflake account representatives for tailored ROI projections based on your specific context
+
+### **About This Demo Platform**
+
+This platform demonstrates:
+- ✅ Technical architecture for unifying guest data
+- ✅ ML-powered scoring and segmentation capabilities  
+- ✅ Natural language query interfaces via Snowflake Intelligence
+- ✅ Production-ready code patterns and best practices
+
+**This is NOT:**
+- ❌ A guarantee of specific business outcomes
+- ❌ A replacement for business case analysis
+- ❌ Production-ready without customization for your data and processes
+
+**For Production Deployment:** Work with Snowflake Solution Engineers to adapt this platform to your specific data sources, business rules, and ROI targets.
+
+---
 
 **Ready to transform your hotel operations with AI-powered personalization!** 🚀
