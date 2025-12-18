@@ -6,29 +6,21 @@
 Hotel-Personalization-System/
 ├── README.md                           # Main project documentation
 ├── DEPLOYMENT_GUIDE.md                 # This deployment guide
+├── deploy.sh                           # Automated bash deployment (RECOMMENDED)
+├── run.sh                              # Runtime operations and validation
+├── clean.sh                            # Cleanup and resource removal
 ├── 
-├── sql/                               # All SQL scripts organized by layer
-│   ├── setup/
-│   │   └── 01_setup_database.sql      # Database and schema creation
-│   ├── bronze/
-│   │   ├── 02_bronze_layer_tables.sql # Raw data tables
-│   │   ├── 03_sample_data_generation.sql # Sample data (Part 1)
-│   │   └── 04_booking_stay_data.sql   # Sample data (Part 2)
-│   ├── silver/
-│   │   └── 05_silver_layer.sql        # Cleaned and standardized data
-│   ├── gold/
-│   │   └── 06_gold_layer.sql          # Analytics-ready aggregations
-│   ├── semantic_views/
-│   │   └── create_semantic_views.sql  # Natural language query views
-│   ├── agents/
-│   │   └── create_intelligence_agents.sql # AI agents
-│   ├── security/
-│   │   └── 32_create_hotel_project_roles.sql # RBAC roles
+├── sql/                               # All SQL scripts (numbered for execution order)
+│   ├── 01_account_setup.sql           # Database and schema creation
+│   ├── 02_schema_setup.sql            # All table definitions
+│   ├── 03_data_generation.sql         # Synthetic data generation
+│   ├── 04_semantic_views.sql          # Semantic views for AI agents
+│   ├── 05_intelligence_agents.sql     # AI agent creation
 │   └── 08_sample_queries.sql          # Example queries
 │
 ├── python/                            # Python deployment scripts
 │   ├── deployment/
-│   │   ├── complete_deployment.py     # Main deployment script
+│   │   ├── complete_deployment.py     # Alternative Python deployment
 │   │   └── 33_execute_role_creation.py # Role creation utility
 │   └── utilities/                     # Future utility scripts
 │
@@ -39,54 +31,110 @@ Hotel-Personalization-System/
 │       ├── AGENT_SAMPLE_QUESTIONS.md  # Comprehensive agent questions
 │       └── AGENT_QUICK_REFERENCE.md   # Quick reference card
 │
-└── archive/                           # Archived iteration files
-    └── [All development iteration files]
+└── solution_presentation/             # Solution overview and presentation
+    ├── Hotel_Personalization_Solution_Overview.md
+    └── images/                        # Generated diagrams
 ```
 
 ## 🎯 **Quick Deployment**
 
-### **Option 1: Automated Python Deployment (Recommended)**
+### **Option 1: Automated Bash Deployment (⭐ RECOMMENDED)**
+
+The `deploy.sh` script provides the fastest and most reliable deployment:
 
 ```bash
 # Navigate to project directory
 cd "/path/to/Hotel-Personalization-System"
 
-# Run complete deployment
+# Full deployment (10-15 minutes)
+./deploy.sh
+
+# Or with custom options:
+./deploy.sh --prefix DEV              # Deploy with DEV_ prefix for testing
+./deploy.sh -c prod                   # Use 'prod' connection
+./deploy.sh --skip-agents             # Skip Intelligence Agents creation
+./deploy.sh --only-sql                # Deploy only SQL infrastructure
+```
+
+**What deploy.sh does:**
+1. ✅ Validates prerequisites (Snowflake CLI installed and configured)
+2. ✅ Creates database, schemas, roles, and warehouse
+3. ✅ Deploys all tables across Bronze, Silver, Gold layers
+4. ✅ Generates 10,000+ synthetic data records
+5. ✅ Creates semantic views for natural language querying
+6. ✅ Deploys 6 Snowflake Intelligence Agents (optional)
+7. ✅ Runs validation queries to confirm success
+
+**After deployment, use run.sh for operations:**
+```bash
+./run.sh status                       # Check resource and data status
+./run.sh validate                     # Run validation queries
+./run.sh query "SELECT * FROM..."     # Execute custom SQL
+./run.sh test-agents                  # Test Intelligence Agents
+```
+
+### **Option 2: Python Deployment Script**
+
+Alternative Python-based deployment:
+
+```bash
+# Navigate to project directory
+cd "/path/to/Hotel-Personalization-System"
+
+# Run Python deployment
 python python/deployment/complete_deployment.py
 ```
 
-### **Option 2: Manual SQL Deployment**
+### **Option 3: Manual SQL Deployment**
 
-Execute SQL files in this order:
+Execute SQL files in numbered order using Snowflake CLI:
 
-```sql
--- 1. Setup
-@sql/setup/01_setup_database.sql
-
--- 2. Security
-@sql/security/32_create_hotel_project_roles.sql
-
--- 3. Data Layers
-@sql/bronze/02_bronze_layer_tables.sql
-@sql/bronze/03_sample_data_generation.sql
-@sql/bronze/04_booking_stay_data.sql
-@sql/silver/05_silver_layer.sql
-@sql/gold/06_gold_layer.sql
-
--- 4. Semantic Layer
-@sql/semantic_views/create_semantic_views.sql
-
--- 5. AI Agents
-@sql/agents/create_intelligence_agents.sql
+```bash
+# Execute each file in sequence
+snow sql -f sql/01_account_setup.sql -c demo
+snow sql -f sql/02_schema_setup.sql -c demo
+snow sql -f sql/03_data_generation.sql -c demo
+snow sql -f sql/04_semantic_views.sql -c demo
+snow sql -f sql/05_intelligence_agents.sql -c demo
 ```
 
-## 🔐 **Authentication Setup**
+Or using SnowSQL:
+```bash
+snowsql -c demo -f sql/01_account_setup.sql
+snowsql -c demo -f sql/02_schema_setup.sql
+# ... continue with remaining files
+```
 
-The deployment uses key-pair authentication. Ensure you have:
+## 🔐 **Prerequisites**
 
-1. **Private Key**: `~/.ssh/snowflake_rsa_key`
-2. **Public Key**: Already configured in Snowflake for user `SRSUBRAMANIAN`
-3. **Account**: `snowflake_partner_se_training-srsubramanian`
+Before deploying, ensure you have:
+
+### **1. Snowflake CLI Installed**
+```bash
+pip install snowflake-cli-labs
+
+# Verify installation
+snow --version
+```
+
+### **2. Snowflake Connection Configured**
+```bash
+# Add a connection (interactive)
+snow connection add demo
+
+# Or manually edit ~/.snowflake/connections.toml
+```
+
+### **3. Required Privileges**
+Your Snowflake user needs:
+- CREATE DATABASE
+- CREATE WAREHOUSE  
+- CREATE ROLE
+- USAGE on SNOWFLAKE_INTELLIGENCE database (for AI agents)
+
+### **4. Snowflake Edition**
+- **Minimum**: Enterprise Edition
+- **For AI Agents**: Business Critical or higher (with Snowflake Intelligence enabled)
 
 ## 📊 **What Gets Created**
 
@@ -140,22 +188,83 @@ Try these sample questions with your agents:
 
 ### **Common Issues:**
 
-1. **Authentication Error:**
-   - Verify private key path: `~/.ssh/snowflake_rsa_key`
-   - Ensure public key is set in Snowflake user profile
+1. **Snowflake CLI Not Found:**
+   ```bash
+   # Install Snowflake CLI
+   pip install snowflake-cli-labs
+   
+   # Configure connection
+   snow connection add demo
+   ```
 
-2. **Permission Denied:**
-   - Script uses `ACCOUNTADMIN` role for initial setup
-   - Ensure your user has appropriate privileges
+2. **Authentication Error:**
+   - Verify your Snowflake connection is configured: `snow connection test -c demo`
+   - Check credentials in `~/.snowflake/connections.toml`
+   - For key-pair auth, ensure private key path is correct
 
-3. **Agent Creation Fails:**
-   - Verify `SNOWFLAKE_INTELLIGENCE` database exists
-   - Check that semantic views were created successfully
+3. **Permission Denied:**
+   - Deploy script requires `ACCOUNTADMIN` or equivalent privileges
+   - Ensure your user has CREATE DATABASE and CREATE WAREHOUSE permissions
+
+4. **Agent Creation Fails:**
+   - Verify your Snowflake edition supports Snowflake Intelligence (Business Critical or higher)
+   - Check that semantic views were created successfully before agents
+   - Use `--skip-agents` flag to deploy without agents if needed
+
+5. **Data Generation Takes Too Long:**
+   - Increase warehouse size in `sql/01_account_setup.sql` (default: MEDIUM)
+   - Consider reducing data volume in `sql/03_data_generation.sql` for testing
 
 ### **Getting Help:**
-- Check the `archive/` folder for detailed development history
-- Review `docs/references/` for comprehensive documentation
+
+**Documentation Resources:**
+- Review `README.md` for complete system overview
+- Check `docs/DESIGN.md` for architecture details
+- See `docs/references/` for comprehensive agent questions and guides
 - Use sample queries in `sql/08_sample_queries.sql` for testing
+
+**Validation Commands:**
+```bash
+./run.sh status                       # Check deployment status
+./run.sh validate                     # Run validation queries
+./run.sh test-agents                  # Test AI agents
+```
+
+**Support:**
+- GitHub Issues: Report problems or request features
+- Snowflake Community: Connect with other developers
+- Contact your Snowflake account team for production deployments
+
+## 🧹 **Cleanup & Resource Removal**
+
+To remove all deployed resources, use the `clean.sh` script:
+
+```bash
+# Interactive cleanup (asks for confirmation)
+./clean.sh
+
+# Non-interactive cleanup (auto-confirms)
+./clean.sh --force
+
+# Keep Intelligence Agents, remove everything else
+./clean.sh --keep-agents
+
+# Cleanup with custom connection
+./clean.sh -c prod
+
+# Cleanup with environment prefix
+./clean.sh --prefix DEV
+```
+
+**What gets removed:**
+- ❌ All tables and data (Bronze, Silver, Gold layers)
+- ❌ Semantic views
+- ❌ Intelligence Agents (unless --keep-agents specified)
+- ❌ Project-specific roles
+- ❌ Warehouse (if created by deployment)
+- ❌ Database (HOTEL_PERSONALIZATION)
+
+**Note:** This operation cannot be undone. Ensure you have backups if needed.
 
 ## 🎉 **Success Indicators**
 
