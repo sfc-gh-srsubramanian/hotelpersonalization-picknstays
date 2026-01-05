@@ -11,12 +11,12 @@
 |------|--------|--------------|--------------|
 | `01_account_setup.sql` | ✅ PASS | 60 | 60 |
 | `02_schema_setup.sql` | ✅ PASS | 2 | 2 |
-| `03_data_generation.sql` | ✅ PASS | 114 | 114 |
+| `03_data_generation.sql` | ✅ PASS | 121 | 121 |
 | `04_semantic_views.sql` | ✅ PASS | 4 | 4 |
 | `05_intelligence_agents.sql` | ✅ PASS | 0 | 0 |
 | `08_sample_queries.sql` | ✅ PASS | 0 | 0 |
 
-**Total Issues:** 180 identified and fixed
+**Total Issues:** 187 identified and fixed
 
 ---
 
@@ -151,6 +151,57 @@ FROM TABLE(GENERATOR(ROWCOUNT => 50))
 
 ---
 
+### 5. **SEQ4() Numeric Overflow (7 occurrences + 114 refactored)**
+
+**File:** `03_data_generation.sql`
+
+**Problem:**
+```sql
+-- ❌ SEQ4() returns huge numbers, causes overflow
+SELECT 
+    ROUND(25.0 + (SEQ4() * 7) % 25 + RANDOM() * 0.001, 6) as latitude,
+    ROUND(-125.0 + (SEQ4() * 11) % 50 + RANDOM() * 0.001, 6) as longitude
+-- Error: "Number out of representable range: type FIXED[SB8](10,8), 
+-- value -2807277308468908.739"
+```
+
+**Root Causes:**
+1. SEQ4() returns very large 64-bit integers (not sequential 0,1,2,3...)
+2. Each SEQ4() call returns a **different** value in the same SELECT
+3. Multiplying large SEQ4() values causes overflow **before** modulo operation
+4. DECIMAL(10,8) can only hold values like -99.99999999 (2 digits before decimal)
+
+**Solution:**
+```sql
+-- ✅ Use ROW_NUMBER() to get consistent sequential numbers
+WITH seq_generator AS (
+    SELECT ROW_NUMBER() OVER (ORDER BY SEQ4()) - 1 as seq
+    FROM TABLE(GENERATOR(ROWCOUNT => 50))
+),
+table_data AS (
+    SELECT 
+        ROUND(25.0 + (seq * 7) % 25 + RANDOM() * 0.001, 6) as latitude,
+        ROUND(-125.0 + (seq * 11) % 50 + RANDOM() * 0.001, 6) as longitude
+        -- Now seq is 0, 1, 2, 3, 4, ... and consistent across all references
+    FROM seq_generator
+)
+```
+
+**Locations Fixed:**
+- `03_data_generation.sql`:
+  - Added 7 `seq_generator` CTEs (one per INSERT statement)
+  - Refactored 114 SEQ4() references to use `seq` variable
+  - Ensures consistent sequential numbering (0-based)
+  - Prevents numeric overflow in calculations
+
+**Why This Matters:**
+- SEQ4() is designed for unique IDs, not sequential iteration
+- ROW_NUMBER() generates true sequential numbers (0, 1, 2, ...)
+- Using same `seq` value across multiple columns maintains data consistency
+- Prevents overflow errors in DECIMAL fields
+
+---
+
 ## ✅ Validation Checks Performed
 
 ### 1. **IDENTIFIER() Syntax**
@@ -237,10 +288,16 @@ All SQL scripts have been validated and fixed. You can now deploy with confidenc
 
 3. **GENERATOR() Function:**
    - ❌ Cannot use column aliases like `t(seq)` with GENERATOR
-   - ✅ Use `SEQ4()` function to get sequence numbers
+   - ✅ Use `ROW_NUMBER()` for sequential numbers, not `SEQ4()` directly
    - GENERATOR produces rows with built-in sequence columns
 
-4. **Medallion Architecture:**
+4. **SEQ4() Function:**
+   - ❌ SEQ4() returns huge unique IDs, not sequential 0,1,2,3...
+   - ❌ Each SEQ4() call in same SELECT returns different value
+   - ❌ Multiplying SEQ4() causes numeric overflow
+   - ✅ Use `ROW_NUMBER() OVER (ORDER BY SEQ4()) - 1` for consistent sequential numbers
+
+5. **Medallion Architecture:**
    - Bronze = Raw data (source columns only)
    - Silver = Enriched data (derived columns added)
    - Gold = Analytics (aggregations from Silver)
@@ -282,6 +339,7 @@ All fixes have been committed and pushed to GitHub:
 - `5ce5c5e` - Fix GROUP BY clause - move marketing_opt_in before aggregations (1 fix)
 - `37ef048` - Fix IDENTIFIER() concatenation in semantic views (4 fixes)
 - `78b5cb2` - Fix GENERATOR function syntax - replace t(seq) with SEQ4() (114 fixes)
+- `531d5c7` - Fix SEQ4() overflow - use ROW_NUMBER() for sequential IDs (7 CTEs + 114 refactors)
 
 **Repository:** https://github.com/sfc-gh-srsubramanian/hotelpersonalization-picknstays
 
