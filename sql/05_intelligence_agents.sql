@@ -13,24 +13,27 @@
 -- 
 -- Prerequisites:
 --   - Semantic views must be created first (04_semantic_views.sql)
---   - GOLD schema must exist in project database
+--   - SNOWFLAKE_INTELLIGENCE database must exist
 -- 
 -- Session variables (set by deploy.sh):
---   $FULL_PREFIX, $PROJECT_ROLE, $DB_NAME
+--   $FULL_PREFIX, $PROJECT_ROLE
 -- ============================================================================
 
 USE ROLE ACCOUNTADMIN;
 
 -- ============================================================================
--- Use project database and GOLD schema for agents
+-- Ensure SNOWFLAKE_INTELLIGENCE database and schema exist
 -- ============================================================================
-USE DATABASE IDENTIFIER($DB_NAME);
-USE SCHEMA GOLD;
+CREATE DATABASE IF NOT EXISTS SNOWFLAKE_INTELLIGENCE;
+CREATE SCHEMA IF NOT EXISTS SNOWFLAKE_INTELLIGENCE.AGENTS;
+
+USE DATABASE SNOWFLAKE_INTELLIGENCE;
+USE SCHEMA AGENTS;
 
 -- ============================================================================
 -- 1. HOTEL GUEST ANALYTICS AGENT
 -- ============================================================================
-CREATE OR REPLACE AGENT GOLD."Hotel Guest Analytics Agent"
+CREATE OR REPLACE AGENT SNOWFLAKE_INTELLIGENCE.AGENTS."Hotel Guest Analytics Agent"
 COMMENT = 'Specialized agent for guest behavior analysis, loyalty insights, and booking patterns'
 FROM SPECIFICATION $$
 models:
@@ -69,7 +72,7 @@ $$;
 -- ============================================================================
 -- 2. HOTEL PERSONALIZATION SPECIALIST
 -- ============================================================================
-CREATE OR REPLACE AGENT GOLD."Hotel Personalization Specialist"
+CREATE OR REPLACE AGENT SNOWFLAKE_INTELLIGENCE.AGENTS."Hotel Personalization Specialist"
 COMMENT = 'Specialized agent for creating hyper-personalized guest experiences and preference management'
 FROM SPECIFICATION $$
 models:
@@ -108,7 +111,7 @@ $$;
 -- ============================================================================
 -- 3. HOTEL AMENITIES INTELLIGENCE AGENT
 -- ============================================================================
-CREATE OR REPLACE AGENT GOLD."Hotel Amenities Intelligence Agent"
+CREATE OR REPLACE AGENT SNOWFLAKE_INTELLIGENCE.AGENTS."Hotel Amenities Intelligence Agent"
 COMMENT = 'Specialized agent for comprehensive amenity analytics including infrastructure services'
 FROM SPECIFICATION $$
 models:
@@ -154,7 +157,7 @@ $$;
 -- ============================================================================
 -- 4. GUEST EXPERIENCE OPTIMIZER
 -- ============================================================================
-CREATE OR REPLACE AGENT GOLD."Guest Experience Optimizer"
+CREATE OR REPLACE AGENT SNOWFLAKE_INTELLIGENCE.AGENTS."Guest Experience Optimizer"
 COMMENT = 'Specialized agent for satisfaction enhancement, churn prevention, and service excellence'
 FROM SPECIFICATION $$
 models:
@@ -201,7 +204,7 @@ $$;
 -- ============================================================================
 -- 5. HOTEL INTELLIGENCE MASTER AGENT
 -- ============================================================================
-CREATE OR REPLACE AGENT GOLD."Hotel Intelligence Master Agent"
+CREATE OR REPLACE AGENT SNOWFLAKE_INTELLIGENCE.AGENTS."Hotel Intelligence Master Agent"
 COMMENT = 'Comprehensive strategic agent spanning all areas of hotel operations and business intelligence'
 FROM SPECIFICATION $$
 models:
@@ -256,11 +259,11 @@ $$;
 -- Grant agents to project role for demo purposes
 SET AGENT_ROLE = IDENTIFIER($PROJECT_ROLE);
 
-GRANT USAGE ON AGENT GOLD."Hotel Guest Analytics Agent" TO ROLE IDENTIFIER($AGENT_ROLE);
-GRANT USAGE ON AGENT GOLD."Hotel Personalization Specialist" TO ROLE IDENTIFIER($AGENT_ROLE);
-GRANT USAGE ON AGENT GOLD."Hotel Amenities Intelligence Agent" TO ROLE IDENTIFIER($AGENT_ROLE);
-GRANT USAGE ON AGENT GOLD."Guest Experience Optimizer" TO ROLE IDENTIFIER($AGENT_ROLE);
-GRANT USAGE ON AGENT GOLD."Hotel Intelligence Master Agent" TO ROLE IDENTIFIER($AGENT_ROLE);
+GRANT USAGE ON AGENT SNOWFLAKE_INTELLIGENCE.AGENTS."Hotel Guest Analytics Agent" TO ROLE IDENTIFIER($AGENT_ROLE);
+GRANT USAGE ON AGENT SNOWFLAKE_INTELLIGENCE.AGENTS."Hotel Personalization Specialist" TO ROLE IDENTIFIER($AGENT_ROLE);
+GRANT USAGE ON AGENT SNOWFLAKE_INTELLIGENCE.AGENTS."Hotel Amenities Intelligence Agent" TO ROLE IDENTIFIER($AGENT_ROLE);
+GRANT USAGE ON AGENT SNOWFLAKE_INTELLIGENCE.AGENTS."Guest Experience Optimizer" TO ROLE IDENTIFIER($AGENT_ROLE);
+GRANT USAGE ON AGENT SNOWFLAKE_INTELLIGENCE.AGENTS."Hotel Intelligence Master Agent" TO ROLE IDENTIFIER($AGENT_ROLE);
 
 -- ============================================================================
 -- Summary
