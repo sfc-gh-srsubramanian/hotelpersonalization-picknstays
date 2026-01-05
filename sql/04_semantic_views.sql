@@ -94,8 +94,7 @@ DIMENSIONS (
     PUBLIC GUESTS.LOYALTY_TIER AS loyalty_tier,
     PUBLIC GUESTS.CUSTOMER_SEGMENT AS customer_segment,
     PUBLIC GUESTS.TECH_ADOPTION_PROFILE AS tech_adoption_profile,
-    PUBLIC GUESTS.AMENITY_SPENDING_CATEGORY AS amenity_spending_category,
-    PUBLIC SCORES.CUSTOMER_SEGMENT AS score_segment
+    PUBLIC GUESTS.AMENITY_SPENDING_CATEGORY AS amenity_spending_category
 )
 METRICS (
     PUBLIC SCORES.PERSONALIZATION_READINESS_SCORE AS AVG(scores.personalization_readiness_score),
