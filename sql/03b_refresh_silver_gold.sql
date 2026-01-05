@@ -117,37 +117,52 @@ SELECT
     sh.room_number,
     sh.actual_check_in,
     sh.actual_check_out,
+    DATEDIFF(minute, sh.actual_check_in, sh.actual_check_out) / (24 * 60.0) as actual_nights,
+    be.check_in_date as scheduled_check_in,
+    be.check_out_date as scheduled_check_out,
+    DATEDIFF(hour, be.check_in_date::TIMESTAMP, sh.actual_check_in) as check_in_variance_hours,
+    DATEDIFF(hour, be.check_out_date::TIMESTAMP, sh.actual_check_out) as check_out_variance_hours,
     sh.room_type,
     sh.floor_number,
+    CASE 
+        WHEN sh.floor_number <= 3 THEN 'Low'
+        WHEN sh.floor_number <= 7 THEN 'Mid'
+        ELSE 'High'
+    END as floor_category,
     sh.view_type,
     sh.bed_type,
     sh.total_charges,
     sh.room_charges,
     sh.tax_amount,
     sh.incidental_charges,
+    ROUND(sh.incidental_charges / sh.total_charges * 100, 2) as incidental_percentage,
     sh.no_show,
     sh.early_departure,
     sh.late_checkout,
-    sh.housekeeping_notes,
-    sh.maintenance_requests,
+    sh.guest_satisfaction_score,
+    CASE 
+        WHEN sh.guest_satisfaction_score >= 5 THEN 'Excellent'
+        WHEN sh.guest_satisfaction_score >= 4 THEN 'Good'
+        WHEN sh.guest_satisfaction_score >= 3 THEN 'Average'
+        WHEN sh.guest_satisfaction_score >= 2 THEN 'Poor'
+        ELSE 'Very Poor'
+    END as satisfaction_category,
+    sh.staff_notes,
+    CASE 
+        WHEN sh.guest_satisfaction_score <= 2 
+            OR sh.early_departure = TRUE 
+            OR (sh.staff_notes IS NOT NULL AND CONTAINS(sh.staff_notes:notes[0]::STRING, 'Complained'))
+        THEN TRUE 
+        ELSE FALSE 
+    END as had_service_issues,
+    ROUND(sh.total_charges / GREATEST(actual_nights, 1), 2) as revenue_per_night,
     sh.created_at,
-    sh.updated_at,
-    DATEDIFF(hour, sh.actual_check_in, sh.actual_check_out) / 24.0 as actual_nights,
-    CASE 
-        WHEN sh.no_show THEN 'No Show'
-        WHEN sh.early_departure THEN 'Early Departure'
-        WHEN sh.late_checkout THEN 'Late Checkout'
-        ELSE 'Normal'
-    END as stay_category,
-    ROUND(sh.total_charges / NULLIF(DATEDIFF(day, sh.actual_check_in, sh.actual_check_out), 0), 2) as avg_daily_charges,
-    CASE 
-        WHEN sh.incidental_charges > (sh.room_charges * 0.5) THEN 'High Spender'
-        WHEN sh.incidental_charges > (sh.room_charges * 0.2) THEN 'Moderate Spender'
-        WHEN sh.incidental_charges > 0 THEN 'Light Spender'
-        ELSE 'No Extras'
-    END as spending_category,
     CURRENT_TIMESTAMP() as processed_at
-FROM BRONZE.stay_history sh;
+FROM BRONZE.stay_history sh
+JOIN bookings_enriched be ON sh.booking_id = be.booking_id
+WHERE sh.actual_check_in IS NOT NULL
+    AND sh.actual_check_out IS NOT NULL
+    AND sh.total_charges > 0;
 
 -- ----------------------------------------------------------------------------
 -- Preferences Consolidated (Guest preferences aggregated)
