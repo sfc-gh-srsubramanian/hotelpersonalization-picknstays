@@ -80,7 +80,7 @@ WITH seq_generator AS (
 ),
 guest_data AS (
     SELECT 
-        'GUEST_' || LPAD(seq, 6, '0') as guest_id,
+        'GUEST_' || LPAD(seq::VARCHAR, 6, '0') as guest_id,
         ['James', 'Mary', 'John', 'Patricia', 'Robert', 'Jennifer', 'Michael', 'Linda', 'David', 'Elizabeth', 
          'William', 'Barbara', 'Richard', 'Susan', 'Joseph', 'Jessica', 'Thomas', 'Sarah', 'Christopher', 'Karen',
          'Daniel', 'Nancy', 'Matthew', 'Lisa', 'Anthony', 'Betty', 'Mark', 'Helen', 'Donald', 'Sandra'][seq % 30] as first_name,
@@ -163,8 +163,8 @@ WITH seq_generator AS (
 ),
 pref_data AS (
     SELECT 
-        'PREF_' || LPAD(seq, 6, '0') as preference_id,
-        'GUEST_' || LPAD(seq, 6, '0') as guest_id,
+        'PREF_' || LPAD(seq::VARCHAR, 6, '0') as preference_id,
+        'GUEST_' || LPAD(seq::VARCHAR, 6, '0') as guest_id,
         ['Standard King', 'Standard Queen', 'Deluxe King', 'Suite', 'Executive'][seq % 5] as room_type_preference,
         ['low', 'middle', 'high', 'no_preference'][seq % 4] as floor_preference,
         ['city', 'ocean', 'garden', 'mountain', 'pool', 'no_preference'][seq % 6] as view_preference,
@@ -192,8 +192,8 @@ WITH seq_generator AS (
 ),
 service_data AS (
     SELECT 
-        'SERV_PREF_' || LPAD(seq, 6, '0') as preference_id,
-        'GUEST_' || LPAD(seq, 6, '0') as guest_id,
+        'SERV_PREF_' || LPAD(seq::VARCHAR, 6, '0') as preference_id,
+        'GUEST_' || LPAD(seq::VARCHAR, 6, '0') as guest_id,
         PARSE_JSON('{"cuisines": ["italian", "asian"], "dietary_restrictions": ["none"]}') as dining_preferences,
         PARSE_JSON('["massage", "facial"]') as spa_services,
         PARSE_JSON('["gym", "pool"]') as fitness_preferences,
@@ -370,11 +370,11 @@ transactions AS (
         a.base_price > 100 as is_premium_service,
         FALSE as is_repeat_service,
         CASE 
-            WHEN a.category = 'spa' THEN UNIFORM(30, 120, RANDOM())
-            WHEN a.category = 'restaurant' THEN UNIFORM(45, 180, RANDOM())
+            WHEN a.category = 'spa' THEN UNIFORM(30, 120, RANDOM())::INTEGER
+            WHEN a.category = 'restaurant' THEN UNIFORM(45, 180, RANDOM())::INTEGER
             ELSE NULL
         END as duration_minutes,
-        'STAFF_' || LPAD(UNIFORM(1, 50, RANDOM()), 3, '0') as staff_id,
+        'STAFF_' || LPAD(UNIFORM(1, 50, RANDOM())::INTEGER::VARCHAR, 3, '0') as staff_id,
         sh.hotel_id,
         sh.booking_id
     FROM stay_history sh
@@ -411,29 +411,29 @@ usage_records AS (
         sh.guest_id,
         a.category as amenity_category,
         a.amenity as amenity_name,
-        DATEADD(HOUR, UNIFORM(0, DATEDIFF(HOUR, sh.actual_check_in, sh.actual_check_out), RANDOM()), sh.actual_check_in) as usage_start_time,
-        DATEADD(MINUTE, UNIFORM(15, 240, RANDOM()), usage_start_time) as usage_end_time,
-        DATEDIFF(MINUTE, usage_start_time, usage_end_time) as usage_duration_minutes,
+        DATEADD(HOUR, UNIFORM(0, DATEDIFF(HOUR, sh.actual_check_in, sh.actual_check_out), RANDOM())::INTEGER, sh.actual_check_in) as usage_start_time,
+        DATEADD(MINUTE, UNIFORM(15, 240, RANDOM())::INTEGER, usage_start_time) as usage_end_time,
+        DATEDIFF(MINUTE, usage_start_time, usage_end_time)::INTEGER as usage_duration_minutes,
         CASE 
-            WHEN a.category = 'wifi' THEN 'Room ' || (100 + UNIFORM(1, 500, RANDOM()))
-            WHEN a.category = 'smart_tv' THEN 'Room ' || (100 + UNIFORM(1, 500, RANDOM()))
+            WHEN a.category = 'wifi' THEN 'Room ' || (100 + UNIFORM(1, 500, RANDOM())::INTEGER)::VARCHAR
+            WHEN a.category = 'smart_tv' THEN 'Room ' || (100 + UNIFORM(1, 500, RANDOM())::INTEGER)::VARCHAR
             WHEN a.category = 'pool' THEN 'Pool Deck'
         END as location,
         CASE 
-            WHEN a.category = 'wifi' THEN 'Device_' || UNIFORM(1000, 9999, RANDOM())
-            WHEN a.category = 'smart_tv' THEN 'TV_' || UNIFORM(100, 999, RANDOM())
+            WHEN a.category = 'wifi' THEN 'Device_' || UNIFORM(1000, 9999, RANDOM())::INTEGER::VARCHAR
+            WHEN a.category = 'smart_tv' THEN 'TV_' || UNIFORM(100, 999, RANDOM())::INTEGER::VARCHAR
             ELSE NULL
         END as device_info,
         a.usage_type,
         CASE 
-            WHEN UNIFORM(0, 99, RANDOM()) < 5 THEN 1
-            WHEN UNIFORM(0, 99, RANDOM()) < 15 THEN 2
-            WHEN UNIFORM(0, 99, RANDOM()) < 40 THEN 3
-            WHEN UNIFORM(0, 99, RANDOM()) < 70 THEN 4
+            WHEN UNIFORM(0, 99, RANDOM())::INTEGER < 5 THEN 1
+            WHEN UNIFORM(0, 99, RANDOM())::INTEGER < 15 THEN 2
+            WHEN UNIFORM(0, 99, RANDOM())::INTEGER < 40 THEN 3
+            WHEN UNIFORM(0, 99, RANDOM())::INTEGER < 70 THEN 4
             ELSE 5
         END as guest_satisfaction,
-        UNIFORM(1, 5, RANDOM()) as usage_frequency,
-        CASE WHEN a.category = 'wifi' THEN UNIFORM(50, 2000, RANDOM()) ELSE NULL END as data_consumed_mb,
+        UNIFORM(1, 5, RANDOM())::INTEGER as usage_frequency,
+        CASE WHEN a.category = 'wifi' THEN UNIFORM(50, 2000, RANDOM())::INTEGER ELSE NULL END as data_consumed_mb,
         CASE WHEN a.category = 'smart_tv' THEN PARSE_JSON('["Netflix", "HBO", "ESPN"]') ELSE NULL END as channels_accessed,
         CURRENT_TIMESTAMP() as created_at
     FROM stay_history sh
@@ -453,12 +453,12 @@ WITH seq_generator AS (
 ),
 social_data AS (
     SELECT 
-        'SOCIAL_' || LPAD(seq, 7, '0') as activity_id,
-        'GUEST_' || LPAD((seq % 2000) + 1, 6, '0') as guest_id,
+        'SOCIAL_' || LPAD(seq::VARCHAR, 7, '0') as activity_id,
+        'GUEST_' || LPAD(((seq % 2000) + 1)::VARCHAR, 6, '0') as guest_id,
         ['Instagram', 'Twitter', 'Facebook', 'TikTok', 'LinkedIn'][seq % 5] as platform,
         ['Post', 'Share', 'Review', 'Check-in'][seq % 4] as activity_type,
         PARSE_JSON('{"text": "Great stay!", "hashtags": ["hotel", "travel", "vacation"]}') as content,
-        ROUND(-1.0 + (RANDOM() * 2), 2) as sentiment_score,
+        CAST(-1.0 + UNIFORM(0, 2.0, RANDOM()) AS DECIMAL(3,2)) as sentiment_score,
         PARSE_JSON('{"likes": ' || UNIFORM(0, 500, RANDOM()) || ', "shares": ' || UNIFORM(0, 50, RANDOM()) || ', "comments": ' || UNIFORM(0, 100, RANDOM()) || '}') as engagement_metrics,
         ['New York', 'Los Angeles', 'Chicago'][seq % 3] as location_tag,
         seq % 2 = 0 as hotel_mention,
