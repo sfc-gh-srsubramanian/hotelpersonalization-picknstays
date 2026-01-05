@@ -811,7 +811,7 @@ SELECT
     
     CURRENT_TIMESTAMP() as processed_at
     
-FROM BRONZE.guest_profiles g
+FROM SILVER.guests_standardized g
 LEFT JOIN BRONZE.loyalty_program lp ON g.guest_id = lp.guest_id
 LEFT JOIN SILVER.bookings_enriched be ON g.guest_id = be.guest_id
 LEFT JOIN SILVER.amenity_spending_enriched ase ON g.guest_id = ase.guest_id
