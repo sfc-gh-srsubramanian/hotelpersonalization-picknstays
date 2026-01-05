@@ -467,16 +467,15 @@ WITH usage_amenities AS (
     
     AS t(category, amenity, usage_type)
 ),
-usage_records AS (
+usage_base AS (
     SELECT 
-        'USAGE_' || LPAD((ROW_NUMBER() OVER (ORDER BY RANDOM()))::INTEGER, 8, '0') as usage_id,
+        'USAGE_' || LPAD((ROW_NUMBER() OVER (ORDER BY RANDOM()))::INTEGER::VARCHAR, 8, '0') as usage_id,
         sh.stay_id,
         sh.guest_id,
         a.category as amenity_category,
         a.amenity as amenity_name,
         DATEADD(HOUR, FLOOR(RANDOM() * DATEDIFF(HOUR, sh.actual_check_in, sh.actual_check_out))::INTEGER, sh.actual_check_in) as usage_start_time,
-        DATEADD(MINUTE, UNIFORM(15, 240, RANDOM())::INTEGER, usage_start_time) as usage_end_time,
-        DATEDIFF(MINUTE, usage_start_time, usage_end_time)::INTEGER as usage_duration_minutes,
+        UNIFORM(15, 240, RANDOM())::INTEGER as duration_minutes,
         CASE 
             WHEN a.category = 'wifi' THEN 'Room ' || (100 + UNIFORM(1, 500, RANDOM())::INTEGER)::VARCHAR
             WHEN a.category = 'smart_tv' THEN 'Room ' || (100 + UNIFORM(1, 500, RANDOM())::INTEGER)::VARCHAR
@@ -503,6 +502,26 @@ usage_records AS (
     CROSS JOIN usage_amenities a
     WHERE UNIFORM(0, 99, RANDOM())::INTEGER < 15
     LIMIT 15000
+),
+usage_records AS (
+    SELECT
+        usage_id,
+        stay_id,
+        guest_id,
+        amenity_category,
+        amenity_name,
+        usage_start_time,
+        DATEADD(MINUTE, duration_minutes, usage_start_time) as usage_end_time,
+        duration_minutes as usage_duration_minutes,
+        location,
+        device_info,
+        usage_type,
+        guest_satisfaction,
+        usage_frequency,
+        data_consumed_mb,
+        channels_accessed,
+        created_at
+    FROM usage_base
 )
 SELECT * FROM usage_records;
 
