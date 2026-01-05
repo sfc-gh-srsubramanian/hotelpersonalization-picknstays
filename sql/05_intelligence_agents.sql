@@ -16,7 +16,7 @@
 --   - GOLD schema must exist in project database
 -- 
 -- Session variables (set by deploy.sh):
---   $FULL_PREFIX, $PROJECT_ROLE, $DB_NAME
+--   $FULL_PREFIX, $PROJECT_ROLE
 -- ============================================================================
 
 USE ROLE ACCOUNTADMIN;
@@ -24,7 +24,7 @@ USE ROLE ACCOUNTADMIN;
 -- ============================================================================
 -- Use project database and GOLD schema for agents
 -- ============================================================================
-USE DATABASE IDENTIFIER($DB_NAME);
+USE DATABASE IDENTIFIER($FULL_PREFIX);
 USE SCHEMA GOLD;
 
 -- ============================================================================
