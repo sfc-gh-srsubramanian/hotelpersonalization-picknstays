@@ -408,7 +408,7 @@ WITH amenity_services AS (
 ),
 transactions AS (
     SELECT 
-        'TRANS_' || LPAD((ROW_NUMBER() OVER (ORDER BY RANDOM()))::INTEGER, 8, '0') as transaction_id,
+        'TRANS_' || LPAD((ROW_NUMBER() OVER (ORDER BY RANDOM()))::INTEGER::VARCHAR, 8, '0') as transaction_id,
         sh.stay_id,
         sh.guest_id,
         a.category as amenity_category,
