@@ -1,8 +1,8 @@
 -- ============================================================================
--- Hotel Personalization - Refresh Silver and Gold Layers (Step 4b)
+-- Hotel Personalization - Refresh Silver and Gold Layers (03b)
 -- ============================================================================
 -- Rebuilds Silver and Gold tables after Bronze data is loaded
--- Run this AFTER 03_data_generation.sql (Step 4) to populate Silver and Gold layers
+-- Run this AFTER 03_data_generation.sql to populate Silver and Gold layers
 --
 -- This script re-executes the CREATE OR REPLACE TABLE statements
 -- from 02_schema_setup.sql for Silver and Gold layers with fresh Bronze data.
