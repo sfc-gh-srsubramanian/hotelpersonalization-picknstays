@@ -165,124 +165,196 @@ WHERE sh.actual_check_in IS NOT NULL
     AND sh.total_charges > 0;
 
 -- ----------------------------------------------------------------------------
--- Preferences Consolidated (Guest preferences aggregated)
+-- Preferences Consolidated (Unified preference profiles)
 -- ----------------------------------------------------------------------------
 CREATE OR REPLACE TABLE preferences_consolidated AS
 SELECT 
-    gp.guest_id,
-    gp.preference_category,
-    LISTAGG(gp.preference_value, ', ') WITHIN GROUP (ORDER BY gp.preference_value) as preferences,
-    COUNT(DISTINCT gp.preference_value) as preference_count,
-    MAX(gp.last_updated) as last_preference_update,
+    rp.guest_id,
+    rp.room_type_preference,
+    rp.floor_preference,
+    rp.view_preference,
+    rp.bed_type_preference,
+    rp.smoking_preference,
+    rp.accessibility_needs,
+    rp.temperature_preference,
+    CASE 
+        WHEN rp.temperature_preference <= 70 THEN 'Cool'
+        WHEN rp.temperature_preference <= 74 THEN 'Moderate'
+        ELSE 'Warm'
+    END as temperature_category,
+    rp.lighting_preference,
+    rp.pillow_type_preference,
+    rp.room_amenities,
+    rp.noise_level_preference,
+    sp.dining_preferences,
+    sp.spa_services,
+    sp.fitness_preferences,
+    sp.business_services,
+    sp.transportation_preferences,
+    sp.entertainment_preferences,
+    sp.housekeeping_preferences,
+    sp.concierge_services,
+    sp.preferred_communication_method,
+    sp.preferred_check_in_time,
+    sp.preferred_check_out_time,
+    (CASE WHEN rp.room_type_preference IS NOT NULL THEN 1 ELSE 0 END +
+     CASE WHEN rp.floor_preference != 'no_preference' THEN 1 ELSE 0 END +
+     CASE WHEN rp.view_preference != 'no_preference' THEN 1 ELSE 0 END +
+     CASE WHEN rp.bed_type_preference != 'no_preference' THEN 1 ELSE 0 END +
+     CASE WHEN sp.dining_preferences IS NOT NULL THEN 1 ELSE 0 END +
+     CASE WHEN sp.spa_services IS NOT NULL THEN 1 ELSE 0 END +
+     CASE WHEN sp.fitness_preferences IS NOT NULL THEN 1 ELSE 0 END) as preference_completeness_score,
+    GREATEST(rp.last_updated, COALESCE(sp.last_updated, rp.last_updated)) as last_updated,
     CURRENT_TIMESTAMP() as processed_at
-FROM BRONZE.guest_preferences gp
-GROUP BY gp.guest_id, gp.preference_category;
+FROM BRONZE.room_preferences rp
+LEFT JOIN BRONZE.service_preferences sp ON rp.guest_id = sp.guest_id;
 
 -- ----------------------------------------------------------------------------
--- Engagement Metrics (Guest engagement scores)
+-- Engagement Metrics (Social media engagement analytics)
 -- ----------------------------------------------------------------------------
 CREATE OR REPLACE TABLE engagement_metrics AS
 SELECT 
-    ga.guest_id,
-    ga.activity_type,
-    COUNT(*) as activity_count,
-    MAX(ga.activity_date) as last_activity_date,
-    MIN(ga.activity_date) as first_activity_date,
-    DATEDIFF(day, MIN(ga.activity_date), MAX(ga.activity_date)) as engagement_span_days,
+    sma.guest_id,
+    COUNT(*) as total_activities,
+    COUNT(DISTINCT sma.platform) as platforms_used,
+    COUNT(DISTINCT DATE(sma.activity_date)) as active_days,
+    AVG(sma.sentiment_score) as avg_sentiment,
     CASE 
-        WHEN MAX(ga.activity_date) > DATEADD(month, -1, CURRENT_DATE()) THEN 'Active'
-        WHEN MAX(ga.activity_date) > DATEADD(month, -3, CURRENT_DATE()) THEN 'Moderate'
-        WHEN MAX(ga.activity_date) > DATEADD(month, -6, CURRENT_DATE()) THEN 'Low'
-        ELSE 'Dormant'
+        WHEN AVG(sma.sentiment_score) >= 0.5 THEN 'Positive'
+        WHEN AVG(sma.sentiment_score) >= 0 THEN 'Neutral'
+        ELSE 'Negative'
+    END as overall_sentiment,
+    SUM(CASE WHEN sma.hotel_mention THEN 1 ELSE 0 END) as hotel_mentions,
+    SUM(CASE WHEN sma.brand_mention THEN 1 ELSE 0 END) as brand_mentions,
+    SUM(sma.engagement_metrics:likes::INT) as total_likes,
+    SUM(sma.engagement_metrics:shares::INT) as total_shares,
+    SUM(sma.engagement_metrics:comments::INT) as total_comments,
+    SUM(sma.engagement_metrics:likes::INT + sma.engagement_metrics:shares::INT + sma.engagement_metrics:comments::INT) as total_engagement,
+    COUNT(CASE WHEN sma.activity_type = 'Post' THEN 1 END) as posts_count,
+    COUNT(CASE WHEN sma.activity_type = 'Review' THEN 1 END) as reviews_count,
+    COUNT(CASE WHEN sma.activity_type = 'Check-in' THEN 1 END) as checkins_count,
+    MAX(sma.activity_date) as last_activity_date,
+    MIN(sma.activity_date) as first_activity_date,
+    DATEDIFF(day, MIN(sma.activity_date), MAX(sma.activity_date)) + 1 as activity_span_days,
+    ROUND(COUNT(*) / GREATEST(DATEDIFF(day, MIN(sma.activity_date), MAX(sma.activity_date)) + 1, 1), 2) as avg_activities_per_day,
+    CASE 
+        WHEN total_activities >= 50 THEN 'High'
+        WHEN total_activities >= 20 THEN 'Medium'
+        WHEN total_activities >= 5 THEN 'Low'
+        ELSE 'Minimal'
     END as engagement_level,
     CURRENT_TIMESTAMP() as processed_at
-FROM BRONZE.guest_activity ga
-GROUP BY ga.guest_id, ga.activity_type;
+FROM BRONZE.social_media_activity sma
+GROUP BY sma.guest_id;
 
 -- ----------------------------------------------------------------------------
--- Amenity Spending Enriched (Amenity transactions with categorization)
+-- Amenity Spending Enriched (Enriched amenity transactions)
 -- ----------------------------------------------------------------------------
 CREATE OR REPLACE TABLE amenity_spending_enriched AS
 SELECT
-    at.transaction_id,
-    at.guest_id,
-    at.hotel_id,
-    at.stay_id,
-    at.amenity_category,
-    at.amenity_type,
-    at.amenity_name,
-    at.amenity_location,
-    at.transaction_date,
-    at.quantity,
-    at.unit_price,
-    at.amount,
-    at.currency,
-    at.payment_method,
-    at.staff_member,
-    at.guest_satisfaction,
-    at.notes,
-    at.created_at,
-    CASE 
-        WHEN at.amenity_category = 'spa' THEN 'Wellness'
-        WHEN at.amenity_category IN ('restaurant', 'bar', 'room_service') THEN 'Food & Beverage'
-        WHEN at.amenity_category IN ('wifi', 'smart_tv') THEN 'Technology'
-        WHEN at.amenity_category = 'pool_services' THEN 'Recreation'
-        ELSE 'Other'
+    at.*,
+    CASE
+        WHEN amenity_category = 'spa' THEN 'Wellness'
+        WHEN amenity_category IN ('bar', 'restaurant') THEN 'Food & Beverage'
+        WHEN amenity_category = 'room_service' THEN 'In-Room Dining'
+        WHEN amenity_category IN ('wifi', 'smart_tv') THEN 'Technology Services'
+        WHEN amenity_category = 'pool_services' THEN 'Recreation Services'
+        ELSE 'Other Services'
     END as service_group,
-    CASE 
-        WHEN HOUR(at.transaction_date) BETWEEN 6 AND 11 THEN 'Morning'
-        WHEN HOUR(at.transaction_date) BETWEEN 12 AND 17 THEN 'Afternoon'
-        WHEN HOUR(at.transaction_date) BETWEEN 18 AND 22 THEN 'Evening'
-        ELSE 'Late Night'
-    END as time_of_day,
-    DAYOFWEEK(at.transaction_date) as day_of_week,
-    CASE 
-        WHEN DAYOFWEEK(at.transaction_date) IN (6, 7) THEN TRUE 
-        ELSE FALSE 
-    END as is_weekend,
+    
+    CASE
+        WHEN amount <= 25 THEN 'Low Spend'
+        WHEN amount <= 100 THEN 'Medium Spend'
+        ELSE 'High Spend'
+    END as spend_category,
+    
+    EXTRACT(HOUR FROM transaction_date) as transaction_hour,
+    DAYNAME(transaction_date) as transaction_day,
+    DATE_TRUNC('month', transaction_date) as transaction_month,
+    
+    CASE
+        WHEN guest_satisfaction >= 5 THEN 'Excellent Experience'
+        WHEN guest_satisfaction >= 4 THEN 'Good Experience'
+        WHEN guest_satisfaction >= 3 THEN 'Average Experience'
+        ELSE 'Poor Experience'
+    END as experience_category,
+    
+    CASE
+        WHEN amount > (
+            SELECT PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY amount)
+            FROM BRONZE.amenity_transactions at2
+            WHERE at2.amenity_category = at.amenity_category
+        ) THEN 'Premium Service'
+        ELSE 'Standard Service'
+    END as service_tier,
+    
     CURRENT_TIMESTAMP() as processed_at
+    
 FROM BRONZE.amenity_transactions at;
 
 -- ----------------------------------------------------------------------------
--- Amenity Usage Enriched (Infrastructure amenity usage with metrics)
+-- Amenity Usage Enriched (Enriched amenity usage data)
 -- ----------------------------------------------------------------------------
 CREATE OR REPLACE TABLE amenity_usage_enriched AS
 SELECT
-    au.usage_id,
-    au.guest_id,
-    au.hotel_id,
-    au.stay_id,
-    au.amenity_category,
-    au.amenity_type,
-    au.usage_start_time,
-    au.usage_end_time,
-    au.usage_duration_minutes,
-    au.usage_type,
-    au.device_id,
-    au.data_consumed_mb,
-    au.content_category,
-    au.guest_satisfaction,
-    au.technical_issues,
-    au.created_at,
-    CASE 
-        WHEN au.amenity_category = 'wifi' THEN 'Connectivity'
-        WHEN au.amenity_category = 'smart_tv' THEN 'Entertainment'
-        WHEN au.amenity_category = 'pool' THEN 'Recreation'
+    au.*,
+    CASE
+        WHEN amenity_category IN ('wifi', 'smart_tv') THEN 'Technology'
+        WHEN amenity_category = 'pool' THEN 'Recreation'
+        WHEN amenity_category = 'spa' THEN 'Wellness'
+        WHEN amenity_category IN ('bar', 'restaurant') THEN 'Food & Beverage'
+        WHEN amenity_category = 'room_service' THEN 'In-Room Dining'
         ELSE 'Other'
-    END as usage_group,
-    CASE 
-        WHEN HOUR(au.usage_start_time) BETWEEN 6 AND 11 THEN 'Morning'
-        WHEN HOUR(au.usage_start_time) BETWEEN 12 AND 17 THEN 'Afternoon'
-        WHEN HOUR(au.usage_start_time) BETWEEN 18 AND 22 THEN 'Evening'
-        ELSE 'Late Night'
-    END as time_of_day,
-    ROUND(au.usage_duration_minutes / 60.0, 2) as usage_hours,
-    CASE 
-        WHEN au.usage_duration_minutes < 30 THEN 'Short Session'
-        WHEN au.usage_duration_minutes < 120 THEN 'Medium Session'
-        ELSE 'Long Session'
-    END as session_length_category,
-    CURRENT_TIMESTAMP() as processed_at
+    END as usage_category,
+    
+    CASE
+        WHEN usage_duration_minutes >= 120 AND usage_frequency >= 3 THEN 'High Engagement'
+        WHEN usage_duration_minutes >= 60 OR usage_frequency >= 2 THEN 'Medium Engagement'
+        ELSE 'Low Engagement'
+    END as engagement_level,
+    
+    EXTRACT(HOUR FROM usage_start_time) as usage_hour,
+    DAYNAME(usage_start_time) as usage_day,
+    CASE
+        WHEN EXTRACT(HOUR FROM usage_start_time) BETWEEN 6 AND 11 THEN 'Morning'
+        WHEN EXTRACT(HOUR FROM usage_start_time) BETWEEN 12 AND 17 THEN 'Afternoon'
+        WHEN EXTRACT(HOUR FROM usage_start_time) BETWEEN 18 AND 22 THEN 'Evening'
+        ELSE 'Night'
+    END as usage_period,
+    
+    CASE
+        WHEN amenity_category = 'wifi' AND usage_type = 'paid' THEN 'Tech Adopter'
+        WHEN amenity_category = 'smart_tv' AND usage_type = 'paid' THEN 'Entertainment Enthusiast'
+        WHEN amenity_category IN ('wifi', 'smart_tv') AND usage_type = 'free' THEN 'Basic User'
+        ELSE 'Non-Tech'
+    END as tech_profile,
+    
+    CASE
+        WHEN amenity_category = 'wifi' AND data_consumed_mb >= 500 THEN 'Heavy Data User'
+        WHEN amenity_category = 'wifi' AND data_consumed_mb >= 200 THEN 'Moderate Data User'
+        WHEN amenity_category = 'wifi' AND data_consumed_mb > 0 THEN 'Light Data User'
+        ELSE 'No Data Tracking'
+    END as data_usage_pattern,
+    
+    CASE
+        WHEN guest_satisfaction = 5 THEN 'Excellent'
+        WHEN guest_satisfaction = 4 THEN 'Good'
+        WHEN guest_satisfaction = 3 THEN 'Neutral'
+        WHEN guest_satisfaction = 2 THEN 'Poor'
+        ELSE 'Very Poor'
+    END as satisfaction_level,
+    
+    CASE
+        WHEN usage_type = 'paid' THEN TRUE
+        ELSE FALSE
+    END as is_premium_usage,
+    
+    CASE
+        WHEN usage_type = 'paid' AND amenity_category = 'wifi' THEN usage_duration_minutes * 0.10
+        WHEN usage_type = 'paid' AND amenity_category = 'smart_tv' THEN usage_duration_minutes * 0.08
+        ELSE 0
+    END as estimated_session_value
+    
 FROM BRONZE.amenity_usage au;
 
 -- ============================================================================
