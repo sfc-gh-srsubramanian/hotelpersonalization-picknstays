@@ -219,29 +219,66 @@ WITH seq_generator AS (
     SELECT (ROW_NUMBER() OVER (ORDER BY SEQ4()) - 1)::INTEGER as seq
     FROM TABLE(GENERATOR(ROWCOUNT => 25000))
 ),
-booking_data AS (
+booking_dates AS (
     SELECT 
+        seq,
         'BOOKING_' || LPAD(seq::VARCHAR, 7, '0') as booking_id,
         'GUEST_' || LPAD(((seq % 8000) + 1)::VARCHAR, 6, '0') as guest_id,
         'HOTEL_' || LPAD(((seq % 50) + 1)::VARCHAR, 3, '0') as hotel_id,
         DATEADD(day, -1 * ((seq % 1095) * 7), CURRENT_TIMESTAMP()) as booking_date,
-        DATE(DATEADD(day, (seq % 30) + 1, booking_date)) as check_in_date,
-        DATE(DATEADD(day, ((seq % 7) + 1), check_in_date)) as check_out_date,
-        DATEDIFF(day, check_in_date, check_out_date)::INTEGER as num_nights,
+        DATE(DATEADD(day, (seq % 30) + 1, DATEADD(day, -1 * ((seq % 1095) * 7), CURRENT_TIMESTAMP()))) as check_in_date,
         (CASE WHEN seq % 10 = 0 THEN 2 ELSE 1 END + (seq % 3))::INTEGER as num_adults,
         (CASE WHEN seq % 5 = 0 THEN (seq % 3) ELSE 0 END)::INTEGER as num_children,
         ['Standard King', 'Standard Queen', 'Deluxe King', 'Suite', 'Executive', 'Family Room'][seq % 6] as room_type,
         ['BAR', 'CORP', 'AAA', 'GOVT', 'PROMO', 'MEMBER'][seq % 6] as rate_code,
-        CAST(80 + ((seq % 400) * 17 % 400) + ((num_nights % 30) * 150) + UNIFORM(0, 50, RANDOM()) AS DECIMAL(10,2)) as total_amount,
         'USD' as currency,
-        ['Website', 'Mobile App', 'Phone', 'Travel Agent', 'OTA', 'Walk-in'][seq % 6] as booking_channel,
+        ['Website', 'Mobile App', 'Phone', 'Travel Agent', 'OTA', 'Walk-in'][seq % 6] as booking_channel
+    FROM seq_generator
+),
+booking_data AS (
+    SELECT 
+        booking_id,
+        guest_id,
+        hotel_id,
+        booking_date,
+        check_in_date,
+        DATE(DATEADD(day, ((seq % 7) + 1), check_in_date)) as check_out_date,
+        ((seq % 7) + 1)::INTEGER as num_nights,
+        num_adults,
+        num_children,
+        room_type,
+        rate_code,
+        CAST(80 + ((seq % 400) * 17 % 400) + ((((seq % 7) + 1) % 30) * 150) + UNIFORM(0, 50, RANDOM()) AS DECIMAL(10,2)) as total_amount,
+        currency,
+        booking_channel,
         CASE 
             WHEN seq % 20 = 0 THEN 'Cancelled'
             WHEN seq % 100 = 0 THEN 'No-show'
             ELSE 'Confirmed'
         END as booking_status,
-        CASE WHEN booking_status = 'Cancelled' THEN DATEADD(day, -1 * (seq % 7), check_in_date) ELSE NULL END as cancellation_date,
-        DATEDIFF(day, booking_date, check_in_date) as advance_booking_days,
+        seq,
+        check_in_date as temp_check_in
+    FROM booking_dates
+),
+booking_final AS (
+    SELECT
+        booking_id,
+        guest_id,
+        hotel_id,
+        booking_date,
+        check_in_date,
+        check_out_date,
+        num_nights,
+        num_adults,
+        num_children,
+        room_type,
+        rate_code,
+        total_amount,
+        currency,
+        booking_channel,
+        booking_status,
+        CASE WHEN booking_status = 'Cancelled' THEN DATEADD(day, -1 * (seq % 7), temp_check_in) ELSE NULL END as cancellation_date,
+        DATEDIFF(day, booking_date, check_in_date)::INTEGER as advance_booking_days,
         CASE WHEN seq % 7 = 0 THEN 
             PARSE_JSON('["quiet_room", "high_floor"]')
             ELSE NULL 
@@ -250,9 +287,14 @@ booking_data AS (
         ['Credit Card', 'Debit Card', 'Digital Wallet', 'Bank Transfer', 'Points'][seq % 5] as payment_method,
         booking_date as created_at,
         booking_date as updated_at
-    FROM seq_generator
+    FROM booking_data
 )
-SELECT * FROM booking_data;
+SELECT 
+    booking_id, guest_id, hotel_id, booking_date, check_in_date, check_out_date,
+    num_nights, num_adults, num_children, room_type, rate_code, total_amount,
+    currency, booking_channel, booking_status, cancellation_date, advance_booking_days,
+    special_requests, promo_code, payment_method, created_at, updated_at
+FROM booking_final;
 
 -- ============================================================================
 -- 7. STAY HISTORY (20,000 completed stays)
@@ -265,41 +307,62 @@ WITH confirmed_bookings AS (
     ORDER BY RANDOM()
     LIMIT 20000
 ),
-stay_data AS (
+stay_base AS (
     SELECT 
-        'STAY_' || LPAD((ROW_NUMBER() OVER (ORDER BY bh.booking_date))::INTEGER, 7, '0') as stay_id,
+        'STAY_' || LPAD((ROW_NUMBER() OVER (ORDER BY bh.booking_date))::INTEGER::VARCHAR, 7, '0') as stay_id,
         bh.booking_id,
         bh.guest_id,
         bh.hotel_id,
-        (100 + ((ROW_NUMBER() OVER (ORDER BY bh.booking_date))::INTEGER % 900) * 23 % 900)::STRING as room_number,
-        DATEADD(hour, UNIFORM(-2, 6, RANDOM()), bh.check_in_date::TIMESTAMP) as actual_check_in,
-        DATEADD(hour, UNIFORM(-1, 5, RANDOM()), bh.check_out_date::TIMESTAMP) as actual_check_out,
+        (100 + ((ROW_NUMBER() OVER (ORDER BY bh.booking_date))::INTEGER % 900) * 23 % 900)::VARCHAR as room_number,
+        DATEADD(hour, UNIFORM(-2, 6, RANDOM())::INTEGER, bh.check_in_date::TIMESTAMP) as actual_check_in,
+        DATEADD(hour, UNIFORM(-1, 5, RANDOM())::INTEGER, bh.check_out_date::TIMESTAMP) as actual_check_out,
         bh.room_type,
+        ['City View', 'Ocean View', 'Garden View', 'Pool View', 'Mountain View', 'Courtyard View'][UNIFORM(0, 5, RANDOM())::INTEGER] as view_type,
+        ['King', 'Queen', 'Twin', 'Double'][UNIFORM(0, 3, RANDOM())::INTEGER] as bed_type,
+        CAST(bh.total_amount * (0.95 + UNIFORM(0, 0.1, RANDOM())) AS DECIMAL(10,2)) as total_charges,
+        FALSE as no_show,
+        UNIFORM(0, 49, RANDOM())::INTEGER = 0 as early_departure,
+        UNIFORM(0, 29, RANDOM())::INTEGER = 0 as late_checkout,
+        CASE 
+            WHEN UNIFORM(0, 99, RANDOM())::INTEGER < 5 THEN 1
+            WHEN UNIFORM(0, 99, RANDOM())::INTEGER < 15 THEN 2
+            WHEN UNIFORM(0, 99, RANDOM())::INTEGER < 35 THEN 3
+            WHEN UNIFORM(0, 99, RANDOM())::INTEGER < 70 THEN 4
+            ELSE 5
+        END as guest_satisfaction_score,
+        NULL as staff_notes,
+        CURRENT_TIMESTAMP() as created_at
+    FROM confirmed_bookings bh
+),
+stay_data AS (
+    SELECT
+        stay_id,
+        booking_id,
+        guest_id,
+        hotel_id,
+        room_number,
+        actual_check_in,
+        actual_check_out,
+        room_type,
         CASE 
             WHEN SUBSTRING(room_number, 1, 1) IN ('1', '2') THEN 1
             WHEN SUBSTRING(room_number, 1, 1) IN ('3', '4', '5') THEN 2
             WHEN SUBSTRING(room_number, 1, 1) IN ('6', '7', '8') THEN 3
             ELSE 4
         END as floor_number,
-        ['City View', 'Ocean View', 'Garden View', 'Pool View', 'Mountain View', 'Courtyard View'][UNIFORM(0, 5, RANDOM())] as view_type,
-        ['King', 'Queen', 'Twin', 'Double'][UNIFORM(0, 3, RANDOM())] as bed_type,
-        CAST(bh.total_amount * (0.95 + UNIFORM(0, 0.1, RANDOM())) AS DECIMAL(10,2)) as total_charges,
+        view_type,
+        bed_type,
+        total_charges,
         CAST(total_charges * 0.75 AS DECIMAL(10,2)) as room_charges,
         CAST(total_charges * 0.15 AS DECIMAL(10,2)) as tax_amount,
         CAST(total_charges * 0.10 AS DECIMAL(10,2)) as incidental_charges,
-        FALSE as no_show,
-        UNIFORM(0, 49, RANDOM()) = 0 as early_departure,
-        UNIFORM(0, 29, RANDOM()) = 0 as late_checkout,
-        CASE 
-            WHEN UNIFORM(0, 99, RANDOM()) < 5 THEN 1
-            WHEN UNIFORM(0, 99, RANDOM()) < 15 THEN 2
-            WHEN UNIFORM(0, 99, RANDOM()) < 35 THEN 3
-            WHEN UNIFORM(0, 99, RANDOM()) < 70 THEN 4
-            ELSE 5
-        END as guest_satisfaction_score,
-        NULL as staff_notes,
-        CURRENT_TIMESTAMP() as created_at
-    FROM confirmed_bookings bh
+        no_show,
+        early_departure,
+        late_checkout,
+        guest_satisfaction_score,
+        staff_notes,
+        created_at
+    FROM stay_base
 )
 SELECT * FROM stay_data;
 
@@ -350,19 +413,19 @@ transactions AS (
         sh.guest_id,
         a.category as amenity_category,
         a.service as service_name,
-        DATEADD(HOUR, UNIFORM(0, DATEDIFF(HOUR, sh.actual_check_in, sh.actual_check_out), RANDOM()), sh.actual_check_in) as transaction_date,
+        DATEADD(HOUR, UNIFORM(0, DATEDIFF(HOUR, sh.actual_check_in, sh.actual_check_out), RANDOM())::INTEGER, sh.actual_check_in) as transaction_date,
         CAST(a.base_price * (0.8 + UNIFORM(0, 0.4, RANDOM())) AS DECIMAL(10,2)) as amount,
         CASE 
             WHEN a.category IN ('spa', 'room_service', 'wifi') THEN 1
-            WHEN a.category IN ('restaurant', 'smart_tv') THEN UNIFORM(1, 2, RANDOM())
-            ELSE UNIFORM(1, 4, RANDOM())
+            WHEN a.category IN ('restaurant', 'smart_tv') THEN UNIFORM(1, 2, RANDOM())::INTEGER
+            ELSE UNIFORM(1, 4, RANDOM())::INTEGER
         END as quantity,
         a.location,
         CASE 
-            WHEN UNIFORM(0, 99, RANDOM()) < 5 THEN 1
-            WHEN UNIFORM(0, 99, RANDOM()) < 15 THEN 2
-            WHEN UNIFORM(0, 99, RANDOM()) < 35 THEN 3
-            WHEN UNIFORM(0, 99, RANDOM()) < 65 THEN 4
+            WHEN UNIFORM(0, 99, RANDOM())::INTEGER < 5 THEN 1
+            WHEN UNIFORM(0, 99, RANDOM())::INTEGER < 15 THEN 2
+            WHEN UNIFORM(0, 99, RANDOM())::INTEGER < 35 THEN 3
+            WHEN UNIFORM(0, 99, RANDOM())::INTEGER < 65 THEN 4
             ELSE 5
         END as guest_satisfaction,
         CASE WHEN a.category IN ('wifi', 'smart_tv') THEN 'upgrade' ELSE 'paid' END as service_type,
@@ -379,7 +442,7 @@ transactions AS (
         sh.booking_id
     FROM stay_history sh
     CROSS JOIN amenity_services a
-    WHERE UNIFORM(0, 99, RANDOM()) < 20
+    WHERE UNIFORM(0, 99, RANDOM())::INTEGER < 20
     LIMIT 30000
 )
 SELECT * FROM transactions;
@@ -438,7 +501,7 @@ usage_records AS (
         CURRENT_TIMESTAMP() as created_at
     FROM stay_history sh
     CROSS JOIN usage_amenities a
-    WHERE UNIFORM(0, 99, RANDOM()) < 15
+    WHERE UNIFORM(0, 99, RANDOM())::INTEGER < 15
     LIMIT 15000
 )
 SELECT * FROM usage_records;
@@ -459,7 +522,7 @@ social_data AS (
         ['Post', 'Share', 'Review', 'Check-in'][seq % 4] as activity_type,
         PARSE_JSON('{"text": "Great stay!", "hashtags": ["hotel", "travel", "vacation"]}') as content,
         CAST(-1.0 + UNIFORM(0, 2.0, RANDOM()) AS DECIMAL(3,2)) as sentiment_score,
-        PARSE_JSON('{"likes": ' || UNIFORM(0, 500, RANDOM()) || ', "shares": ' || UNIFORM(0, 50, RANDOM()) || ', "comments": ' || UNIFORM(0, 100, RANDOM()) || '}') as engagement_metrics,
+        PARSE_JSON('{"likes": ' || UNIFORM(0, 500, RANDOM())::INTEGER || ', "shares": ' || UNIFORM(0, 50, RANDOM())::INTEGER || ', "comments": ' || UNIFORM(0, 100, RANDOM())::INTEGER || '}') as engagement_metrics,
         ['New York', 'Los Angeles', 'Chicago'][seq % 3] as location_tag,
         seq % 2 = 0 as hotel_mention,
         seq % 3 = 0 as brand_mention,
@@ -474,35 +537,59 @@ SELECT * FROM social_data;
 -- 11. FEEDBACK REVIEWS (10,000 reviews)
 -- ============================================================================
 INSERT INTO feedback_reviews
-WITH review_data AS (
+WITH review_base AS (
     SELECT 
-        'REVIEW_' || LPAD((ROW_NUMBER() OVER (ORDER BY sh.actual_check_out))::INTEGER, 7, '0') as review_id,
+        'REVIEW_' || LPAD((ROW_NUMBER() OVER (ORDER BY sh.actual_check_out))::INTEGER::VARCHAR, 7, '0') as review_id,
         sh.guest_id,
         sh.stay_id,
         sh.hotel_id,
         sh.guest_satisfaction_score as overall_rating,
-        GREATEST(1, sh.guest_satisfaction_score + UNIFORM(-1, 1, RANDOM())) as room_rating,
-        GREATEST(1, sh.guest_satisfaction_score + UNIFORM(-1, 1, RANDOM())) as service_rating,
-        GREATEST(1, sh.guest_satisfaction_score + UNIFORM(-1, 1, RANDOM())) as cleanliness_rating,
-        GREATEST(1, sh.guest_satisfaction_score + UNIFORM(-1, 1, RANDOM())) as amenities_rating,
-        GREATEST(1, sh.guest_satisfaction_score + UNIFORM(-1, 1, RANDOM())) as location_rating,
-        GREATEST(1, sh.guest_satisfaction_score + UNIFORM(-1, 1, RANDOM())) as value_rating,
+        GREATEST(1, sh.guest_satisfaction_score + UNIFORM(-1, 1, RANDOM())::INTEGER) as room_rating,
+        GREATEST(1, sh.guest_satisfaction_score + UNIFORM(-1, 1, RANDOM())::INTEGER) as service_rating,
+        GREATEST(1, sh.guest_satisfaction_score + UNIFORM(-1, 1, RANDOM())::INTEGER) as cleanliness_rating,
+        GREATEST(1, sh.guest_satisfaction_score + UNIFORM(-1, 1, RANDOM())::INTEGER) as amenities_rating,
+        GREATEST(1, sh.guest_satisfaction_score + UNIFORM(-1, 1, RANDOM())::INTEGER) as location_rating,
+        GREATEST(1, sh.guest_satisfaction_score + UNIFORM(-1, 1, RANDOM())::INTEGER) as value_rating,
         CASE 
             WHEN sh.guest_satisfaction_score >= 4 THEN 'Excellent hotel experience!'
             WHEN sh.guest_satisfaction_score >= 3 THEN 'Good stay overall.'
             ELSE 'Room for improvement.'
         END as review_text,
-        DATEADD(day, UNIFORM(1, 7, RANDOM()), sh.actual_check_out) as review_date,
-        ['Internal', 'TripAdvisor', 'Google', 'Booking.com'][UNIFORM(0, 3, RANDOM())] as platform,
+        DATEADD(day, UNIFORM(1, 7, RANDOM())::INTEGER, sh.actual_check_out) as review_date,
+        ['Internal', 'TripAdvisor', 'Google', 'Booking.com'][UNIFORM(0, 3, RANDOM())::INTEGER] as platform,
         TRUE as verified_stay,
-        UNIFORM(0, 50, RANDOM()) as helpful_votes,
-        CASE WHEN UNIFORM(0, 2, RANDOM()) = 0 THEN 'Thank you for your feedback!' ELSE NULL END as management_response,
-        CASE WHEN management_response IS NOT NULL THEN DATEADD(day, 1, review_date) ELSE NULL END as response_date,
+        UNIFORM(0, 50, RANDOM())::INTEGER as helpful_votes,
+        CASE WHEN UNIFORM(0, 2, RANDOM())::INTEGER = 0 THEN 'Thank you for your feedback!' ELSE NULL END as management_response,
         PARSE_JSON('{"sentiment": ' || (sh.guest_satisfaction_score / 5.0)::STRING || '}') as sentiment_analysis,
-        CURRENT_TIMESTAMP() as created_at
+        CURRENT_TIMESTAMP() as created_at,
+        sh.actual_check_out
     FROM stay_history sh
     WHERE UNIFORM(0, 1, RANDOM()) < 0.5
     LIMIT 10000
+),
+review_data AS (
+    SELECT
+        review_id,
+        guest_id,
+        stay_id,
+        hotel_id,
+        overall_rating,
+        room_rating,
+        service_rating,
+        cleanliness_rating,
+        amenities_rating,
+        location_rating,
+        value_rating,
+        review_text,
+        review_date,
+        platform,
+        verified_stay,
+        helpful_votes,
+        management_response,
+        CASE WHEN management_response IS NOT NULL THEN DATEADD(day, 1, review_date) ELSE NULL END as response_date,
+        sentiment_analysis,
+        created_at
+    FROM review_base
 )
 SELECT * FROM review_data;
 
