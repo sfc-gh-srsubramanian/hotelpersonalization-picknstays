@@ -528,65 +528,86 @@ FROM GOLD.guest_360_view_enhanced g360;
 CREATE OR REPLACE TABLE amenity_analytics AS
 WITH transaction_metrics AS (
     SELECT
-        ase.amenity_category,
-        ase.amenity_type,
-        ase.amenity_location,
-        ase.service_group,
-        COUNT(DISTINCT ase.transaction_id) as total_transactions,
-        COUNT(DISTINCT ase.guest_id) as unique_guests,
-        SUM(ase.amount) as total_revenue,
-        AVG(ase.amount) as avg_transaction_value,
-        AVG(ase.guest_satisfaction) as avg_satisfaction,
-        COUNT(CASE WHEN ase.guest_satisfaction >= 4 THEN 1 END)::FLOAT / NULLIF(COUNT(*), 0) as satisfaction_rate,
-        SUM(ase.quantity) as total_quantity_sold
-    FROM SILVER.amenity_spending_enriched ase
+        DATE_TRUNC('month', at.transaction_date) as metric_month,
+        at.amenity_category,
+        CASE
+            WHEN at.amenity_category = 'spa' THEN 'Wellness'
+            WHEN at.amenity_category IN ('bar', 'restaurant') THEN 'Food & Beverage'
+            WHEN at.amenity_category = 'room_service' THEN 'In-Room Dining'
+            WHEN at.amenity_category IN ('wifi', 'smart_tv') THEN 'Technology Services'
+            WHEN at.amenity_category = 'pool_services' THEN 'Recreation Services'
+            ELSE 'Other Services'
+        END as service_group,
+        at.location,
+        COUNT(DISTINCT at.transaction_id) as total_transactions,
+        COUNT(DISTINCT at.guest_id) as unique_guests,
+        SUM(at.amount) as total_revenue,
+        AVG(at.amount) as avg_transaction_value,
+        AVG(at.guest_satisfaction) as avg_satisfaction,
+        ROUND(AVG(at.guest_satisfaction) / 5 * 100, 2) as satisfaction_rate,
+        COUNT(CASE WHEN at.is_premium_service = TRUE THEN at.transaction_id END) as premium_transactions,
+        ROUND(
+            COUNT(CASE WHEN at.is_premium_service = TRUE THEN at.transaction_id END) / 
+            NULLIF(COUNT(DISTINCT at.transaction_id), 0) * 100, 2
+        ) as premium_service_rate,
+        0 as total_usage_sessions,
+        0 as total_usage_minutes,
+        0 as avg_session_duration,
+        0 as total_data_consumed_mb
+    FROM BRONZE.amenity_transactions at
     GROUP BY 1,2,3,4
 ),
 usage_metrics AS (
     SELECT
-        aue.amenity_category,
-        aue.amenity_type,
-        aue.usage_group,
-        COUNT(DISTINCT aue.usage_id) as total_sessions,
-        COUNT(DISTINCT aue.guest_id) as unique_users,
-        AVG(aue.usage_duration_minutes) as avg_session_duration,
-        SUM(aue.usage_duration_minutes) as total_usage_minutes,
-        AVG(aue.guest_satisfaction) as avg_satisfaction,
-        SUM(aue.data_consumed_mb) as total_data_consumed_mb,
-        COUNT(CASE WHEN aue.technical_issues THEN 1 END)::FLOAT / NULLIF(COUNT(*), 0) as technical_issue_rate
-    FROM SILVER.amenity_usage_enriched aue
-    GROUP BY 1,2,3
+        DATE_TRUNC('month', au.usage_start_time) as metric_month,
+        au.amenity_category,
+        CASE
+            WHEN au.amenity_category IN ('wifi', 'smart_tv') THEN 'Technology Services'
+            WHEN au.amenity_category = 'pool' THEN 'Recreation Services'
+            ELSE 'Other Services'
+        END as service_group,
+        au.location,
+        0 as total_transactions,
+        COUNT(DISTINCT au.guest_id) as unique_guests,
+        0 as total_revenue,
+        0 as avg_transaction_value,
+        AVG(au.guest_satisfaction) as avg_satisfaction,
+        ROUND(AVG(au.guest_satisfaction) / 5 * 100, 2) as satisfaction_rate,
+        0 as premium_transactions,
+        0 as premium_service_rate,
+        COUNT(DISTINCT au.usage_id) as total_usage_sessions,
+        SUM(au.usage_duration_minutes) as total_usage_minutes,
+        ROUND(AVG(au.usage_duration_minutes), 2) as avg_session_duration,
+        COALESCE(SUM(au.data_consumed_mb), 0) as total_data_consumed_mb
+    FROM BRONZE.amenity_usage au
+    GROUP BY 1,2,3,4
 )
 SELECT
+    COALESCE(tm.metric_month, um.metric_month) as metric_month,
     COALESCE(tm.amenity_category, um.amenity_category) as amenity_category,
-    COALESCE(tm.amenity_type, um.amenity_type) as amenity_type,
-    tm.amenity_location,
-    COALESCE(tm.service_group, um.usage_group) as service_group,
-    tm.total_transactions,
-    tm.unique_guests as transaction_unique_guests,
-    tm.total_revenue,
-    tm.avg_transaction_value,
-    tm.total_quantity_sold,
-    um.total_sessions as usage_sessions,
-    um.unique_users as usage_unique_guests,
-    um.avg_session_duration,
-    um.total_usage_minutes,
-    um.total_data_consumed_mb,
-    um.technical_issue_rate,
-    COALESCE(tm.avg_satisfaction, um.avg_satisfaction) as overall_satisfaction,
-    tm.satisfaction_rate as transaction_satisfaction_rate,
+    COALESCE(tm.service_group, um.service_group) as service_group,
+    COALESCE(tm.location, um.location) as location,
+    COALESCE(tm.total_transactions, 0) + COALESCE(um.total_transactions, 0) as total_transactions,
+    GREATEST(COALESCE(tm.unique_guests, 0), COALESCE(um.unique_guests, 0)) as unique_guests,
+    COALESCE(tm.total_revenue, 0) + COALESCE(um.total_revenue, 0) as total_revenue,
     CASE 
-        WHEN COALESCE(tm.total_revenue, 0) > 10000 AND COALESCE(tm.avg_satisfaction, 0) >= 4 THEN 'Star Performer'
-        WHEN COALESCE(tm.total_revenue, 0) > 10000 THEN 'High Revenue'
-        WHEN COALESCE(tm.avg_satisfaction, 0) >= 4 THEN 'High Satisfaction'
-        WHEN COALESCE(tm.total_transactions, um.total_sessions, 0) > 100 THEN 'High Volume'
-        ELSE 'Standard'
-    END as performance_category,
+        WHEN COALESCE(tm.total_transactions, 0) > 0 THEN tm.avg_transaction_value
+        ELSE 0
+    END as avg_transaction_value,
+    COALESCE(tm.avg_satisfaction, um.avg_satisfaction, 0) as avg_satisfaction,
+    COALESCE(tm.satisfaction_rate, um.satisfaction_rate, 0) as satisfaction_rate,
+    COALESCE(tm.premium_transactions, 0) as premium_transactions,
+    COALESCE(tm.premium_service_rate, 0) as premium_service_rate,
+    COALESCE(um.total_usage_sessions, 0) as total_usage_sessions,
+    COALESCE(um.total_usage_minutes, 0) as total_usage_minutes,
+    COALESCE(um.avg_session_duration, 0) as avg_session_duration,
+    COALESCE(um.total_data_consumed_mb, 0) as total_data_consumed_mb,
     CURRENT_TIMESTAMP() as processed_at
 FROM transaction_metrics tm
 FULL OUTER JOIN usage_metrics um 
-    ON tm.amenity_category = um.amenity_category 
-    AND tm.amenity_type = um.amenity_type;
+    ON tm.metric_month = um.metric_month 
+    AND tm.amenity_category = um.amenity_category 
+    AND tm.location = um.location;
 
 -- ============================================================================
 -- Summary
