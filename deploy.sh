@@ -6,7 +6,8 @@
 #   1. Check prerequisites
 #   2. Run account-level SQL setup (database, roles, warehouse)
 #   3. Run schema-level SQL setup (tables, views)
-#   4. Generate synthetic data
+#   4. Generate synthetic data into Bronze layer
+#   4b. Refresh Silver and Gold layers with Bronze data
 #   5. Create semantic views
 #   6. Create intelligence agents (optional)
 #
@@ -326,6 +327,40 @@ if should_run_step "data_generation"; then
     echo ""
 else
     echo "Step 4: Skipped (--only-$ONLY_COMPONENT)"
+    echo ""
+fi
+
+###############################################################################
+# Step 4b: Refresh Silver and Gold Layers
+###############################################################################
+if should_run_step "data_generation"; then
+    echo "Step 4b: Refreshing Silver and Gold layers..."
+    echo "-------------------------------------------------------------------------"
+    echo "Rebuilding: Silver and Gold tables with fresh Bronze data"
+    echo ""
+    
+    {
+        echo "USE ROLE ${ROLE};"
+        echo "USE DATABASE ${DATABASE};"
+        echo "USE WAREHOUSE ${WAREHOUSE};"
+        echo ""
+        echo "SET FULL_PREFIX = '${FULL_PREFIX}';"
+        echo "SET PROJECT_ROLE = '${ROLE}';"
+        echo ""
+        cat sql/03b_refresh_silver_gold.sql
+    } | snow sql $SNOW_CONN -i
+    
+    if [ $? -eq 0 ]; then
+        echo ""
+        echo -e "${GREEN}✓${NC} Silver and Gold layers refreshed"
+        echo "  • Silver Layer: 7 tables rebuilt (cleaned and enriched data)"
+        echo "  • Gold Layer: 3 tables rebuilt (analytics-ready aggregations)"
+    else
+        error_exit "Silver/Gold refresh failed"
+    fi
+    echo ""
+else
+    echo "Step 4b: Skipped (--only-$ONLY_COMPONENT)"
     echo ""
 fi
 
