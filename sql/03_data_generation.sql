@@ -75,7 +75,7 @@ SELECT * FROM hotel_data;
 -- ============================================================================
 INSERT INTO guest_profiles
 WITH seq_generator AS (
-    SELECT ROW_NUMBER() OVER (ORDER BY SEQ4()) - 1 as seq
+    SELECT (ROW_NUMBER() OVER (ORDER BY SEQ4()) - 1)::INTEGER as seq
     FROM TABLE(GENERATOR(ROWCOUNT => 10000))
 ),
 guest_data AS (
@@ -113,7 +113,7 @@ SELECT * FROM guest_data;
 -- ============================================================================
 INSERT INTO loyalty_program
 WITH seq_generator AS (
-    SELECT ROW_NUMBER() OVER (ORDER BY SEQ4()) - 1 as seq
+    SELECT (ROW_NUMBER() OVER (ORDER BY SEQ4()) - 1)::INTEGER as seq
     FROM TABLE(GENERATOR(ROWCOUNT => 8000))
 ),
 loyalty_data AS (
@@ -158,7 +158,7 @@ SELECT * FROM loyalty_data;
 -- ============================================================================
 INSERT INTO room_preferences
 WITH seq_generator AS (
-    SELECT ROW_NUMBER() OVER (ORDER BY SEQ4()) - 1 as seq
+    SELECT (ROW_NUMBER() OVER (ORDER BY SEQ4()) - 1)::INTEGER as seq
     FROM TABLE(GENERATOR(ROWCOUNT => 7500))
 ),
 pref_data AS (
@@ -187,7 +187,7 @@ SELECT * FROM pref_data;
 -- ============================================================================
 INSERT INTO service_preferences
 WITH seq_generator AS (
-    SELECT ROW_NUMBER() OVER (ORDER BY SEQ4()) - 1 as seq
+    SELECT (ROW_NUMBER() OVER (ORDER BY SEQ4()) - 1)::INTEGER as seq
     FROM TABLE(GENERATOR(ROWCOUNT => 7000))
 ),
 service_data AS (
@@ -216,7 +216,7 @@ SELECT * FROM service_data;
 -- ============================================================================
 INSERT INTO booking_history
 WITH seq_generator AS (
-    SELECT ROW_NUMBER() OVER (ORDER BY SEQ4()) - 1 as seq
+    SELECT (ROW_NUMBER() OVER (ORDER BY SEQ4()) - 1)::INTEGER as seq
     FROM TABLE(GENERATOR(ROWCOUNT => 25000))
 ),
 booking_data AS (
@@ -448,7 +448,7 @@ SELECT * FROM usage_records;
 -- ============================================================================
 INSERT INTO social_media_activity
 WITH seq_generator AS (
-    SELECT ROW_NUMBER() OVER (ORDER BY SEQ4()) - 1 as seq
+    SELECT (ROW_NUMBER() OVER (ORDER BY SEQ4()) - 1)::INTEGER as seq
     FROM TABLE(GENERATOR(ROWCOUNT => 5000))
 ),
 social_data AS (
