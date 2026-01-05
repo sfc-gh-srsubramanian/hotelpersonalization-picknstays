@@ -347,7 +347,7 @@ if should_run_step "data_generation"; then
         echo "SET FULL_PREFIX = '${FULL_PREFIX}';"
         echo "SET PROJECT_ROLE = '${ROLE}';"
         echo ""
-        cat sql/03b_refresh_silver_gold.sql
+        cat sql/04b_refresh_silver_gold.sql
     } | snow sql $SNOW_CONN -i
     
     if [ $? -eq 0 ]; then
