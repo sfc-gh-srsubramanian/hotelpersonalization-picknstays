@@ -408,12 +408,36 @@ $$;
 -- ============================================================================
 -- Grant Usage Permissions
 -- ============================================================================
--- Grant agents to project role for demo purposes
+-- Set role name variables for granular access control
+SET ROLE_ADMIN = $PROJECT_ROLE || '_ADMIN';
+SET ROLE_GUEST_ANALYST = $PROJECT_ROLE || '_GUEST_ANALYST';
+SET ROLE_REVENUE_ANALYST = $PROJECT_ROLE || '_REVENUE_ANALYST';
+SET ROLE_EXPERIENCE_ANALYST = $PROJECT_ROLE || '_EXPERIENCE_ANALYST';
+
+-- Grant all agents to main project role (for backwards compatibility)
 GRANT USAGE ON AGENT GOLD."Hotel Guest Analytics Agent" TO ROLE IDENTIFIER($PROJECT_ROLE);
 GRANT USAGE ON AGENT GOLD."Hotel Personalization Specialist" TO ROLE IDENTIFIER($PROJECT_ROLE);
 GRANT USAGE ON AGENT GOLD."Hotel Amenities Intelligence Agent" TO ROLE IDENTIFIER($PROJECT_ROLE);
 GRANT USAGE ON AGENT GOLD."Guest Experience Optimizer" TO ROLE IDENTIFIER($PROJECT_ROLE);
 GRANT USAGE ON AGENT GOLD."Hotel Intelligence Master Agent" TO ROLE IDENTIFIER($PROJECT_ROLE);
+
+-- Grant all agents to Admin role (full access)
+GRANT USAGE ON AGENT GOLD."Hotel Guest Analytics Agent" TO ROLE IDENTIFIER($ROLE_ADMIN);
+GRANT USAGE ON AGENT GOLD."Hotel Personalization Specialist" TO ROLE IDENTIFIER($ROLE_ADMIN);
+GRANT USAGE ON AGENT GOLD."Hotel Amenities Intelligence Agent" TO ROLE IDENTIFIER($ROLE_ADMIN);
+GRANT USAGE ON AGENT GOLD."Guest Experience Optimizer" TO ROLE IDENTIFIER($ROLE_ADMIN);
+GRANT USAGE ON AGENT GOLD."Hotel Intelligence Master Agent" TO ROLE IDENTIFIER($ROLE_ADMIN);
+
+-- Grant Guest Analytics Agent to Guest Analyst role
+GRANT USAGE ON AGENT GOLD."Hotel Guest Analytics Agent" TO ROLE IDENTIFIER($ROLE_GUEST_ANALYST);
+
+-- Grant Personalization and Master agents to Revenue Analyst role
+GRANT USAGE ON AGENT GOLD."Hotel Personalization Specialist" TO ROLE IDENTIFIER($ROLE_REVENUE_ANALYST);
+GRANT USAGE ON AGENT GOLD."Hotel Intelligence Master Agent" TO ROLE IDENTIFIER($ROLE_REVENUE_ANALYST);
+
+-- Grant Experience Optimizer and Amenities agents to Experience Analyst role
+GRANT USAGE ON AGENT GOLD."Guest Experience Optimizer" TO ROLE IDENTIFIER($ROLE_EXPERIENCE_ANALYST);
+GRANT USAGE ON AGENT GOLD."Hotel Amenities Intelligence Agent" TO ROLE IDENTIFIER($ROLE_EXPERIENCE_ANALYST);
 
 -- ============================================================================
 -- Summary
