@@ -232,7 +232,7 @@ booking_data AS (
         (CASE WHEN seq % 5 = 0 THEN (seq % 3) ELSE 0 END)::INTEGER as num_children,
         ['Standard King', 'Standard Queen', 'Deluxe King', 'Suite', 'Executive', 'Family Room'][seq % 6] as room_type,
         ['BAR', 'CORP', 'AAA', 'GOVT', 'PROMO', 'MEMBER'][seq % 6] as rate_code,
-        CAST(80 + ((seq % 400) * 17 % 400) + (num_nights * 150) + UNIFORM(0, 50, RANDOM()) AS DECIMAL(10,2)) as total_amount,
+        CAST(80 + ((seq % 400) * 17 % 400) + ((num_nights % 30) * 150) + UNIFORM(0, 50, RANDOM()) AS DECIMAL(10,2)) as total_amount,
         'USD' as currency,
         ['Website', 'Mobile App', 'Phone', 'Travel Agent', 'OTA', 'Walk-in'][seq % 6] as booking_channel,
         CASE 
@@ -271,7 +271,7 @@ stay_data AS (
         bh.booking_id,
         bh.guest_id,
         bh.hotel_id,
-        (100 + ((ROW_NUMBER() OVER (ORDER BY bh.booking_date))::INTEGER * 23) % 900)::STRING as room_number,
+        (100 + ((ROW_NUMBER() OVER (ORDER BY bh.booking_date))::INTEGER % 900) * 23 % 900)::STRING as room_number,
         DATEADD(hour, UNIFORM(-2, 6, RANDOM()), bh.check_in_date::TIMESTAMP) as actual_check_in,
         DATEADD(hour, UNIFORM(-1, 5, RANDOM()), bh.check_out_date::TIMESTAMP) as actual_check_out,
         bh.room_type,
@@ -283,10 +283,10 @@ stay_data AS (
         END as floor_number,
         ['City View', 'Ocean View', 'Garden View', 'Pool View', 'Mountain View', 'Courtyard View'][UNIFORM(0, 5, RANDOM())] as view_type,
         ['King', 'Queen', 'Twin', 'Double'][UNIFORM(0, 3, RANDOM())] as bed_type,
-        ROUND(bh.total_amount * (0.95 + RANDOM() * 0.1), 2) as total_charges,
-        ROUND(total_charges * 0.75, 2) as room_charges,
-        ROUND(total_charges * 0.15, 2) as tax_amount,
-        ROUND(total_charges * 0.10, 2) as incidental_charges,
+        CAST(bh.total_amount * (0.95 + UNIFORM(0, 0.1, RANDOM())) AS DECIMAL(10,2)) as total_charges,
+        CAST(total_charges * 0.75 AS DECIMAL(10,2)) as room_charges,
+        CAST(total_charges * 0.15 AS DECIMAL(10,2)) as tax_amount,
+        CAST(total_charges * 0.10 AS DECIMAL(10,2)) as incidental_charges,
         FALSE as no_show,
         UNIFORM(0, 49, RANDOM()) = 0 as early_departure,
         UNIFORM(0, 29, RANDOM()) = 0 as late_checkout,
@@ -351,7 +351,7 @@ transactions AS (
         a.category as amenity_category,
         a.service as service_name,
         DATEADD(HOUR, UNIFORM(0, DATEDIFF(HOUR, sh.actual_check_in, sh.actual_check_out), RANDOM()), sh.actual_check_in) as transaction_date,
-        ROUND(a.base_price * (0.8 + RANDOM() * 0.4), 2) as amount,
+        CAST(a.base_price * (0.8 + UNIFORM(0, 0.4, RANDOM())) AS DECIMAL(10,2)) as amount,
         CASE 
             WHEN a.category IN ('spa', 'room_service', 'wifi') THEN 1
             WHEN a.category IN ('restaurant', 'smart_tv') THEN UNIFORM(1, 2, RANDOM())
