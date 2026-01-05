@@ -413,7 +413,7 @@ transactions AS (
         sh.guest_id,
         a.category as amenity_category,
         a.service as service_name,
-        DATEADD(HOUR, UNIFORM(0, DATEDIFF(HOUR, sh.actual_check_in, sh.actual_check_out), RANDOM())::INTEGER, sh.actual_check_in) as transaction_date,
+        DATEADD(HOUR, FLOOR(RANDOM() * DATEDIFF(HOUR, sh.actual_check_in, sh.actual_check_out))::INTEGER, sh.actual_check_in) as transaction_date,
         CAST(a.base_price * (0.8 + UNIFORM(0, 0.4, RANDOM())) AS DECIMAL(10,2)) as amount,
         CASE 
             WHEN a.category IN ('spa', 'room_service', 'wifi') THEN 1
@@ -474,7 +474,7 @@ usage_records AS (
         sh.guest_id,
         a.category as amenity_category,
         a.amenity as amenity_name,
-        DATEADD(HOUR, UNIFORM(0, DATEDIFF(HOUR, sh.actual_check_in, sh.actual_check_out), RANDOM())::INTEGER, sh.actual_check_in) as usage_start_time,
+        DATEADD(HOUR, FLOOR(RANDOM() * DATEDIFF(HOUR, sh.actual_check_in, sh.actual_check_out))::INTEGER, sh.actual_check_in) as usage_start_time,
         DATEADD(MINUTE, UNIFORM(15, 240, RANDOM())::INTEGER, usage_start_time) as usage_end_time,
         DATEDIFF(MINUTE, usage_start_time, usage_end_time)::INTEGER as usage_duration_minutes,
         CASE 
