@@ -46,37 +46,37 @@ DIMENSIONS (
     PUBLIC GUESTS.AMENITY_SPENDING_CATEGORY AS amenity_spending_category
 )
 METRICS (
-    PUBLIC GUESTS.TOTAL_BOOKINGS AS "Total Bookings Count" COUNT(guests.guest_id),
-    PUBLIC GUESTS.TOTAL_REVENUE AS "Total Guest Revenue" SUM(guests.total_revenue),
-    PUBLIC GUESTS.AVG_BOOKING_VALUE AS "Average Booking Value" AVG(guests.avg_booking_value),
-    PUBLIC GUESTS.AVG_STAY_LENGTH AS "Average Stay Length" AVG(guests.avg_stay_length),
-    PUBLIC GUESTS.LOYALTY_POINTS AS "Loyalty Points Balance" SUM(guests.loyalty_points),
-    PUBLIC GUESTS.TOTAL_AMENITY_SPEND AS "Total Amenity Spend" SUM(guests.total_amenity_spend),
-    PUBLIC GUESTS.TOTAL_SPA_SPEND AS "Total Spa Spend" SUM(guests.total_spa_spend),
-    PUBLIC GUESTS.TOTAL_RESTAURANT_SPEND AS "Total Restaurant Spend" SUM(guests.total_restaurant_spend),
-    PUBLIC GUESTS.TOTAL_BAR_SPEND AS "Total Bar Spend" SUM(guests.total_bar_spend),
-    PUBLIC GUESTS.TOTAL_ROOM_SERVICE_SPEND AS "Total Room Service Spend" SUM(guests.total_room_service_spend),
-    PUBLIC GUESTS.TOTAL_WIFI_SPEND AS "Total WiFi Spend" SUM(guests.total_wifi_spend),
-    PUBLIC GUESTS.TOTAL_SMART_TV_SPEND AS "Total Smart TV Spend" SUM(guests.total_smart_tv_spend),
-    PUBLIC GUESTS.TOTAL_POOL_SERVICES_SPEND AS "Total Pool Services Spend" SUM(guests.total_pool_services_spend),
-    PUBLIC GUESTS.SPA_VISITS AS "Spa Visits Count" SUM(guests.spa_visits),
-    PUBLIC GUESTS.BAR_VISITS AS "Bar Visits Count" SUM(guests.bar_visits),
-    PUBLIC GUESTS.RESTAURANT_VISITS AS "Restaurant Visits Count" SUM(guests.restaurant_visits),
-    PUBLIC GUESTS.ROOM_SERVICE_ORDERS AS "Room Service Orders Count" SUM(guests.room_service_orders),
-    PUBLIC GUESTS.WIFI_UPGRADES AS "WiFi Upgrades Count" SUM(guests.wifi_upgrades),
-    PUBLIC GUESTS.SMART_TV_UPGRADES AS "Smart TV Upgrades Count" SUM(guests.smart_tv_upgrades),
-    PUBLIC GUESTS.POOL_SERVICE_PURCHASES AS "Pool Service Purchases Count" SUM(guests.pool_service_purchases),
-    PUBLIC GUESTS.TOTAL_WIFI_SESSIONS AS "Total WiFi Sessions" SUM(guests.total_wifi_sessions),
-    PUBLIC GUESTS.TOTAL_SMART_TV_SESSIONS AS "Total Smart TV Sessions" SUM(guests.total_smart_tv_sessions),
-    PUBLIC GUESTS.TOTAL_POOL_SESSIONS AS "Total Pool Sessions" SUM(guests.total_pool_sessions),
-    PUBLIC GUESTS.AVG_WIFI_DURATION AS "Average WiFi Session Duration" AVG(guests.avg_wifi_duration),
-    PUBLIC GUESTS.AVG_SMART_TV_DURATION AS "Average Smart TV Session Duration" AVG(guests.avg_smart_tv_duration),
-    PUBLIC GUESTS.AVG_POOL_DURATION AS "Average Pool Session Duration" AVG(guests.avg_pool_duration),
-    PUBLIC GUESTS.TOTAL_WIFI_DATA_MB AS "Total WiFi Data Consumption MB" SUM(guests.total_wifi_data_mb),
-    PUBLIC GUESTS.INFRASTRUCTURE_ENGAGEMENT_SCORE AS "Infrastructure Engagement Score" AVG(guests.infrastructure_engagement_score),
-    PUBLIC GUESTS.AMENITY_DIVERSITY_SCORE AS "Amenity Diversity Score" AVG(guests.amenity_diversity_score),
-    PUBLIC GUESTS.AVG_AMENITY_SATISFACTION AS "Average Amenity Satisfaction" AVG(guests.avg_amenity_satisfaction),
-    PUBLIC GUESTS.AVG_INFRASTRUCTURE_SATISFACTION AS "Average Infrastructure Satisfaction" AVG(guests.avg_infrastructure_satisfaction)
+    PUBLIC GUESTS.TOTAL_BOOKINGS AS COUNT(guests.guest_id),
+    PUBLIC GUESTS.TOTAL_REVENUE AS SUM(guests.total_revenue),
+    PUBLIC GUESTS.AVG_BOOKING_VALUE AS AVG(guests.avg_booking_value),
+    PUBLIC GUESTS.AVG_STAY_LENGTH AS AVG(guests.avg_stay_length),
+    PUBLIC GUESTS.LOYALTY_POINTS AS SUM(guests.loyalty_points),
+    PUBLIC GUESTS.TOTAL_AMENITY_SPEND AS SUM(guests.total_amenity_spend),
+    PUBLIC GUESTS.TOTAL_SPA_SPEND AS SUM(guests.total_spa_spend),
+    PUBLIC GUESTS.TOTAL_RESTAURANT_SPEND AS SUM(guests.total_restaurant_spend),
+    PUBLIC GUESTS.TOTAL_BAR_SPEND AS SUM(guests.total_bar_spend),
+    PUBLIC GUESTS.TOTAL_ROOM_SERVICE_SPEND AS SUM(guests.total_room_service_spend),
+    PUBLIC GUESTS.TOTAL_WIFI_SPEND AS SUM(guests.total_wifi_spend),
+    PUBLIC GUESTS.TOTAL_SMART_TV_SPEND AS SUM(guests.total_smart_tv_spend),
+    PUBLIC GUESTS.TOTAL_POOL_SERVICES_SPEND AS SUM(guests.total_pool_services_spend),
+    PUBLIC GUESTS.SPA_VISITS AS SUM(guests.spa_visits),
+    PUBLIC GUESTS.BAR_VISITS AS SUM(guests.bar_visits),
+    PUBLIC GUESTS.RESTAURANT_VISITS AS SUM(guests.restaurant_visits),
+    PUBLIC GUESTS.ROOM_SERVICE_ORDERS AS SUM(guests.room_service_orders),
+    PUBLIC GUESTS.WIFI_UPGRADES AS SUM(guests.wifi_upgrades),
+    PUBLIC GUESTS.SMART_TV_UPGRADES AS SUM(guests.smart_tv_upgrades),
+    PUBLIC GUESTS.POOL_SERVICE_PURCHASES AS SUM(guests.pool_service_purchases),
+    PUBLIC GUESTS.TOTAL_WIFI_SESSIONS AS SUM(guests.total_wifi_sessions),
+    PUBLIC GUESTS.TOTAL_SMART_TV_SESSIONS AS SUM(guests.total_smart_tv_sessions),
+    PUBLIC GUESTS.TOTAL_POOL_SESSIONS AS SUM(guests.total_pool_sessions),
+    PUBLIC GUESTS.AVG_WIFI_DURATION AS AVG(guests.avg_wifi_duration),
+    PUBLIC GUESTS.AVG_SMART_TV_DURATION AS AVG(guests.avg_smart_tv_duration),
+    PUBLIC GUESTS.AVG_POOL_DURATION AS AVG(guests.avg_pool_duration),
+    PUBLIC GUESTS.TOTAL_WIFI_DATA_MB AS SUM(guests.total_wifi_data_mb),
+    PUBLIC GUESTS.INFRASTRUCTURE_ENGAGEMENT_SCORE AS AVG(guests.infrastructure_engagement_score),
+    PUBLIC GUESTS.AMENITY_DIVERSITY_SCORE AS AVG(guests.amenity_diversity_score),
+    PUBLIC GUESTS.AVG_AMENITY_SATISFACTION AS AVG(guests.avg_amenity_satisfaction),
+    PUBLIC GUESTS.AVG_INFRASTRUCTURE_SATISFACTION AS AVG(guests.avg_infrastructure_satisfaction)
 );
 
 -- ============================================================================
@@ -103,21 +103,21 @@ DIMENSIONS (
     PUBLIC SCORES.CUSTOMER_SEGMENT AS score_segment
 )
 METRICS (
-    PUBLIC SCORES.PERSONALIZATION_READINESS_SCORE AS "Personalization Readiness Score" AVG(scores.personalization_readiness_score),
-    PUBLIC SCORES.UPSELL_PROPENSITY_SCORE AS "Upsell Propensity Score" AVG(scores.upsell_propensity_score),
-    PUBLIC SCORES.SPA_UPSELL_PROPENSITY AS "Spa Upsell Propensity" AVG(scores.spa_upsell_propensity),
-    PUBLIC SCORES.DINING_UPSELL_PROPENSITY AS "Dining Upsell Propensity" AVG(scores.dining_upsell_propensity),
-    PUBLIC SCORES.TECH_UPSELL_PROPENSITY AS "Technology Upsell Propensity" AVG(scores.tech_upsell_propensity),
-    PUBLIC SCORES.POOL_SERVICES_UPSELL_PROPENSITY AS "Pool Services Upsell Propensity" AVG(scores.pool_services_upsell_propensity),
-    PUBLIC SCORES.LOYALTY_PROPENSITY_SCORE AS "Loyalty Propensity Score" AVG(scores.loyalty_propensity_score),
-    PUBLIC SCORES.AMENITY_ENGAGEMENT_SCORE AS "Amenity Engagement Score" AVG(scores.amenity_engagement_score),
-    PUBLIC SCORES.INFRASTRUCTURE_ENGAGEMENT_SCORE AS "Infrastructure Engagement Score" AVG(scores.infrastructure_engagement_score),
-    PUBLIC GUESTS.TOTAL_AMENITY_SPEND AS "Total Amenity Spend" SUM(guests.total_amenity_spend),
-    PUBLIC GUESTS.TOTAL_WIFI_SESSIONS AS "Total WiFi Sessions" SUM(guests.total_wifi_sessions),
-    PUBLIC GUESTS.TOTAL_SMART_TV_SESSIONS AS "Total Smart TV Sessions" SUM(guests.total_smart_tv_sessions),
-    PUBLIC GUESTS.TOTAL_POOL_SESSIONS AS "Total Pool Sessions" SUM(guests.total_pool_sessions),
-    PUBLIC GUESTS.AVG_AMENITY_SATISFACTION AS "Average Amenity Satisfaction" AVG(guests.avg_amenity_satisfaction),
-    PUBLIC GUESTS.AVG_INFRASTRUCTURE_SATISFACTION AS "Average Infrastructure Satisfaction" AVG(guests.avg_infrastructure_satisfaction)
+    PUBLIC SCORES.PERSONALIZATION_READINESS_SCORE AS AVG(scores.personalization_readiness_score),
+    PUBLIC SCORES.UPSELL_PROPENSITY_SCORE AS AVG(scores.upsell_propensity_score),
+    PUBLIC SCORES.SPA_UPSELL_PROPENSITY AS AVG(scores.spa_upsell_propensity),
+    PUBLIC SCORES.DINING_UPSELL_PROPENSITY AS AVG(scores.dining_upsell_propensity),
+    PUBLIC SCORES.TECH_UPSELL_PROPENSITY AS AVG(scores.tech_upsell_propensity),
+    PUBLIC SCORES.POOL_SERVICES_UPSELL_PROPENSITY AS AVG(scores.pool_services_upsell_propensity),
+    PUBLIC SCORES.LOYALTY_PROPENSITY_SCORE AS AVG(scores.loyalty_propensity_score),
+    PUBLIC SCORES.AMENITY_ENGAGEMENT_SCORE AS AVG(scores.amenity_engagement_score),
+    PUBLIC SCORES.INFRASTRUCTURE_ENGAGEMENT_SCORE AS AVG(scores.infrastructure_engagement_score),
+    PUBLIC GUESTS.TOTAL_AMENITY_SPEND AS SUM(guests.total_amenity_spend),
+    PUBLIC GUESTS.TOTAL_WIFI_SESSIONS AS SUM(guests.total_wifi_sessions),
+    PUBLIC GUESTS.TOTAL_SMART_TV_SESSIONS AS SUM(guests.total_smart_tv_sessions),
+    PUBLIC GUESTS.TOTAL_POOL_SESSIONS AS SUM(guests.total_pool_sessions),
+    PUBLIC GUESTS.AVG_AMENITY_SATISFACTION AS AVG(guests.avg_amenity_satisfaction),
+    PUBLIC GUESTS.AVG_INFRASTRUCTURE_SATISFACTION AS AVG(guests.avg_infrastructure_satisfaction)
 );
 
 -- ============================================================================
@@ -137,17 +137,17 @@ DIMENSIONS (
     PUBLIC AMENITIES.METRIC_MONTH AS metric_month
 )
 METRICS (
-    PUBLIC AMENITIES.TOTAL_REVENUE AS "Total Amenity Revenue" SUM(amenities.total_revenue),
-    PUBLIC AMENITIES.TOTAL_TRANSACTIONS AS "Total Transactions" SUM(amenities.total_transactions),
-    PUBLIC AMENITIES.UNIQUE_GUESTS AS "Unique Guest Count" SUM(amenities.unique_guests),
-    PUBLIC AMENITIES.AVG_TRANSACTION_VALUE AS "Average Transaction Value" AVG(amenities.avg_transaction_value),
-    PUBLIC AMENITIES.AVG_SATISFACTION AS "Average Satisfaction" AVG(amenities.avg_satisfaction),
-    PUBLIC AMENITIES.SATISFACTION_RATE AS "Satisfaction Rate %" AVG(amenities.satisfaction_rate),
-    PUBLIC AMENITIES.PREMIUM_SERVICE_RATE AS "Premium Service Rate %" AVG(amenities.premium_service_rate),
-    PUBLIC AMENITIES.TOTAL_USAGE_SESSIONS AS "Total Usage Sessions" SUM(amenities.total_usage_sessions),
-    PUBLIC AMENITIES.TOTAL_USAGE_MINUTES AS "Total Usage Minutes" SUM(amenities.total_usage_minutes),
-    PUBLIC AMENITIES.AVG_SESSION_DURATION AS "Average Session Duration" AVG(amenities.avg_session_duration),
-    PUBLIC AMENITIES.TOTAL_DATA_CONSUMED_MB AS "Total Data Consumed MB" SUM(amenities.total_data_consumed_mb)
+    PUBLIC AMENITIES.TOTAL_REVENUE AS SUM(amenities.total_revenue),
+    PUBLIC AMENITIES.TOTAL_TRANSACTIONS AS SUM(amenities.total_transactions),
+    PUBLIC AMENITIES.UNIQUE_GUESTS AS SUM(amenities.unique_guests),
+    PUBLIC AMENITIES.AVG_TRANSACTION_VALUE AS AVG(amenities.avg_transaction_value),
+    PUBLIC AMENITIES.AVG_SATISFACTION AS AVG(amenities.avg_satisfaction),
+    PUBLIC AMENITIES.SATISFACTION_RATE AS AVG(amenities.satisfaction_rate),
+    PUBLIC AMENITIES.PREMIUM_SERVICE_RATE AS AVG(amenities.premium_service_rate),
+    PUBLIC AMENITIES.TOTAL_USAGE_SESSIONS AS SUM(amenities.total_usage_sessions),
+    PUBLIC AMENITIES.TOTAL_USAGE_MINUTES AS SUM(amenities.total_usage_minutes),
+    PUBLIC AMENITIES.AVG_SESSION_DURATION AS AVG(amenities.avg_session_duration),
+    PUBLIC AMENITIES.TOTAL_DATA_CONSUMED_MB AS SUM(amenities.total_data_consumed_mb)
 );
 
 -- ============================================================================
