@@ -25,12 +25,12 @@ USE SCHEMA BRONZE;
 -- ============================================================================
 INSERT INTO hotel_properties
 WITH seq_generator AS (
-    SELECT ROW_NUMBER() OVER (ORDER BY SEQ4()) - 1 as seq
+    SELECT (ROW_NUMBER() OVER (ORDER BY SEQ4()) - 1)::INTEGER as seq
     FROM TABLE(GENERATOR(ROWCOUNT => 50))
 ),
 hotel_data AS (
     SELECT 
-        'HOTEL_' || LPAD(seq, 3, '0') as hotel_id,
+        'HOTEL_' || LPAD(seq::VARCHAR, 3, '0') as hotel_id,
         CASE 
             WHEN seq <= 10 THEN 'Hilton ' || ['Downtown', 'Garden Inn', 'Embassy Suites', 'DoubleTree', 'Hampton Inn'][seq % 5]
             WHEN seq <= 20 THEN 'Marriott ' || ['Courtyard', 'Residence Inn', 'SpringHill Suites', 'Fairfield Inn', 'TownePlace Suites'][seq % 5]
@@ -45,18 +45,18 @@ hotel_data AS (
             WHEN seq <= 40 THEN 'IHG'
             ELSE 'Independent'
         END as brand,
-        (seq * 123) || ' ' || ['Main St', 'Broadway', 'Park Ave', 'First St', 'Oak Blvd'][seq % 5] as address_line1,
+        (seq * 123)::VARCHAR || ' ' || ['Main St', 'Broadway', 'Park Ave', 'First St', 'Oak Blvd'][seq % 5] as address_line1,
         NULL as address_line2,
         ['New York', 'Los Angeles', 'Chicago', 'Houston', 'Phoenix', 'Philadelphia', 'San Antonio', 'San Diego', 'Dallas', 'San Jose'][seq % 10] as city,
         ['NY', 'CA', 'IL', 'TX', 'AZ', 'PA', 'TX', 'CA', 'TX', 'CA'][seq % 10] as state_province,
-        LPAD((10000 + seq * 17) % 90000 + 10000, 5, '0') as postal_code,
+        LPAD(((10000 + seq * 17) % 90000 + 10000)::VARCHAR, 5, '0') as postal_code,
         'USA' as country,
-        ROUND(25.0 + (seq * 7) % 25 + RANDOM() * 0.001, 6) as latitude,
-        ROUND(-125.0 + (seq * 11) % 50 + RANDOM() * 0.001, 6) as longitude,
-        '+1' || LPAD((seq * 31) % 900 + 100, 3, '0') || LPAD((seq * 47) % 9000 + 1000, 4, '0') as phone,
+        CAST(25.0 + ((seq * 7) % 25) + UNIFORM(0.0, 0.001, RANDOM()) AS DECIMAL(10,8)) as latitude,
+        CAST(-125.0 + ((seq * 11) % 50) + UNIFORM(0.0, 0.001, RANDOM()) AS DECIMAL(11,8)) as longitude,
+        '+1' || LPAD(((seq * 31) % 900 + 100)::VARCHAR, 3, '0') || LPAD(((seq * 47) % 9000 + 1000)::VARCHAR, 4, '0') as phone,
         LOWER(REPLACE(hotel_name, ' ', '.')) || '@hotel.com' as email,
         3 + (seq % 3) as star_rating,
-        100 + (seq * 23) % 400 as total_rooms,
+        100 + ((seq * 23) % 400) as total_rooms,
         PARSE_JSON('["WiFi", "Parking", "Pool", "Fitness Center", "Restaurant", "Room Service", "Concierge", "Business Center"]') as amenities,
         PARSE_JSON('["Standard King", "Standard Queen", "Deluxe King", "Suite", "Executive", "Family Room"]') as room_types,
         TIME('15:00:00') as check_in_time,
