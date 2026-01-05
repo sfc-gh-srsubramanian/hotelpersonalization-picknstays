@@ -29,8 +29,6 @@ SET FQ_AMENITY_ANALYTICS = $FULL_PREFIX || '.GOLD.AMENITY_ANALYTICS';
 -- ============================================================================
 
 CREATE OR REPLACE SEMANTIC VIEW GUEST_ANALYTICS_VIEW
-COMMENT = 'Comprehensive guest behavior analysis including amenity spending and infrastructure usage'
-AS
 TABLES (
     GUESTS AS IDENTIFIER($FQ_GUEST_360) PRIMARY KEY (GUEST_ID)
 )
@@ -88,8 +86,6 @@ METRICS (
 -- ============================================================================
 
 CREATE OR REPLACE SEMANTIC VIEW PERSONALIZATION_INSIGHTS_VIEW
-COMMENT = 'AI-powered personalization scores including service-specific upsell propensity'
-AS
 TABLES (
     SCORES AS IDENTIFIER($FQ_PERSONALIZATION_SCORES) PRIMARY KEY (GUEST_ID),
     GUESTS AS IDENTIFIER($FQ_GUEST_360) PRIMARY KEY (GUEST_ID)
@@ -131,8 +127,6 @@ METRICS (
 -- ============================================================================
 
 CREATE OR REPLACE SEMANTIC VIEW AMENITY_ANALYTICS_VIEW
-COMMENT = 'Unified amenity analytics combining transaction and usage data'
-AS
 TABLES (
     AMENITIES AS IDENTIFIER($FQ_AMENITY_ANALYTICS) PRIMARY KEY (METRIC_MONTH, AMENITY_CATEGORY, LOCATION)
 )
