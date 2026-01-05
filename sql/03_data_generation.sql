@@ -267,11 +267,11 @@ WITH confirmed_bookings AS (
 ),
 stay_data AS (
     SELECT 
-        'STAY_' || LPAD(ROW_NUMBER() OVER (ORDER BY bh.booking_date), 7, '0') as stay_id,
+        'STAY_' || LPAD((ROW_NUMBER() OVER (ORDER BY bh.booking_date))::INTEGER, 7, '0') as stay_id,
         bh.booking_id,
         bh.guest_id,
         bh.hotel_id,
-        (100 + (ROW_NUMBER() OVER (ORDER BY bh.booking_date) * 23) % 900)::STRING as room_number,
+        (100 + ((ROW_NUMBER() OVER (ORDER BY bh.booking_date))::INTEGER * 23) % 900)::STRING as room_number,
         DATEADD(hour, UNIFORM(-2, 6, RANDOM()), bh.check_in_date::TIMESTAMP) as actual_check_in,
         DATEADD(hour, UNIFORM(-1, 5, RANDOM()), bh.check_out_date::TIMESTAMP) as actual_check_out,
         bh.room_type,
@@ -345,7 +345,7 @@ WITH amenity_services AS (
 ),
 transactions AS (
     SELECT 
-        'TRANS_' || LPAD(ROW_NUMBER() OVER (ORDER BY RANDOM()), 8, '0') as transaction_id,
+        'TRANS_' || LPAD((ROW_NUMBER() OVER (ORDER BY RANDOM()))::INTEGER, 8, '0') as transaction_id,
         sh.stay_id,
         sh.guest_id,
         a.category as amenity_category,
@@ -406,7 +406,7 @@ WITH usage_amenities AS (
 ),
 usage_records AS (
     SELECT 
-        'USAGE_' || LPAD(ROW_NUMBER() OVER (ORDER BY RANDOM()), 8, '0') as usage_id,
+        'USAGE_' || LPAD((ROW_NUMBER() OVER (ORDER BY RANDOM()))::INTEGER, 8, '0') as usage_id,
         sh.stay_id,
         sh.guest_id,
         a.category as amenity_category,
@@ -476,7 +476,7 @@ SELECT * FROM social_data;
 INSERT INTO feedback_reviews
 WITH review_data AS (
     SELECT 
-        'REVIEW_' || LPAD(ROW_NUMBER() OVER (ORDER BY sh.actual_check_out), 7, '0') as review_id,
+        'REVIEW_' || LPAD((ROW_NUMBER() OVER (ORDER BY sh.actual_check_out))::INTEGER, 7, '0') as review_id,
         sh.guest_id,
         sh.stay_id,
         sh.hotel_id,
