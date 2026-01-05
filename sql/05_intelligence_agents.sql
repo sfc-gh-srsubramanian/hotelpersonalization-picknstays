@@ -409,13 +409,11 @@ $$;
 -- Grant Usage Permissions
 -- ============================================================================
 -- Grant agents to project role for demo purposes
-SET AGENT_ROLE = IDENTIFIER($PROJECT_ROLE);
-
-GRANT USAGE ON AGENT GOLD."Hotel Guest Analytics Agent" TO ROLE IDENTIFIER($AGENT_ROLE);
-GRANT USAGE ON AGENT GOLD."Hotel Personalization Specialist" TO ROLE IDENTIFIER($AGENT_ROLE);
-GRANT USAGE ON AGENT GOLD."Hotel Amenities Intelligence Agent" TO ROLE IDENTIFIER($AGENT_ROLE);
-GRANT USAGE ON AGENT GOLD."Guest Experience Optimizer" TO ROLE IDENTIFIER($AGENT_ROLE);
-GRANT USAGE ON AGENT GOLD."Hotel Intelligence Master Agent" TO ROLE IDENTIFIER($AGENT_ROLE);
+GRANT USAGE ON AGENT GOLD."Hotel Guest Analytics Agent" TO ROLE IDENTIFIER($PROJECT_ROLE);
+GRANT USAGE ON AGENT GOLD."Hotel Personalization Specialist" TO ROLE IDENTIFIER($PROJECT_ROLE);
+GRANT USAGE ON AGENT GOLD."Hotel Amenities Intelligence Agent" TO ROLE IDENTIFIER($PROJECT_ROLE);
+GRANT USAGE ON AGENT GOLD."Guest Experience Optimizer" TO ROLE IDENTIFIER($PROJECT_ROLE);
+GRANT USAGE ON AGENT GOLD."Hotel Intelligence Master Agent" TO ROLE IDENTIFIER($PROJECT_ROLE);
 
 -- ============================================================================
 -- Summary
