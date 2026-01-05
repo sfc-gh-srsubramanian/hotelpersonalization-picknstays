@@ -725,6 +725,7 @@ SELECT
     lp.tier_level as loyalty_tier,
     lp.points_balance as loyalty_points,
     lp.lifetime_points,
+    g.marketing_opt_in,
     
     -- Booking metrics
     COALESCE(COUNT(DISTINCT be.booking_id), 0) as total_bookings,
@@ -748,8 +749,6 @@ SELECT
         WHEN DATEDIFF(day, MAX(be.check_in_date), CURRENT_DATE()) > 90 THEN 'Low Risk'
         ELSE 'Active'
     END as churn_risk,
-    
-    g.marketing_opt_in,
     
     -- Amenity spending metrics
     COALESCE(SUM(ase.amount), 0) as total_amenity_spend,
