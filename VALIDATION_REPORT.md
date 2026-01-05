@@ -11,12 +11,12 @@
 |------|--------|--------------|--------------|
 | `01_account_setup.sql` | ✅ PASS | 60 | 60 |
 | `02_schema_setup.sql` | ✅ PASS | 2 | 2 |
-| `03_data_generation.sql` | ✅ PASS | 0 | 0 |
+| `03_data_generation.sql` | ✅ PASS | 114 | 114 |
 | `04_semantic_views.sql` | ✅ PASS | 4 | 4 |
 | `05_intelligence_agents.sql` | ✅ PASS | 0 | 0 |
 | `08_sample_queries.sql` | ✅ PASS | 0 | 0 |
 
-**Total Issues:** 66 identified and fixed
+**Total Issues:** 180 identified and fixed
 
 ---
 
@@ -114,6 +114,43 @@ GROUP BY 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16;
 
 ---
 
+### 4. **GENERATOR Function Invalid Column Alias (114 occurrences)**
+
+**File:** `03_data_generation.sql`
+
+**Problem:**
+```sql
+-- ❌ This syntax is NOT supported in Snowflake
+FROM TABLE(GENERATOR(ROWCOUNT => 50)) t(seq)
+-- Error: "Mismatch between number of columns produced by 'T' and 
+-- the number of aliases specified"
+```
+
+**Solution:**
+```sql
+-- ✅ Remove column alias, use SEQ4() function instead
+FROM TABLE(GENERATOR(ROWCOUNT => 50))
+-- Replace all 'seq' with 'SEQ4()'
+
+-- Before: 'GUEST_' || LPAD(seq, 6, '0')
+-- After:  'GUEST_' || LPAD(SEQ4(), 6, '0')
+```
+
+**Locations Fixed:**
+- `03_data_generation.sql`:
+  - 7 GENERATOR statements (all table aliases removed)
+  - 114 variable references changed from `seq` to `SEQ4()`
+  - Affected tables: hotel_properties, guest_profiles, loyalty_program, 
+    room_preferences, service_preferences, booking_history, social_media_activity
+
+**Why This Matters:**
+- GENERATOR() is a table-valued function that produces rows
+- Column aliases like `t(seq)` are not valid for GENERATOR
+- Use `SEQ4()` built-in function to get sequence numbers
+- SEQ4() generates unique sequence values for each row
+
+---
+
 ## ✅ Validation Checks Performed
 
 ### 1. **IDENTIFIER() Syntax**
@@ -198,7 +235,12 @@ All SQL scripts have been validated and fixed. You can now deploy with confidenc
    - Use column positions (1,2,3...) or full column names
    - Keep non-aggregated columns before aggregated ones
 
-3. **Medallion Architecture:**
+3. **GENERATOR() Function:**
+   - ❌ Cannot use column aliases like `t(seq)` with GENERATOR
+   - ✅ Use `SEQ4()` function to get sequence numbers
+   - GENERATOR produces rows with built-in sequence columns
+
+4. **Medallion Architecture:**
    - Bronze = Raw data (source columns only)
    - Silver = Enriched data (derived columns added)
    - Gold = Analytics (aggregations from Silver)
@@ -235,10 +277,11 @@ All SQL scripts have been validated and fixed. You can now deploy with confidenc
 
 All fixes have been committed and pushed to GitHub:
 
-- `75ba889` - Fix IDENTIFIER() string concatenation in role creation
-- `ac4a79a` - Fix guest_360_view_enhanced to use SILVER.guests_standardized
-- `5ce5c5e` - Fix GROUP BY clause - move marketing_opt_in before aggregations
-- `37ef048` - Fix IDENTIFIER() concatenation in semantic views
+- `75ba889` - Fix IDENTIFIER() string concatenation in role creation (60 fixes)
+- `ac4a79a` - Fix guest_360_view_enhanced to use SILVER.guests_standardized (1 fix)
+- `5ce5c5e` - Fix GROUP BY clause - move marketing_opt_in before aggregations (1 fix)
+- `37ef048` - Fix IDENTIFIER() concatenation in semantic views (4 fixes)
+- `78b5cb2` - Fix GENERATOR function syntax - replace t(seq) with SEQ4() (114 fixes)
 
 **Repository:** https://github.com/sfc-gh-srsubramanian/hotelpersonalization-picknstays
 
