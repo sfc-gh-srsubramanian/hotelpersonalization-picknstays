@@ -45,25 +45,25 @@ hotel_data AS (
             WHEN seq <= 40 THEN 'IHG'
             ELSE 'Independent'
         END as brand,
-        (seq * 123)::VARCHAR || ' ' || ['Main St', 'Broadway', 'Park Ave', 'First St', 'Oak Blvd'][seq % 5] as address_line1,
+        ((seq % 1000) * 123)::VARCHAR || ' ' || ['Main St', 'Broadway', 'Park Ave', 'First St', 'Oak Blvd'][seq % 5] as address_line1,
         NULL as address_line2,
         ['New York', 'Los Angeles', 'Chicago', 'Houston', 'Phoenix', 'Philadelphia', 'San Antonio', 'San Diego', 'Dallas', 'San Jose'][seq % 10] as city,
         ['NY', 'CA', 'IL', 'TX', 'AZ', 'PA', 'TX', 'CA', 'TX', 'CA'][seq % 10] as state_province,
-        LPAD(((10000 + seq * 17) % 90000 + 10000)::VARCHAR, 5, '0') as postal_code,
+        LPAD((10000 + (seq % 5000) * 17 % 90000)::VARCHAR, 5, '0') as postal_code,
         'USA' as country,
-        CAST(25.0 + ((seq * 7) % 25) + UNIFORM(0.0, 0.001, RANDOM()) AS DECIMAL(10,8)) as latitude,
-        CAST(-125.0 + ((seq * 11) % 50) + UNIFORM(0.0, 0.001, RANDOM()) AS DECIMAL(11,8)) as longitude,
-        '+1' || LPAD(((seq * 31) % 900 + 100)::VARCHAR, 3, '0') || LPAD(((seq * 47) % 9000 + 1000)::VARCHAR, 4, '0') as phone,
+        CAST(25.0 + ((seq % 25) * 7 % 25) + UNIFORM(0.0, 0.001, RANDOM()) AS DECIMAL(10,8)) as latitude,
+        CAST(-125.0 + ((seq % 50) * 11 % 50) + UNIFORM(0.0, 0.001, RANDOM()) AS DECIMAL(11,8)) as longitude,
+        '+1' || LPAD(((seq % 900) * 31 % 900 + 100)::VARCHAR, 3, '0') || LPAD(((seq % 9000) * 47 % 9000 + 1000)::VARCHAR, 4, '0') as phone,
         LOWER(REPLACE(hotel_name, ' ', '.')) || '@hotel.com' as email,
         3 + (seq % 3) as star_rating,
-        100 + ((seq * 23) % 400) as total_rooms,
+        100 + ((seq % 400) * 23 % 400) as total_rooms,
         PARSE_JSON('["WiFi", "Parking", "Pool", "Fitness Center", "Restaurant", "Room Service", "Concierge", "Business Center"]') as amenities,
         PARSE_JSON('["Standard King", "Standard Queen", "Deluxe King", "Suite", "Executive", "Family Room"]') as room_types,
         TIME('15:00:00') as check_in_time,
         TIME('11:00:00') as check_out_time,
         ['America/New_York', 'America/Los_Angeles', 'America/Chicago', 'America/Denver'][seq % 4] as timezone,
-        DATEADD(day, -1 * (seq * 100 + 365), CURRENT_DATE()) as opened_date,
-        DATEADD(day, -1 * (seq * 30 + 100), CURRENT_DATE()) as last_renovation_date,
+        DATEADD(day, -1 * ((seq % 100) * 100 + 365), CURRENT_DATE()) as opened_date,
+        DATEADD(day, -1 * ((seq % 365) * 30 + 100), CURRENT_DATE()) as last_renovation_date,
         CURRENT_TIMESTAMP() as created_at,
         CURRENT_TIMESTAMP() as updated_at
     FROM seq_generator
@@ -87,23 +87,23 @@ guest_data AS (
         ['Smith', 'Johnson', 'Williams', 'Brown', 'Jones', 'Garcia', 'Miller', 'Davis', 'Rodriguez', 'Martinez',
          'Hernandez', 'Lopez', 'Gonzalez', 'Wilson', 'Anderson', 'Thomas', 'Taylor', 'Moore', 'Jackson', 'Martin',
          'Lee', 'Perez', 'Thompson', 'White', 'Harris', 'Sanchez', 'Clark', 'Ramirez', 'Lewis', 'Robinson'][seq % 30] as last_name,
-        LOWER(first_name || '.' || last_name || seq) || '@' || ['gmail.com', 'yahoo.com', 'outlook.com', 'hotmail.com', 'company.com'][seq % 5] as email,
-        '+1' || LPAD((seq * 23) % 900 + 100, 3, '0') || LPAD((seq * 41) % 9000 + 1000, 4, '0') as phone,
-        DATEADD(year, -1 * (20 + (seq * 13) % 60), CURRENT_DATE()) as date_of_birth,
+        LOWER(first_name || '.' || last_name || seq::VARCHAR) || '@' || ['gmail.com', 'yahoo.com', 'outlook.com', 'hotmail.com', 'company.com'][seq % 5] as email,
+        '+1' || LPAD(((seq % 900) * 23 % 900 + 100)::VARCHAR, 3, '0') || LPAD(((seq % 9000) * 41 % 9000 + 1000)::VARCHAR, 4, '0') as phone,
+        DATEADD(year, -1 * (20 + (seq % 60) * 13 % 60), CURRENT_DATE()) as date_of_birth,
         ['M', 'F', 'Other'][seq % 3] as gender,
         ['USA', 'Canada', 'UK', 'Germany', 'France', 'Japan', 'Australia', 'Brazil', 'India', 'Mexico'][seq % 10] as nationality,
         ['English', 'Spanish', 'French', 'German', 'Chinese', 'Japanese', 'Portuguese', 'Hindi'][seq % 8] as language_preference,
-        (seq * 47) || ' ' || ['Oak St', 'Pine Ave', 'Maple Dr', 'Cedar Ln', 'Elm Way'][seq % 5] as address_line1,
-        CASE WHEN seq % 4 = 0 THEN 'Apt ' || (seq % 100 + 1) ELSE NULL END as address_line2,
+        ((seq % 1000) * 47)::VARCHAR || ' ' || ['Oak St', 'Pine Ave', 'Maple Dr', 'Cedar Ln', 'Elm Way'][seq % 5] as address_line1,
+        CASE WHEN seq % 4 = 0 THEN 'Apt ' || (seq % 100 + 1)::VARCHAR ELSE NULL END as address_line2,
         ['Boston', 'Miami', 'Seattle', 'Denver', 'Atlanta', 'Las Vegas', 'Portland', 'Nashville', 'Austin', 'Orlando'][seq % 10] as city,
         ['MA', 'FL', 'WA', 'CO', 'GA', 'NV', 'OR', 'TN', 'TX', 'FL'][seq % 10] as state_province,
-        LPAD((20000 + seq * 19) % 80000 + 10000, 5, '0') as postal_code,
+        LPAD((20000 + (seq % 4000) * 19 % 80000)::VARCHAR, 5, '0') as postal_code,
         'USA' as country,
-        DATEADD(day, -1 * (seq * 7), CURRENT_DATE()) as registration_date,
+        DATEADD(day, -1 * ((seq % 1095) * 7), CURRENT_DATE()) as registration_date,
         CURRENT_TIMESTAMP() as last_updated,
         seq % 3 != 0 as marketing_opt_in,
         PARSE_JSON('{"email": true, "sms": ' || (seq % 2 = 0)::STRING || ', "phone": ' || (seq % 3 = 0)::STRING || '}') as communication_preferences,
-        PARSE_JSON('{"name": "Emergency Contact", "phone": "+1' || LPAD((seq * 67) % 9000 + 1000, 4, '0') || '", "relationship": "' || ['spouse', 'parent', 'sibling', 'friend'][seq % 4] || '"}') as emergency_contact
+        PARSE_JSON('{"name": "Emergency Contact", "phone": "+1' || LPAD(((seq % 9000) * 67 % 9000 + 1000)::VARCHAR, 4, '0') || '", "relationship": "' || ['spouse', 'parent', 'sibling', 'friend'][seq % 4] || '"}') as emergency_contact
     FROM seq_generator
 )
 SELECT * FROM guest_data;
@@ -118,19 +118,19 @@ WITH seq_generator AS (
 ),
 loyalty_data AS (
     SELECT 
-        'LOYALTY_' || LPAD(seq, 6, '0') as loyalty_id,
-        'GUEST_' || LPAD(seq, 6, '0') as guest_id,
+        'LOYALTY_' || LPAD(seq::VARCHAR, 6, '0') as loyalty_id,
+        'GUEST_' || LPAD(seq::VARCHAR, 6, '0') as guest_id,
         'Hotel Rewards Program' as program_name,
-        'HRP' || LPAD(seq * 73, 10, '0') as member_number,
+        'HRP' || LPAD(((seq % 10000) * 73)::VARCHAR, 10, '0') as member_number,
         CASE 
             WHEN seq % 100 < 5 THEN 'Diamond'
             WHEN seq % 100 < 20 THEN 'Gold'
             WHEN seq % 100 < 50 THEN 'Silver'
             ELSE 'Blue'
         END as tier_level,
-        (seq * 127) % 50000 + 1000 as points_balance,
-        (seq * 191) % 200000 + 5000 as lifetime_points,
-        DATEADD(day, -1 * (seq * 3), CURRENT_DATE()) as tier_qualification_date,
+        (seq % 50000) * 127 % 50000 + 1000 as points_balance,
+        (seq % 200000) * 191 % 200000 + 5000 as lifetime_points,
+        DATEADD(day, -1 * ((seq % 1095) * 3), CURRENT_DATE()) as tier_qualification_date,
         CASE tier_level
             WHEN 'Blue' THEN 10000
             WHEN 'Silver' THEN 25000
