@@ -26,43 +26,43 @@ USE SCHEMA BRONZE;
 INSERT INTO hotel_properties
 WITH hotel_data AS (
     SELECT 
-        'HOTEL_' || LPAD(seq, 3, '0') as hotel_id,
+        'HOTEL_' || LPAD(SEQ4(), 3, '0') as hotel_id,
         CASE 
-            WHEN seq <= 10 THEN 'Hilton ' || ['Downtown', 'Garden Inn', 'Embassy Suites', 'DoubleTree', 'Hampton Inn'][seq % 5]
-            WHEN seq <= 20 THEN 'Marriott ' || ['Courtyard', 'Residence Inn', 'SpringHill Suites', 'Fairfield Inn', 'TownePlace Suites'][seq % 5]
-            WHEN seq <= 30 THEN 'Hyatt ' || ['Place', 'House', 'Centric', 'Regency', 'Grand'][seq % 5]
-            WHEN seq <= 40 THEN 'IHG ' || ['Holiday Inn', 'Crowne Plaza', 'InterContinental', 'Staybridge Suites', 'Candlewood Suites'][seq % 5]
-            ELSE 'Independent ' || ['Boutique', 'Luxury', 'Business', 'Resort', 'Extended Stay'][seq % 5]
+            WHEN SEQ4() <= 10 THEN 'Hilton ' || ['Downtown', 'Garden Inn', 'Embassy Suites', 'DoubleTree', 'Hampton Inn'][SEQ4() % 5]
+            WHEN SEQ4() <= 20 THEN 'Marriott ' || ['Courtyard', 'Residence Inn', 'SpringHill Suites', 'Fairfield Inn', 'TownePlace Suites'][SEQ4() % 5]
+            WHEN SEQ4() <= 30 THEN 'Hyatt ' || ['Place', 'House', 'Centric', 'Regency', 'Grand'][SEQ4() % 5]
+            WHEN SEQ4() <= 40 THEN 'IHG ' || ['Holiday Inn', 'Crowne Plaza', 'InterContinental', 'Staybridge Suites', 'Candlewood Suites'][SEQ4() % 5]
+            ELSE 'Independent ' || ['Boutique', 'Luxury', 'Business', 'Resort', 'Extended Stay'][SEQ4() % 5]
         END as hotel_name,
         CASE 
-            WHEN seq <= 10 THEN 'Hilton'
-            WHEN seq <= 20 THEN 'Marriott'
-            WHEN seq <= 30 THEN 'Hyatt'
-            WHEN seq <= 40 THEN 'IHG'
+            WHEN SEQ4() <= 10 THEN 'Hilton'
+            WHEN SEQ4() <= 20 THEN 'Marriott'
+            WHEN SEQ4() <= 30 THEN 'Hyatt'
+            WHEN SEQ4() <= 40 THEN 'IHG'
             ELSE 'Independent'
         END as brand,
-        (seq * 123) || ' ' || ['Main St', 'Broadway', 'Park Ave', 'First St', 'Oak Blvd'][seq % 5] as address_line1,
+        (SEQ4() * 123) || ' ' || ['Main St', 'Broadway', 'Park Ave', 'First St', 'Oak Blvd'][SEQ4() % 5] as address_line1,
         NULL as address_line2,
-        ['New York', 'Los Angeles', 'Chicago', 'Houston', 'Phoenix', 'Philadelphia', 'San Antonio', 'San Diego', 'Dallas', 'San Jose'][seq % 10] as city,
-        ['NY', 'CA', 'IL', 'TX', 'AZ', 'PA', 'TX', 'CA', 'TX', 'CA'][seq % 10] as state_province,
-        LPAD((10000 + seq * 17) % 90000 + 10000, 5, '0') as postal_code,
+        ['New York', 'Los Angeles', 'Chicago', 'Houston', 'Phoenix', 'Philadelphia', 'San Antonio', 'San Diego', 'Dallas', 'San Jose'][SEQ4() % 10] as city,
+        ['NY', 'CA', 'IL', 'TX', 'AZ', 'PA', 'TX', 'CA', 'TX', 'CA'][SEQ4() % 10] as state_province,
+        LPAD((10000 + SEQ4() * 17) % 90000 + 10000, 5, '0') as postal_code,
         'USA' as country,
-        ROUND(25.0 + (seq * 7) % 25 + RANDOM() * 0.001, 6) as latitude,
-        ROUND(-125.0 + (seq * 11) % 50 + RANDOM() * 0.001, 6) as longitude,
-        '+1' || LPAD((seq * 31) % 900 + 100, 3, '0') || LPAD((seq * 47) % 9000 + 1000, 4, '0') as phone,
+        ROUND(25.0 + (SEQ4() * 7) % 25 + RANDOM() * 0.001, 6) as latitude,
+        ROUND(-125.0 + (SEQ4() * 11) % 50 + RANDOM() * 0.001, 6) as longitude,
+        '+1' || LPAD((SEQ4() * 31) % 900 + 100, 3, '0') || LPAD((SEQ4() * 47) % 9000 + 1000, 4, '0') as phone,
         LOWER(REPLACE(hotel_name, ' ', '.')) || '@hotel.com' as email,
-        3 + (seq % 3) as star_rating,
-        100 + (seq * 23) % 400 as total_rooms,
+        3 + (SEQ4() % 3) as star_rating,
+        100 + (SEQ4() * 23) % 400 as total_rooms,
         PARSE_JSON('["WiFi", "Parking", "Pool", "Fitness Center", "Restaurant", "Room Service", "Concierge", "Business Center"]') as amenities,
         PARSE_JSON('["Standard King", "Standard Queen", "Deluxe King", "Suite", "Executive", "Family Room"]') as room_types,
         TIME('15:00:00') as check_in_time,
         TIME('11:00:00') as check_out_time,
-        ['America/New_York', 'America/Los_Angeles', 'America/Chicago', 'America/Denver'][seq % 4] as timezone,
-        DATEADD(day, -1 * (seq * 100 + 365), CURRENT_DATE()) as opened_date,
-        DATEADD(day, -1 * (seq * 30 + 100), CURRENT_DATE()) as last_renovation_date,
+        ['America/New_York', 'America/Los_Angeles', 'America/Chicago', 'America/Denver'][SEQ4() % 4] as timezone,
+        DATEADD(day, -1 * (SEQ4() * 100 + 365), CURRENT_DATE()) as opened_date,
+        DATEADD(day, -1 * (SEQ4() * 30 + 100), CURRENT_DATE()) as last_renovation_date,
         CURRENT_TIMESTAMP() as created_at,
         CURRENT_TIMESTAMP() as updated_at
-    FROM TABLE(GENERATOR(ROWCOUNT => 50)) t(seq)
+    FROM TABLE(GENERATOR(ROWCOUNT => 50))
 )
 SELECT * FROM hotel_data;
 
@@ -72,31 +72,31 @@ SELECT * FROM hotel_data;
 INSERT INTO guest_profiles
 WITH guest_data AS (
     SELECT 
-        'GUEST_' || LPAD(seq, 6, '0') as guest_id,
+        'GUEST_' || LPAD(SEQ4(), 6, '0') as guest_id,
         ['James', 'Mary', 'John', 'Patricia', 'Robert', 'Jennifer', 'Michael', 'Linda', 'David', 'Elizabeth', 
          'William', 'Barbara', 'Richard', 'Susan', 'Joseph', 'Jessica', 'Thomas', 'Sarah', 'Christopher', 'Karen',
-         'Daniel', 'Nancy', 'Matthew', 'Lisa', 'Anthony', 'Betty', 'Mark', 'Helen', 'Donald', 'Sandra'][seq % 30] as first_name,
+         'Daniel', 'Nancy', 'Matthew', 'Lisa', 'Anthony', 'Betty', 'Mark', 'Helen', 'Donald', 'Sandra'][SEQ4() % 30] as first_name,
         ['Smith', 'Johnson', 'Williams', 'Brown', 'Jones', 'Garcia', 'Miller', 'Davis', 'Rodriguez', 'Martinez',
          'Hernandez', 'Lopez', 'Gonzalez', 'Wilson', 'Anderson', 'Thomas', 'Taylor', 'Moore', 'Jackson', 'Martin',
-         'Lee', 'Perez', 'Thompson', 'White', 'Harris', 'Sanchez', 'Clark', 'Ramirez', 'Lewis', 'Robinson'][seq % 30] as last_name,
-        LOWER(first_name || '.' || last_name || seq) || '@' || ['gmail.com', 'yahoo.com', 'outlook.com', 'hotmail.com', 'company.com'][seq % 5] as email,
-        '+1' || LPAD((seq * 23) % 900 + 100, 3, '0') || LPAD((seq * 41) % 9000 + 1000, 4, '0') as phone,
-        DATEADD(year, -1 * (20 + (seq * 13) % 60), CURRENT_DATE()) as date_of_birth,
-        ['M', 'F', 'Other'][seq % 3] as gender,
-        ['USA', 'Canada', 'UK', 'Germany', 'France', 'Japan', 'Australia', 'Brazil', 'India', 'Mexico'][seq % 10] as nationality,
-        ['English', 'Spanish', 'French', 'German', 'Chinese', 'Japanese', 'Portuguese', 'Hindi'][seq % 8] as language_preference,
-        (seq * 47) || ' ' || ['Oak St', 'Pine Ave', 'Maple Dr', 'Cedar Ln', 'Elm Way'][seq % 5] as address_line1,
-        CASE WHEN seq % 4 = 0 THEN 'Apt ' || (seq % 100 + 1) ELSE NULL END as address_line2,
-        ['Boston', 'Miami', 'Seattle', 'Denver', 'Atlanta', 'Las Vegas', 'Portland', 'Nashville', 'Austin', 'Orlando'][seq % 10] as city,
-        ['MA', 'FL', 'WA', 'CO', 'GA', 'NV', 'OR', 'TN', 'TX', 'FL'][seq % 10] as state_province,
-        LPAD((20000 + seq * 19) % 80000 + 10000, 5, '0') as postal_code,
+         'Lee', 'Perez', 'Thompson', 'White', 'Harris', 'Sanchez', 'Clark', 'Ramirez', 'Lewis', 'Robinson'][SEQ4() % 30] as last_name,
+        LOWER(first_name || '.' || last_name || SEQ4()) || '@' || ['gmail.com', 'yahoo.com', 'outlook.com', 'hotmail.com', 'company.com'][SEQ4() % 5] as email,
+        '+1' || LPAD((SEQ4() * 23) % 900 + 100, 3, '0') || LPAD((SEQ4() * 41) % 9000 + 1000, 4, '0') as phone,
+        DATEADD(year, -1 * (20 + (SEQ4() * 13) % 60), CURRENT_DATE()) as date_of_birth,
+        ['M', 'F', 'Other'][SEQ4() % 3] as gender,
+        ['USA', 'Canada', 'UK', 'Germany', 'France', 'Japan', 'Australia', 'Brazil', 'India', 'Mexico'][SEQ4() % 10] as nationality,
+        ['English', 'Spanish', 'French', 'German', 'Chinese', 'Japanese', 'Portuguese', 'Hindi'][SEQ4() % 8] as language_preference,
+        (SEQ4() * 47) || ' ' || ['Oak St', 'Pine Ave', 'Maple Dr', 'Cedar Ln', 'Elm Way'][SEQ4() % 5] as address_line1,
+        CASE WHEN SEQ4() % 4 = 0 THEN 'Apt ' || (SEQ4() % 100 + 1) ELSE NULL END as address_line2,
+        ['Boston', 'Miami', 'Seattle', 'Denver', 'Atlanta', 'Las Vegas', 'Portland', 'Nashville', 'Austin', 'Orlando'][SEQ4() % 10] as city,
+        ['MA', 'FL', 'WA', 'CO', 'GA', 'NV', 'OR', 'TN', 'TX', 'FL'][SEQ4() % 10] as state_province,
+        LPAD((20000 + SEQ4() * 19) % 80000 + 10000, 5, '0') as postal_code,
         'USA' as country,
-        DATEADD(day, -1 * (seq * 7), CURRENT_DATE()) as registration_date,
+        DATEADD(day, -1 * (SEQ4() * 7), CURRENT_DATE()) as registration_date,
         CURRENT_TIMESTAMP() as last_updated,
-        seq % 3 != 0 as marketing_opt_in,
-        PARSE_JSON('{"email": true, "sms": ' || (seq % 2 = 0)::STRING || ', "phone": ' || (seq % 3 = 0)::STRING || '}') as communication_preferences,
-        PARSE_JSON('{"name": "Emergency Contact", "phone": "+1' || LPAD((seq * 67) % 9000 + 1000, 4, '0') || '", "relationship": "' || ['spouse', 'parent', 'sibling', 'friend'][seq % 4] || '"}') as emergency_contact
-    FROM TABLE(GENERATOR(ROWCOUNT => 10000)) t(seq)
+        SEQ4() % 3 != 0 as marketing_opt_in,
+        PARSE_JSON('{"email": true, "sms": ' || (SEQ4() % 2 = 0)::STRING || ', "phone": ' || (SEQ4() % 3 = 0)::STRING || '}') as communication_preferences,
+        PARSE_JSON('{"name": "Emergency Contact", "phone": "+1' || LPAD((SEQ4() * 67) % 9000 + 1000, 4, '0') || '", "relationship": "' || ['spouse', 'parent', 'sibling', 'friend'][SEQ4() % 4] || '"}') as emergency_contact
+    FROM TABLE(GENERATOR(ROWCOUNT => 10000))
 )
 SELECT * FROM guest_data;
 
@@ -106,19 +106,19 @@ SELECT * FROM guest_data;
 INSERT INTO loyalty_program
 WITH loyalty_data AS (
     SELECT 
-        'LOYALTY_' || LPAD(seq, 6, '0') as loyalty_id,
-        'GUEST_' || LPAD(seq, 6, '0') as guest_id,
+        'LOYALTY_' || LPAD(SEQ4(), 6, '0') as loyalty_id,
+        'GUEST_' || LPAD(SEQ4(), 6, '0') as guest_id,
         'Hotel Rewards Program' as program_name,
-        'HRP' || LPAD(seq * 73, 10, '0') as member_number,
+        'HRP' || LPAD(SEQ4() * 73, 10, '0') as member_number,
         CASE 
-            WHEN seq % 100 < 5 THEN 'Diamond'
-            WHEN seq % 100 < 20 THEN 'Gold'
-            WHEN seq % 100 < 50 THEN 'Silver'
+            WHEN SEQ4() % 100 < 5 THEN 'Diamond'
+            WHEN SEQ4() % 100 < 20 THEN 'Gold'
+            WHEN SEQ4() % 100 < 50 THEN 'Silver'
             ELSE 'Blue'
         END as tier_level,
-        (seq * 127) % 50000 + 1000 as points_balance,
-        (seq * 191) % 200000 + 5000 as lifetime_points,
-        DATEADD(day, -1 * (seq * 3), CURRENT_DATE()) as tier_qualification_date,
+        (SEQ4() * 127) % 50000 + 1000 as points_balance,
+        (SEQ4() * 191) % 200000 + 5000 as lifetime_points,
+        DATEADD(day, -1 * (SEQ4() * 3), CURRENT_DATE()) as tier_qualification_date,
         CASE tier_level
             WHEN 'Blue' THEN 10000
             WHEN 'Silver' THEN 25000
@@ -132,12 +132,12 @@ WITH loyalty_data AS (
             WHEN 'Silver' THEN PARSE_JSON('["Late Checkout", "WiFi"]')
             ELSE PARSE_JSON('["WiFi"]')
         END as benefits,
-        seq % 10 as referral_count,
+        SEQ4() % 10 as referral_count,
         'Active' as status,
-        DATEADD(day, -1 * (seq % 30), CURRENT_DATE()) as last_activity_date,
+        DATEADD(day, -1 * (SEQ4() % 30), CURRENT_DATE()) as last_activity_date,
         CURRENT_TIMESTAMP() as created_at,
         CURRENT_TIMESTAMP() as updated_at
-    FROM TABLE(GENERATOR(ROWCOUNT => 8000)) t(seq)
+    FROM TABLE(GENERATOR(ROWCOUNT => 8000))
 )
 SELECT * FROM loyalty_data;
 
@@ -147,22 +147,22 @@ SELECT * FROM loyalty_data;
 INSERT INTO room_preferences
 WITH pref_data AS (
     SELECT 
-        'PREF_' || LPAD(seq, 6, '0') as preference_id,
-        'GUEST_' || LPAD(seq, 6, '0') as guest_id,
-        ['Standard King', 'Standard Queen', 'Deluxe King', 'Suite', 'Executive'][seq % 5] as room_type_preference,
-        ['low', 'middle', 'high', 'no_preference'][seq % 4] as floor_preference,
-        ['city', 'ocean', 'garden', 'mountain', 'pool', 'no_preference'][seq % 6] as view_preference,
-        ['king', 'queen', 'twin', 'no_preference'][seq % 4] as bed_type_preference,
-        seq % 20 = 0 as smoking_preference,
-        seq % 50 = 0 as accessibility_needs,
-        68 + (seq % 12) as temperature_preference,
-        ['bright', 'dim', 'natural', 'no_preference'][seq % 4] as lighting_preference,
-        ['firm', 'soft', 'memory_foam', 'feather', 'no_preference'][seq % 5] as pillow_type_preference,
+        'PREF_' || LPAD(SEQ4(), 6, '0') as preference_id,
+        'GUEST_' || LPAD(SEQ4(), 6, '0') as guest_id,
+        ['Standard King', 'Standard Queen', 'Deluxe King', 'Suite', 'Executive'][SEQ4() % 5] as room_type_preference,
+        ['low', 'middle', 'high', 'no_preference'][SEQ4() % 4] as floor_preference,
+        ['city', 'ocean', 'garden', 'mountain', 'pool', 'no_preference'][SEQ4() % 6] as view_preference,
+        ['king', 'queen', 'twin', 'no_preference'][SEQ4() % 4] as bed_type_preference,
+        SEQ4() % 20 = 0 as smoking_preference,
+        SEQ4() % 50 = 0 as accessibility_needs,
+        68 + (SEQ4() % 12) as temperature_preference,
+        ['bright', 'dim', 'natural', 'no_preference'][SEQ4() % 4] as lighting_preference,
+        ['firm', 'soft', 'memory_foam', 'feather', 'no_preference'][SEQ4() % 5] as pillow_type_preference,
         PARSE_JSON('["mini_fridge", "coffee_maker"]') as room_amenities,
-        ['quiet', 'moderate', 'doesnt_matter'][seq % 3] as noise_level_preference,
+        ['quiet', 'moderate', 'doesnt_matter'][SEQ4() % 3] as noise_level_preference,
         CURRENT_TIMESTAMP() as last_updated,
         CURRENT_TIMESTAMP() as created_at
-    FROM TABLE(GENERATOR(ROWCOUNT => 7500)) t(seq)
+    FROM TABLE(GENERATOR(ROWCOUNT => 7500))
 )
 SELECT * FROM pref_data;
 
@@ -172,8 +172,8 @@ SELECT * FROM pref_data;
 INSERT INTO service_preferences
 WITH service_data AS (
     SELECT 
-        'SERV_PREF_' || LPAD(seq, 6, '0') as preference_id,
-        'GUEST_' || LPAD(seq, 6, '0') as guest_id,
+        'SERV_PREF_' || LPAD(SEQ4(), 6, '0') as preference_id,
+        'GUEST_' || LPAD(SEQ4(), 6, '0') as guest_id,
         PARSE_JSON('{"cuisines": ["italian", "asian"], "dietary_restrictions": ["none"]}') as dining_preferences,
         PARSE_JSON('["massage", "facial"]') as spa_services,
         PARSE_JSON('["gym", "pool"]') as fitness_preferences,
@@ -182,12 +182,12 @@ WITH service_data AS (
         PARSE_JSON('["live_music", "bar"]') as entertainment_preferences,
         PARSE_JSON('{"frequency": "daily", "time": "morning"}') as housekeeping_preferences,
         PARSE_JSON('["restaurant_reservations", "tour_booking"]') as concierge_services,
-        ['email', 'sms', 'phone', 'app'][seq % 4] as preferred_communication_method,
+        ['email', 'sms', 'phone', 'app'][SEQ4() % 4] as preferred_communication_method,
         TIME('15:00:00') as preferred_check_in_time,
         TIME('11:00:00') as preferred_check_out_time,
         CURRENT_TIMESTAMP() as last_updated,
         CURRENT_TIMESTAMP() as created_at
-    FROM TABLE(GENERATOR(ROWCOUNT => 7000)) t(seq)
+    FROM TABLE(GENERATOR(ROWCOUNT => 7000))
 )
 SELECT * FROM service_data;
 
@@ -197,36 +197,36 @@ SELECT * FROM service_data;
 INSERT INTO booking_history
 WITH booking_data AS (
     SELECT 
-        'BOOKING_' || LPAD(seq, 7, '0') as booking_id,
-        'GUEST_' || LPAD((seq % 8000) + 1, 6, '0') as guest_id,
-        'HOTEL_' || LPAD((seq % 50) + 1, 3, '0') as hotel_id,
-        DATEADD(day, -1 * ((seq * 7) % 1095), CURRENT_TIMESTAMP()) as booking_date,
-        DATE(DATEADD(day, (seq * 13) % 30 + 1, booking_date)) as check_in_date,
-        DATE(DATEADD(day, ((seq % 7) + 1), check_in_date)) as check_out_date,
+        'BOOKING_' || LPAD(SEQ4(), 7, '0') as booking_id,
+        'GUEST_' || LPAD((SEQ4() % 8000) + 1, 6, '0') as guest_id,
+        'HOTEL_' || LPAD((SEQ4() % 50) + 1, 3, '0') as hotel_id,
+        DATEADD(day, -1 * ((SEQ4() * 7) % 1095), CURRENT_TIMESTAMP()) as booking_date,
+        DATE(DATEADD(day, (SEQ4() * 13) % 30 + 1, booking_date)) as check_in_date,
+        DATE(DATEADD(day, ((SEQ4() % 7) + 1), check_in_date)) as check_out_date,
         DATEDIFF(day, check_in_date, check_out_date) as num_nights,
-        CASE WHEN seq % 10 = 0 THEN 2 ELSE 1 END + (seq % 3) as num_adults,
-        CASE WHEN seq % 5 = 0 THEN (seq % 3) ELSE 0 END as num_children,
-        ['Standard King', 'Standard Queen', 'Deluxe King', 'Suite', 'Executive', 'Family Room'][seq % 6] as room_type,
-        ['BAR', 'CORP', 'AAA', 'GOVT', 'PROMO', 'MEMBER'][seq % 6] as rate_code,
-        ROUND(80 + (seq * 17) % 400 + (num_nights * 150) + RANDOM() * 50, 2) as total_amount,
+        CASE WHEN SEQ4() % 10 = 0 THEN 2 ELSE 1 END + (SEQ4() % 3) as num_adults,
+        CASE WHEN SEQ4() % 5 = 0 THEN (SEQ4() % 3) ELSE 0 END as num_children,
+        ['Standard King', 'Standard Queen', 'Deluxe King', 'Suite', 'Executive', 'Family Room'][SEQ4() % 6] as room_type,
+        ['BAR', 'CORP', 'AAA', 'GOVT', 'PROMO', 'MEMBER'][SEQ4() % 6] as rate_code,
+        ROUND(80 + (SEQ4() * 17) % 400 + (num_nights * 150) + RANDOM() * 50, 2) as total_amount,
         'USD' as currency,
-        ['Website', 'Mobile App', 'Phone', 'Travel Agent', 'OTA', 'Walk-in'][seq % 6] as booking_channel,
+        ['Website', 'Mobile App', 'Phone', 'Travel Agent', 'OTA', 'Walk-in'][SEQ4() % 6] as booking_channel,
         CASE 
-            WHEN seq % 20 = 0 THEN 'Cancelled'
-            WHEN seq % 100 = 0 THEN 'No-show'
+            WHEN SEQ4() % 20 = 0 THEN 'Cancelled'
+            WHEN SEQ4() % 100 = 0 THEN 'No-show'
             ELSE 'Confirmed'
         END as booking_status,
-        CASE WHEN booking_status = 'Cancelled' THEN DATEADD(day, -1 * (seq % 7), check_in_date) ELSE NULL END as cancellation_date,
+        CASE WHEN booking_status = 'Cancelled' THEN DATEADD(day, -1 * (SEQ4() % 7), check_in_date) ELSE NULL END as cancellation_date,
         DATEDIFF(day, booking_date, check_in_date) as advance_booking_days,
-        CASE WHEN seq % 7 = 0 THEN 
+        CASE WHEN SEQ4() % 7 = 0 THEN 
             PARSE_JSON('["quiet_room", "high_floor"]')
             ELSE NULL 
         END as special_requests,
-        CASE WHEN seq % 15 = 0 THEN 'SAVE20' ELSE NULL END as promo_code,
-        ['Credit Card', 'Debit Card', 'Digital Wallet', 'Bank Transfer', 'Points'][seq % 5] as payment_method,
+        CASE WHEN SEQ4() % 15 = 0 THEN 'SAVE20' ELSE NULL END as promo_code,
+        ['Credit Card', 'Debit Card', 'Digital Wallet', 'Bank Transfer', 'Points'][SEQ4() % 5] as payment_method,
         booking_date as created_at,
         booking_date as updated_at
-    FROM TABLE(GENERATOR(ROWCOUNT => 25000)) t(seq)
+    FROM TABLE(GENERATOR(ROWCOUNT => 25000))
 )
 SELECT * FROM booking_data;
 
@@ -425,20 +425,20 @@ SELECT * FROM usage_records;
 INSERT INTO social_media_activity
 WITH social_data AS (
     SELECT 
-        'SOCIAL_' || LPAD(seq, 7, '0') as activity_id,
-        'GUEST_' || LPAD((seq % 2000) + 1, 6, '0') as guest_id,
-        ['Instagram', 'Twitter', 'Facebook', 'TikTok', 'LinkedIn'][seq % 5] as platform,
-        ['Post', 'Share', 'Review', 'Check-in'][seq % 4] as activity_type,
+        'SOCIAL_' || LPAD(SEQ4(), 7, '0') as activity_id,
+        'GUEST_' || LPAD((SEQ4() % 2000) + 1, 6, '0') as guest_id,
+        ['Instagram', 'Twitter', 'Facebook', 'TikTok', 'LinkedIn'][SEQ4() % 5] as platform,
+        ['Post', 'Share', 'Review', 'Check-in'][SEQ4() % 4] as activity_type,
         PARSE_JSON('{"text": "Great stay!", "hashtags": ["hotel", "travel", "vacation"]}') as content,
         ROUND(-1.0 + (RANDOM() * 2), 2) as sentiment_score,
         PARSE_JSON('{"likes": ' || UNIFORM(0, 500, RANDOM()) || ', "shares": ' || UNIFORM(0, 50, RANDOM()) || ', "comments": ' || UNIFORM(0, 100, RANDOM()) || '}') as engagement_metrics,
-        ['New York', 'Los Angeles', 'Chicago'][seq % 3] as location_tag,
-        seq % 2 = 0 as hotel_mention,
-        seq % 3 = 0 as brand_mention,
-        DATEADD(day, -1 * (seq % 365), CURRENT_TIMESTAMP()) as activity_date,
+        ['New York', 'Los Angeles', 'Chicago'][SEQ4() % 3] as location_tag,
+        SEQ4() % 2 = 0 as hotel_mention,
+        SEQ4() % 3 = 0 as brand_mention,
+        DATEADD(day, -1 * (SEQ4() % 365), CURRENT_TIMESTAMP()) as activity_date,
         CURRENT_TIMESTAMP() as processed_at,
         CURRENT_TIMESTAMP() as created_at
-    FROM TABLE(GENERATOR(ROWCOUNT => 5000)) t(seq)
+    FROM TABLE(GENERATOR(ROWCOUNT => 5000))
 )
 SELECT * FROM social_data;
 
