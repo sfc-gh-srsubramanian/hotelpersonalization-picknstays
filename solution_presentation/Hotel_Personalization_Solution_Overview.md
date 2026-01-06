@@ -49,18 +49,38 @@ Hotels today face unprecedented challenges in delivering personalized experience
 
 The Hotel Personalization Platform transforms raw operational data into actionable guest intelligence through Snowflake's unified data cloud.
 
-### Architecture Overview
+### Medallion Architecture
 
 ![Architecture Diagram](images/architecture_overview.png)
 
-The platform implements a modern **Medallion Architecture** (Bronze → Silver → Gold) across Snowflake, with an additional Semantic Layer for natural language querying:
+The platform implements a modern **Medallion Architecture** (Bronze → Silver → Gold) across Snowflake:
 
-- **Bronze Layer**: Raw data ingestion from all guest touchpoints (PMS, booking platforms, amenity systems)
-- **Silver Layer**: Data quality, enrichment, and standardization
-- **Gold Layer**: Analytics-ready aggregations and ML-powered insights
-- **Semantic Layer**: Business-friendly views and Snowflake Intelligence Agents
+#### Bronze Layer: Raw Data Capture
+- **13 tables** capturing all guest touchpoints
+- No transformation - preserves source data fidelity
+- Rapid ingestion from PMS, booking platforms, and amenity systems
+- Sources: Property Management Systems, booking platforms, amenity transactions, infrastructure usage, social media, feedback
 
-*See [Section 6: Medallion Architecture](#6-medallion-architecture) for detailed data flow and table specifications.*
+#### Silver Layer: Enrichment & Standardization
+- **7 enriched tables** with cleaned, validated data
+- Standardized guest profiles with demographic enrichment
+- Derived attributes (age, generation, booking lead time categories)
+- Behavioral classifications (tech adoption, amenity spending categories)
+- Time-based patterns and engagement metrics
+
+#### Gold Layer: Analytics-Ready Aggregations
+- **3 core tables** for business intelligence:
+  - `GUEST_360_VIEW_ENHANCED`: Comprehensive guest profiles with all metrics
+  - `PERSONALIZATION_SCORES_ENHANCED`: ML scoring outputs (7 propensity models)
+  - `AMENITY_ANALYTICS`: Unified amenity performance metrics
+- 360-degree guest profiles with comprehensive amenity intelligence
+- ML-powered personalization and upsell propensity scores
+- Real-time aggregations for business insights
+
+#### Semantic Layer: Natural Language Interface
+- **3 semantic views** for business-friendly querying
+- Snowflake Intelligence Agents for conversational analytics
+- Natural language access to guest intelligence without SQL knowledge
 
 ---
 
@@ -156,32 +176,7 @@ The platform ingests and unifies data from across the guest journey:
 
 ---
 
-## 6. Medallion Architecture
-
-### Bronze → Silver → Gold Data Flow
-
-![Medallion Architecture](images/medallion_architecture.png)
-
-**Bronze Layer: Raw Data Capture**
-- 13 tables capturing all guest touchpoints
-- No transformation - preserves source data fidelity
-- Rapid ingestion from PMS and amenity systems
-
-**Silver Layer: Enrichment & Standardization**
-- 7 enriched tables with cleaned, validated data
-- Derived attributes (age, generation, booking lead time categories)
-- Behavioral classifications (tech adoption, amenity spending categories)
-- Time-based patterns and engagement metrics
-
-**Gold Layer: Analytics-Ready Aggregations**
-- 3 core tables for business intelligence:
-  - `GUEST_360_VIEW_ENHANCED`: Comprehensive guest profiles
-  - `PERSONALIZATION_SCORES_ENHANCED`: ML scoring outputs
-  - `AMENITY_ANALYTICS`: Unified amenity performance metrics
-
----
-
-## 7. ML Scoring Models
+## 6. ML Scoring Models
 
 ### AI-Powered Guest Intelligence
 
@@ -232,7 +227,7 @@ The platform features 7 specialized machine learning scoring models using a **0-
 
 ---
 
-## 8. Snowflake Intelligence Agents
+## 7. Snowflake Intelligence Agents
 
 ### Natural Language Guest Intelligence
 
@@ -282,7 +277,7 @@ Five specialized AI agents enable business users to query guest data in natural 
 
 ---
 
-## 9. Unified Amenity Analytics
+## 8. Unified Amenity Analytics
 
 ### Single Source of Truth for All Services
 
@@ -310,7 +305,7 @@ A unique platform differentiator: **unified analytics across traditional ameniti
 
 ---
 
-## 10. Key Use Cases
+## 9. Key Use Cases
 
 ### Real-World Applications
 
@@ -376,7 +371,7 @@ Campaign: "Weekend Wellness + Binge" package
 
 ---
 
-## 11. Getting Started
+## 10. Getting Started
 
 ### Deployment in 3 Steps
 
@@ -423,7 +418,7 @@ snow connection add demo
 
 ---
 
-## 12. Technical Specifications
+## 11. Technical Specifications
 
 ### Platform Requirements
 
@@ -451,7 +446,7 @@ snow connection add demo
 
 ---
 
-## 13. Integration & Extensibility
+## 12. Integration & Extensibility
 
 ### Connect to Your Ecosystem
 
@@ -480,7 +475,7 @@ The platform integrates seamlessly with existing hotel systems:
 
 ---
 
-## 14. Next Steps
+## 13. Next Steps
 
 ### Start Your Personalization Journey
 
