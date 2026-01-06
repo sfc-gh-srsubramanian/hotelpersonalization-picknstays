@@ -58,12 +58,12 @@ snow connection add demo
 
 **What Gets Deployed:**
 - ✅ Database with 5 schemas (Bronze, Silver, Gold, Business Views, Semantic Views)
-- ✅ 20+ tables across medallion architecture
-- ✅ 10,000 synthetic guest profiles for testing
-- ✅ 25,000 bookings and 20,000 completed stays
-- ✅ 30,000+ amenity transactions and 15,000+ usage records
+- ✅ 23 tables across medallion architecture (13 Bronze, 7 Silver, 3 Gold)
+- ✅ 1,000 synthetic guest profiles with realistic data
+- ✅ 2,000+ bookings and 1,395+ completed stays
+- ✅ 3,500+ amenity transactions and 8,000+ usage records
 - ✅ 3 semantic views for natural language querying
-- ✅ 5 Snowflake Intelligence Agents (optional)
+- ✅ 5 Snowflake Intelligence Agents with granular RBAC
 
 **Step 2: Validate the Deployment**
 ```bash
@@ -89,19 +89,15 @@ snow connection add demo
 ### Available Scripts
 
 - **`./deploy.sh`** - Full platform deployment
-  - `--prefix DEV` - Deploy with environment prefix
-  - `--skip-agents` - Skip Intelligence Agents
-  - `--only-sql` - Deploy only SQL infrastructure
+  - Deploys database, schemas, tables, data, semantic views, and agents
+  - Uses Snowflake CLI for streamlined deployment
   
-- **`./run.sh`** - Runtime operations
+- **`./run.sh`** - Runtime operations (if available)
   - `status` - Check resource and data status
   - `validate` - Run validation queries
   - `query "SQL"` - Execute custom SQL
-  - `test-agents` - Test Intelligence Agents
 
-- **`./clean.sh`** - Remove all resources
-  - `--force` - Skip confirmation
-  - `--keep-agents` - Preserve agents
+- **`./clean.sh`** - Remove all resources (use with caution)
 
 ### Quick Validation Examples
 
@@ -139,19 +135,19 @@ ORDER BY revenue DESC;
 ```sql
 -- Query the Guest Analytics Agent
 SELECT SNOWFLAKE.CORTEX.COMPLETE_AGENT(
-    'SNOWFLAKE_INTELLIGENCE.AGENTS."Hotel Guest Analytics Agent"',
+    'HOTEL_PERSONALIZATION.GOLD."Hotel Guest Analytics Agent"',
     'Show me our top 10 guests by total revenue and their loyalty tiers'
 ) AS response;
 
 -- Query the Personalization Specialist
 SELECT SNOWFLAKE.CORTEX.COMPLETE_AGENT(
-    'SNOWFLAKE_INTELLIGENCE.AGENTS."Hotel Personalization Specialist"',
+    'HOTEL_PERSONALIZATION.GOLD."Hotel Personalization Specialist"',
     'Which guests have high spa upsell propensity scores this week?'
 ) AS response;
 
 -- Query the Amenities Intelligence Agent
 SELECT SNOWFLAKE.CORTEX.COMPLETE_AGENT(
-    'SNOWFLAKE_INTELLIGENCE.AGENTS."Hotel Amenities Intelligence Agent"',
+    'HOTEL_PERSONALIZATION.GOLD."Hotel Amenities Intelligence Agent"',
     'What is our amenity revenue breakdown by service category?'
 ) AS response;
 ```
@@ -160,14 +156,18 @@ SELECT SNOWFLAKE.CORTEX.COMPLETE_AGENT(
 
 **SQL Files** (Numbered for execution order):
 - `sql/01_account_setup.sql` - Database, schemas, roles, warehouse
-- `sql/02_schema_setup.sql` - All table definitions across layers
-- `sql/03_data_generation.sql` - Synthetic data generation
-- `sql/04_semantic_views.sql` - Business-friendly semantic views
-- `sql/05_intelligence_agents.sql` - AI agents for natural language querying
+- `sql/02_schema_setup.sql` - All table definitions (23 tables across Bronze/Silver/Gold)
+- `sql/03_data_generation.sql` - Synthetic data generation for all Bronze tables
+- `sql/03b_refresh_silver_gold.sql` - Refresh Silver and Gold tables after data load
+- `sql/04_semantic_views.sql` - 3 semantic views for natural language querying
+- `sql/05_intelligence_agents.sql` - 5 AI agents with granular RBAC
+- `sql/08_sample_queries.sql` - Example BI queries across all layers
 
 **Documentation:**
 - `README.md` - This file, complete platform overview
 - `DEPLOYMENT_GUIDE.md` - Detailed deployment instructions
+- `SCHEMA_VALIDATION_REPORT.md` - Schema validation and fixes
+- `VALIDATION_REPORT.md` - Data generation validation
 - `docs/AGENT_DETAILED_QUESTIONS.md` - Sample agent test questions
 - `docs/hotel_architecture_diagram.xml` - Visual architecture diagram
 - `solution_presentation/` - Solution overview and presentation materials
@@ -329,94 +329,98 @@ To remove all deployed resources:
 
 ### **📊 Data Layers Implemented**
 
-#### **🥉 Bronze Layer (7 Tables)**
+#### **🥉 Bronze Layer (13 Tables)**
 | Table | Records | Purpose |
 |-------|---------|---------|
 | `guest_profiles` | 1,000 | Guest demographics, contact info, preferences |
 | `booking_history` | 2,000 | Complete booking transactions and patterns |
+| `stay_history` | 1,395 | Complete stay records with incidental charges |
+| `room_preferences` | ~716 | Room-specific preferences (bed type, floor, view) |
+| `service_preferences` | ~600 | Service preferences (dining, spa, amenities) |
+| `social_media_activity` | ~500 | Social media engagement and sentiment |
 | `loyalty_program` | 1,000 | Loyalty tiers, points, and program status |
-| `room_preferences` | 716 | Detailed room and service preferences |
+| `feedback_reviews` | ~800 | Guest reviews and satisfaction scores |
+| `payment_methods` | ~1,000 | Payment methods and billing preferences |
+| `special_requests` | ~700 | Special requests and accommodations |
 | `hotel_properties` | 5 | Hotel information across major brands |
-| `amenity_transactions` | 2,510 | **NEW**: Detailed amenity spending (spa, bar, restaurant, room service) |
-| `stay_history` | 1,395 | **NEW**: Complete stay records with incidental charges breakdown |
+| `amenity_transactions` | 3,500+ | Detailed amenity spending (spa, bar, restaurant, room service) |
+| `amenity_usage` | 8,000+ | Infrastructure usage (WiFi, Smart TV, Pool) |
 
-#### **🥈 Silver Layer (2 Tables)**
+#### **🥈 Silver Layer (7 Tables)**
 | Table | Records | Purpose |
 |-------|---------|---------|
-| `guests_standardized` | 1,000 | Cleaned guest data with business logic |
-| `amenity_spending_enriched` | 3,500+ | **ENHANCED**: Enriched amenity transaction data with infrastructure services |
-| `amenity_usage_enriched` | 8,000+ | **NEW**: Infrastructure usage analytics (WiFi, Smart TV, Pool) |
+| `guests_standardized` | 1,000 | Cleaned guest data with business logic and demographics |
+| `bookings_enriched` | 2,000+ | Enriched booking data with derived metrics |
+| `stays_processed` | 1,395+ | Processed stay data with spending categories |
+| `preferences_consolidated` | ~1,000 | Consolidated room and service preferences |
+| `engagement_metrics` | ~500 | Social media and digital engagement analysis |
+| `amenity_spending_enriched` | 3,500+ | Enriched amenity transactions with categories |
+| `amenity_usage_enriched` | 8,000+ | Infrastructure usage analytics with engagement scores |
 
-#### **🏆 Gold Layer (6 Tables)**
+#### **🏆 Gold Layer (3 Tables)**
 | Table | Records | Purpose |
 |-------|---------|---------|
-| `guest_360_view_enhanced` | 1,000 | **ENHANCED**: Complete profiles with infrastructure usage metrics |
-| `personalization_scores_enhanced` | 1,000 | **ENHANCED**: AI scores including tech/pool upsell propensity |
-| `amenity_analytics` | 300+ | **ENHANCED**: Business intelligence for all amenity services |
-| `infrastructure_usage_analytics` | 250+ | **NEW**: Infrastructure service performance (WiFi, Smart TV, Pool) |
-| `guest_360_view` | 1,000 | Legacy guest profiles (maintained for compatibility) |
-| `personalization_scores` | 1,000 | Legacy AI scores (maintained for compatibility) |
+| `guest_360_view_enhanced` | 1,000 | Complete guest profiles with all enriched metrics |
+| `personalization_scores_enhanced` | 1,000 | AI-powered propensity scores (upsell, churn, loyalty) |
+| `amenity_analytics` | Aggregated | Business intelligence for all amenity services |
 
-#### **🔍 Semantic Views Layer (7 Views)**
+#### **🔍 Semantic Views Layer (3 Views)**
 | Semantic View | Purpose | AI Integration |
 |---------------|---------|----------------|
-| `guest_analytics` | **ENHANCED**: Guest behavior with infrastructure amenity intelligence | Natural language queries |
-| `personalization_insights` | **ENHANCED**: Comprehensive personalization with tech upsell scoring | Cortex Analyst ready |
-| `amenity_analytics` | **NEW**: Infrastructure service performance and revenue analytics | Natural language queries |
-| `revenue_analytics` | **ENHANCED**: Revenue optimization with amenity breakdown | Business intelligence |
-| `booking_analytics` | Booking patterns | Predictive analytics |
-| `room_preferences` | Service customization | Operational insights |
-| `amenity_analytics` | **NEW**: Service performance & satisfaction analytics | Amenity business intelligence |
+| `GUEST_ANALYTICS_VIEW` | Guest behavior, booking patterns, loyalty analysis, amenity spend | Natural language queries via Agents |
+| `PERSONALIZATION_INSIGHTS_VIEW` | Personalization scores, upsell propensity, customer segments | Cortex Analyst ready |
+| `AMENITY_ANALYTICS_VIEW` | Infrastructure service performance, revenue analytics | Natural language queries via Agents |
 
-#### **📈 Business Views Layer (2 Views)**
-| Business View | Records | Purpose |
-|---------------|---------|---------|
-| `guest_profile_summary` | 1,000 | Business-friendly guest overview |
-| `personalization_opportunities` | 918 | Actionable personalization insights |
+### **🤖 AI-Powered Intelligence Agents (5 Agents)**
 
-### **🤖 AI-Powered Intelligence Agents (6 Agents)**
+All agents are deployed in the **GOLD schema** and use **"auto" orchestration** model for optimal performance.
 
 #### **🧠 Hotel Guest Analytics Agent**
-- **Role**: `HOTEL_GUEST_ANALYST`
-- **Data Access**: **ENHANCED**: Guest behavior, loyalty analysis, booking patterns, **comprehensive amenity & infrastructure analytics**
-- **Sample Question**: *"Show me guests with high tech upsell propensity and their WiFi/Smart TV usage patterns"*
+- **Location**: `HOTEL_PERSONALIZATION.GOLD."Hotel Guest Analytics Agent"`
+- **Access**: `HOTEL_PERSONALIZATION_ROLE_GUEST_ANALYST`, `HOTEL_PERSONALIZATION_ROLE_ADMIN`
+- **Data Sources**: `GUEST_ANALYTICS_VIEW` semantic view
+- **Expertise**: Guest behavior, loyalty analysis, booking patterns, amenity spend
+- **Sample Questions** (15+): Customer segments, loyalty tiers, spending patterns, guest profiles
 
 #### **🎯 Hotel Personalization Specialist**
-- **Role**: `HOTEL_BUSINESS_ANALYST`
-- **Data Access**: **ENHANCED**: Guest preferences, personalization opportunities, **infrastructure-aware recommendations**
-- **Sample Question**: *"What personalized WiFi and Smart TV packages should we pre-configure for arriving tech-savvy guests?"*
-
-#### **💰 Hotel Revenue Optimizer**
-- **Role**: `HOTEL_REVENUE_ANALYST`
-- **Data Access**: **ENHANCED**: Revenue data, upsell opportunities, **infrastructure service revenue analytics**
-- **Sample Question**: *"What's our WiFi upgrade conversion rate and pool services revenue potential by guest segment?"*
-
-#### **😊 Guest Experience Optimizer**
-- **Role**: `HOTEL_EXPERIENCE_ANALYST`
-- **Data Access**: **ENHANCED**: Satisfaction data, churn risk, **infrastructure service quality analytics**
-- **Sample Question**: *"Which infrastructure services have connectivity issues affecting guest satisfaction?"*
+- **Location**: `HOTEL_PERSONALIZATION.GOLD."Hotel Personalization Specialist"`
+- **Access**: `HOTEL_PERSONALIZATION_ROLE_REVENUE_ANALYST`, `HOTEL_PERSONALIZATION_ROLE_ADMIN`
+- **Data Sources**: `PERSONALIZATION_INSIGHTS_VIEW` semantic view
+- **Expertise**: Hyper-personalization, preference management, targeted offers
+- **Sample Questions** (15+): Upsell opportunities, personalization readiness, preference insights
 
 #### **🌐 Hotel Amenities Intelligence Agent**
-- **Role**: `HOTEL_AMENITY_ANALYST`
-- **Data Access**: **NEW**: Comprehensive amenity & infrastructure analytics, cross-service intelligence
-- **Sample Question**: *"Show me infrastructure usage patterns and revenue optimization opportunities across WiFi, Smart TV, and Pool services"*
+- **Location**: `HOTEL_PERSONALIZATION.GOLD."Hotel Amenities Intelligence Agent"`
+- **Access**: `HOTEL_PERSONALIZATION_ROLE_EXPERIENCE_ANALYST`, `HOTEL_PERSONALIZATION_ROLE_ADMIN`
+- **Data Sources**: `AMENITY_ANALYTICS_VIEW` semantic view
+- **Expertise**: Amenity performance, service analytics, infrastructure usage
+- **Sample Questions** (15+): Amenity revenue, service satisfaction, usage patterns
+
+#### **😊 Guest Experience Optimizer**
+- **Location**: `HOTEL_PERSONALIZATION.GOLD."Guest Experience Optimizer"`
+- **Access**: `HOTEL_PERSONALIZATION_ROLE_EXPERIENCE_ANALYST`, `HOTEL_PERSONALIZATION_ROLE_ADMIN`
+- **Data Sources**: `GUEST_ANALYTICS_VIEW`, `AMENITY_ANALYTICS_VIEW` semantic views
+- **Expertise**: Satisfaction enhancement, churn prevention, service excellence
+- **Sample Questions** (15+): Satisfaction trends, churn risk, service quality issues
 
 #### **🏆 Hotel Intelligence Master Agent**
-- **Role**: `HOTEL_PERSONALIZATION_ADMIN`
-- **Data Access**: **ENHANCED**: Complete cross-functional analysis including **comprehensive amenity intelligence**
-- **Sample Question**: *"Give me strategic insights on our amenity performance and cross-sell opportunities across all services"*
+- **Location**: `HOTEL_PERSONALIZATION.GOLD."Hotel Intelligence Master Agent"`
+- **Access**: `HOTEL_PERSONALIZATION_ROLE_REVENUE_ANALYST`, `HOTEL_PERSONALIZATION_ROLE_ADMIN`
+- **Data Sources**: All 3 semantic views (comprehensive cross-functional access)
+- **Expertise**: Strategic business analysis, executive insights, comprehensive KPIs
+- **Sample Questions** (15+): Strategic analysis, ROI, portfolio optimization, competitive insights
 
 ### **🔐 Security & Governance**
 
 #### **Role-Based Access Control**
-| Role | Purpose | Permissions |
+| Role | Purpose | Agent Access |
 |------|---------|-------------|
-| `HOTEL_PERSONALIZATION_ADMIN` | System administration | Full access to all data |
-| `HOTEL_GUEST_ANALYST` | Guest behavior analysis | SELECT on guest analytics |
-| `HOTEL_REVENUE_ANALYST` | Revenue optimization | SELECT on revenue data |
-| `HOTEL_EXPERIENCE_ANALYST` | Guest experience | SELECT on satisfaction data |
-| `HOTEL_DATA_ENGINEER` | Data pipeline management | Full data management access |
-| `HOTEL_BUSINESS_ANALYST` | Strategic insights | SELECT on business views |
+| `HOTEL_PERSONALIZATION_ROLE` | Main project role | Full database access |
+| `HOTEL_PERSONALIZATION_ROLE_ADMIN` | System administration | All 5 agents |
+| `HOTEL_PERSONALIZATION_ROLE_GUEST_ANALYST` | Guest behavior analysis | Hotel Guest Analytics Agent |
+| `HOTEL_PERSONALIZATION_ROLE_REVENUE_ANALYST` | Revenue optimization | Hotel Personalization Specialist, Hotel Intelligence Master Agent |
+| `HOTEL_PERSONALIZATION_ROLE_EXPERIENCE_ANALYST` | Guest experience | Guest Experience Optimizer, Hotel Amenities Intelligence Agent |
+| `HOTEL_PERSONALIZATION_ROLE_DATA_ENGINEER` | Data pipeline management | Full data management access |
 
 #### **Data Protection Features**
 - ✅ **Column-level security** for PII protection
@@ -518,37 +522,39 @@ To remove all deployed resources:
 ### **📁 Project Structure**
 ```
 Hotel-Personalization-System/
-├── 📊 Data Architecture
-│   ├── 01_setup_database.sql              # Database & schema creation
-│   ├── 02_bronze_layer_tables.sql         # Raw data table definitions
-│   ├── 03_sample_data_generation.sql      # Realistic sample data
-│   ├── 04_booking_stay_data.sql           # Booking & stay records
-│   ├── 05_silver_layer.sql                # Data cleaning & standardization
-│   ├── 06_gold_layer.sql                  # Analytics & aggregations
-│   └── 07_semantic_views.sql              # Business-friendly views
+├── 📊 SQL Scripts (Deployment Order)
+│   ├── sql/01_account_setup.sql           # Database, schemas, roles, warehouse
+│   ├── sql/02_schema_setup.sql            # 23 tables (Bronze, Silver, Gold)
+│   ├── sql/03_data_generation.sql         # Synthetic data for Bronze tables
+│   ├── sql/03b_refresh_silver_gold.sql    # Refresh Silver/Gold after data load
+│   ├── sql/04_semantic_views.sql          # 3 semantic views
+│   ├── sql/05_intelligence_agents.sql     # 5 AI agents with RBAC
+│   └── sql/08_sample_queries.sql          # Example BI queries
 │
-├── 🤖 AI & Intelligence
-│   ├── 10_snowflake_semantic_views.sql    # Semantic view definitions
-│   ├── 11_snowflake_intelligence_agents.sql # AI agent creation
-│   ├── 12_agent_sample_questions.md       # 100+ sample questions
-│   └── 27_agent_sample_questions_guide.md # Complete question library
+├── 🚀 Deployment Scripts
+│   ├── deploy.sh                          # Main deployment script
+│   ├── clean.sh                           # Resource cleanup
+│   ├── run.sh                             # Runtime operations
+│   └── python/deployment/
+│       └── complete_deployment.py         # Python-based deployment
 │
-├── 🔐 Security & Roles
-│   ├── 16_rbac_security_model.sql         # Role-based access control
-│   ├── 17_rbac_user_guide.md             # Security documentation
-│   └── 32_create_hotel_project_roles.sql # Project-specific roles
+├── 📚 Documentation
+│   ├── README.md                          # This comprehensive guide
+│   ├── DEPLOYMENT_GUIDE.md                # Step-by-step deployment
+│   ├── SCHEMA_VALIDATION_REPORT.md        # Schema validation results
+│   ├── VALIDATION_REPORT.md               # Data generation validation
+│   └── docs/
+│       ├── DESIGN.md                      # System architecture
+│       ├── AGENT_DETAILED_QUESTIONS.md    # Agent test questions
+│       ├── hotel_architecture_diagram.xml # Architecture diagram
+│       └── references/
+│           ├── AGENT_SAMPLE_QUESTIONS.md  # 100+ sample questions
+│           └── AGENT_QUICK_REFERENCE.md   # Quick reference
 │
-├── 🚀 Deployment & Operations
-│   ├── 23_final_deployment.py            # Complete system deployment
-│   ├── 29_create_proper_roles_and_data.py # Role creation & data expansion
-│   ├── 38_create_proper_semantic_views.py # Semantic view implementation
-│   └── 42_SEMANTIC_VIEWS_COMPLETE.md     # Implementation summary
-│
-└── 📚 Documentation
-    ├── README.md                          # This comprehensive guide
-    ├── DESIGN.md                          # System architecture details
-    ├── 15_final_deployment_guide.md       # Deployment instructions
-    └── 31_PRODUCTION_READY_SUMMARY.md     # Production readiness summary
+└── 🎨 Solution Presentation
+    └── solution_presentation/
+        ├── Hotel_Personalization_Solution_Overview.md
+        └── images/                        # Solution diagrams
 ```
 
 ### **🔧 Deployment Scripts**
@@ -645,60 +651,6 @@ Ask your AI agents questions like:
 - *"What personalized room setups should we prepare for arriving Diamond guests?"*
 
 ---
-
-## 📁 **CLEAN PROJECT STRUCTURE**
-
-### **Production-Ready Organization**
-```
-Hotel-Personalization-System/
-├── README.md                           # Main project documentation
-├── DEPLOYMENT_GUIDE.md                 # Complete deployment guide
-├── 
-├── sql/                               # All SQL scripts organized by layer
-│   ├── setup/
-│   │   └── 01_setup_database.sql      # Database and schema creation
-│   ├── bronze/
-│   │   ├── 02_bronze_layer_tables.sql # Raw data tables
-│   │   ├── 03_sample_data_generation.sql # Sample data (Part 1)
-│   │   └── 04_booking_stay_data.sql   # Sample data (Part 2)
-│   ├── silver/
-│   │   └── 05_silver_layer.sql        # Cleaned and standardized data
-│   ├── gold/
-│   │   └── 06_gold_layer.sql          # Analytics-ready aggregations
-│   ├── semantic_views/
-│   │   └── create_semantic_views.sql  # Natural language query views
-│   ├── agents/
-│   │   └── create_intelligence_agents.sql # AI agents
-│   ├── security/
-│   │   └── 32_create_hotel_project_roles.sql # RBAC roles
-│   └── 08_sample_queries.sql          # Example queries
-│
-├── python/                            # Python deployment scripts
-│   ├── deployment/
-│   │   ├── complete_deployment.py     # Main deployment script
-│   │   └── 33_execute_role_creation.py # Role creation utility
-│   └── utilities/                     # Future utility scripts
-│
-├── docs/                              # Documentation
-│   ├── DESIGN.md                      # System design documentation
-│   ├── AGENT_DETAILED_QUESTIONS.md    # Detailed agent questions by category
-│   ├── hotel_architecture_diagram.xml # Draw.io architecture diagram
-│   └── references/
-│       ├── AGENT_SAMPLE_QUESTIONS.md  # Comprehensive agent questions
-│       └── AGENT_QUICK_REFERENCE.md   # Quick reference card
-│
-└── archive/                           # Archived iteration files
-    └── [All development iteration files moved here]
-```
-
-### **🚀 Quick Deployment**
-```bash
-# Automated deployment (recommended)
-python python/deployment/complete_deployment.py
-
-# Or follow the step-by-step guide
-cat DEPLOYMENT_GUIDE.md
-```
 
 ---
 
