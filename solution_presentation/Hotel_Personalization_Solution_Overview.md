@@ -53,29 +53,14 @@ The Hotel Personalization Platform transforms raw operational data into actionab
 
 ![Architecture Diagram](images/architecture_overview.png)
 
-The platform implements a modern **Medallion Architecture** across Snowflake:
+The platform implements a modern **Medallion Architecture** (Bronze → Silver → Gold) across Snowflake, with an additional Semantic Layer for natural language querying:
 
-**Bronze Layer** - Raw data ingestion from all guest touchpoints:
-- Property Management Systems (PMS)
-- Booking platforms and reservation systems
-- Amenity transaction systems (spa, dining, bar, room service)
-- Infrastructure usage tracking (WiFi, Smart TV, pool)
-- Social media and feedback platforms
+- **Bronze Layer**: Raw data ingestion from all guest touchpoints (PMS, booking platforms, amenity systems)
+- **Silver Layer**: Data quality, enrichment, and standardization
+- **Gold Layer**: Analytics-ready aggregations and ML-powered insights
+- **Semantic Layer**: Business-friendly views and Snowflake Intelligence Agents
 
-**Silver Layer** - Data quality and enrichment:
-- Standardized guest profiles with demographic enrichment
-- Cleaned booking and stay history
-- Enriched amenity spending with behavioral insights
-- Usage pattern analysis for infrastructure services
-
-**Gold Layer** - Analytics-ready aggregations:
-- 360-degree guest profiles with comprehensive amenity intelligence
-- ML-powered personalization scores
-- Unified amenity analytics (transactions + usage)
-
-**Semantic Layer** - Natural language interface:
-- Business-friendly semantic views
-- Snowflake Intelligence Agents for conversational analytics
+*See [Section 6: Medallion Architecture](#6-medallion-architecture) for detailed data flow and table specifications.*
 
 ---
 
@@ -200,7 +185,11 @@ The platform ingests and unifies data from across the guest journey:
 
 ### AI-Powered Guest Intelligence
 
-The platform features 7 specialized machine learning scoring models (0-100 scale):
+The platform features 7 specialized machine learning scoring models using a **0-100 scale** where:
+- **0-25**: Low propensity/readiness - minimal likelihood or insufficient data
+- **26-50**: Moderate propensity/readiness - some indicators present
+- **51-75**: High propensity/readiness - strong indicators, good targeting opportunity
+- **76-100**: Very high propensity/readiness - excellent targeting opportunity with high conversion likelihood
 
 ![ML Scoring Models](images/ml_scoring_models.png)
 
@@ -425,12 +414,12 @@ snow connection add demo
 
 **What Gets Deployed:**
 - Database with 5 schemas (Bronze, Silver, Gold, Business Views, Semantic Views)
-- 20+ tables across medallion architecture
-- 10,000 guest profiles (synthetic data for demo)
-- 25,000 bookings and 20,000 stays
-- 30,000+ amenity transactions and 15,000+ usage records
+- 23 tables across medallion architecture (13 Bronze, 7 Silver, 3 Gold)
+- 1,000 guest profiles with realistic synthetic data
+- 2,000+ bookings and 1,395+ completed stays
+- 3,500+ amenity transactions and 8,000+ usage records
 - 3 semantic views for natural language querying
-- 5 Snowflake Intelligence Agents (optional)
+- 5 Snowflake Intelligence Agents with granular RBAC
 
 ---
 
