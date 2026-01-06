@@ -90,7 +90,7 @@ tools:
 
 tool_resources:
   guest_analytics:
-    semantic_view: "$FULL_PREFIX.SEMANTIC_VIEWS.GUEST_ANALYTICS_VIEW"
+    semantic_view: "HOTEL_PERSONALIZATION.SEMANTIC_VIEWS.GUEST_ANALYTICS_VIEW"
 $$;
 
 -- ============================================================================
@@ -158,7 +158,7 @@ tools:
 
 tool_resources:
   personalization_insights:
-    semantic_view: "$FULL_PREFIX.SEMANTIC_VIEWS.PERSONALIZATION_INSIGHTS_VIEW"
+    semantic_view: "HOTEL_PERSONALIZATION.SEMANTIC_VIEWS.PERSONALIZATION_INSIGHTS_VIEW"
 $$;
 
 -- ============================================================================
@@ -237,7 +237,7 @@ tools:
 
 tool_resources:
   amenity_analytics:
-    semantic_view: "$FULL_PREFIX.SEMANTIC_VIEWS.AMENITY_ANALYTICS_VIEW"
+    semantic_view: "HOTEL_PERSONALIZATION.SEMANTIC_VIEWS.AMENITY_ANALYTICS_VIEW"
 $$;
 
 -- ============================================================================
@@ -315,9 +315,9 @@ tools:
 
 tool_resources:
   guest_experience:
-    semantic_view: "$FULL_PREFIX.SEMANTIC_VIEWS.GUEST_ANALYTICS_VIEW"
+    semantic_view: "HOTEL_PERSONALIZATION.SEMANTIC_VIEWS.GUEST_ANALYTICS_VIEW"
   amenity_service_quality:
-    semantic_view: "$FULL_PREFIX.SEMANTIC_VIEWS.AMENITY_ANALYTICS_VIEW"
+    semantic_view: "HOTEL_PERSONALIZATION.SEMANTIC_VIEWS.AMENITY_ANALYTICS_VIEW"
 $$;
 
 -- ============================================================================
@@ -398,11 +398,11 @@ tools:
 
 tool_resources:
   guest_intelligence:
-    semantic_view: "$FULL_PREFIX.SEMANTIC_VIEWS.GUEST_ANALYTICS_VIEW"
+    semantic_view: "HOTEL_PERSONALIZATION.SEMANTIC_VIEWS.GUEST_ANALYTICS_VIEW"
   personalization_intelligence:
-    semantic_view: "$FULL_PREFIX.SEMANTIC_VIEWS.PERSONALIZATION_INSIGHTS_VIEW"
+    semantic_view: "HOTEL_PERSONALIZATION.SEMANTIC_VIEWS.PERSONALIZATION_INSIGHTS_VIEW"
   amenity_intelligence:
-    semantic_view: "$FULL_PREFIX.SEMANTIC_VIEWS.AMENITY_ANALYTICS_VIEW"
+    semantic_view: "HOTEL_PERSONALIZATION.SEMANTIC_VIEWS.AMENITY_ANALYTICS_VIEW"
 $$;
 
 -- ============================================================================
