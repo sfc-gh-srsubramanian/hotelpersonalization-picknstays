@@ -403,10 +403,10 @@ cmd_test_agents() {
     echo ""
     snow sql $SNOW_CONN -q "
         SELECT SNOWFLAKE.CORTEX.COMPLETE_AGENT(
-            'SNOWFLAKE_INTELLIGENCE.AGENTS.\"Hotel Guest Analytics Agent\"',
+            '${DATABASE}.GOLD.\"Hotel Guest Analytics Agent\"',
             'Show me our top 5 guests by total revenue'
         ) AS response;
-    " -o plain 2>&1 || echo -e "${YELLOW}Agent query failed - agent may not be deployed${NC}"
+    " --format TABLE 2>&1 || echo -e "${YELLOW}Agent query failed - agent may not be deployed${NC}"
     echo ""
     
     # Test Personalization Specialist
@@ -415,10 +415,10 @@ cmd_test_agents() {
     echo ""
     snow sql $SNOW_CONN -q "
         SELECT SNOWFLAKE.CORTEX.COMPLETE_AGENT(
-            'SNOWFLAKE_INTELLIGENCE.AGENTS.\"Hotel Personalization Specialist\"',
+            '${DATABASE}.GOLD.\"Hotel Personalization Specialist\"',
             'Which guests have the highest spa upsell propensity?'
         ) AS response;
-    " -o plain 2>&1 || echo -e "${YELLOW}Agent query failed - agent may not be deployed${NC}"
+    " --format TABLE 2>&1 || echo -e "${YELLOW}Agent query failed - agent may not be deployed${NC}"
     echo ""
     
     # Test Amenities Intelligence Agent
@@ -427,10 +427,10 @@ cmd_test_agents() {
     echo ""
     snow sql $SNOW_CONN -q "
         SELECT SNOWFLAKE.CORTEX.COMPLETE_AGENT(
-            'SNOWFLAKE_INTELLIGENCE.AGENTS.\"Hotel Amenities Intelligence Agent\"',
+            '${DATABASE}.GOLD.\"Hotel Amenities Intelligence Agent\"',
             'What is our amenity revenue breakdown by service category?'
         ) AS response;
-    " -o plain 2>&1 || echo -e "${YELLOW}Agent query failed - agent may not be deployed${NC}"
+    " --format TABLE 2>&1 || echo -e "${YELLOW}Agent query failed - agent may not be deployed${NC}"
     echo ""
     
     echo "-------------------------------------------------------------------------"
