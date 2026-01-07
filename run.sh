@@ -393,51 +393,41 @@ cmd_test_agents() {
         echo ""
     fi
     
-    echo "Testing sample questions with Intelligence Agents..."
+    echo "Verifying Intelligence Agent Deployment..."
     echo "-------------------------------------------------------------------------"
     echo ""
     
-    # Test Guest Analytics Agent
-    echo "${CYAN}[1/5]${NC} Testing Hotel Guest Analytics Agent..."
-    echo "Question: Show me our top 5 guests by total revenue"
+    # List all agents
+    echo "Checking deployed agents in ${DATABASE}.GOLD schema:"
     echo ""
     snow sql $SNOW_CONN -q "
-        SELECT SNOWFLAKE.CORTEX.COMPLETE_AGENT(
-            '${DATABASE}.GOLD.\"Hotel Guest Analytics Agent\"',
-            'Show me our top 5 guests by total revenue'
-        ) AS response;
-    " --format TABLE 2>&1 || echo -e "${YELLOW}Agent query failed - agent may not be deployed${NC}"
-    echo ""
+        USE ROLE ${ROLE};
+        USE DATABASE ${DATABASE};
+        SHOW AGENTS IN SCHEMA GOLD;
+    " --format TABLE || echo -e "${YELLOW}Could not list agents - they may not be deployed${NC}"
     
-    # Test Personalization Specialist
-    echo "${CYAN}[2/5]${NC} Testing Hotel Personalization Specialist..."
-    echo "Question: Which guests have the highest spa upsell propensity?"
     echo ""
-    snow sql $SNOW_CONN -q "
-        SELECT SNOWFLAKE.CORTEX.COMPLETE_AGENT(
-            '${DATABASE}.GOLD.\"Hotel Personalization Specialist\"',
-            'Which guests have the highest spa upsell propensity?'
-        ) AS response;
-    " --format TABLE 2>&1 || echo -e "${YELLOW}Agent query failed - agent may not be deployed${NC}"
-    echo ""
-    
-    # Test Amenities Intelligence Agent
-    echo "${CYAN}[3/5]${NC} Testing Hotel Amenities Intelligence Agent..."
-    echo "Question: What is our amenity revenue breakdown by service category?"
-    echo ""
-    snow sql $SNOW_CONN -q "
-        SELECT SNOWFLAKE.CORTEX.COMPLETE_AGENT(
-            '${DATABASE}.GOLD.\"Hotel Amenities Intelligence Agent\"',
-            'What is our amenity revenue breakdown by service category?'
-        ) AS response;
-    " --format TABLE 2>&1 || echo -e "${YELLOW}Agent query failed - agent may not be deployed${NC}"
-    echo ""
-    
     echo "-------------------------------------------------------------------------"
-    echo -e "${GREEN}Agent testing complete!${NC}"
+    echo -e "${CYAN}How to Test Agents:${NC}"
+    echo "-------------------------------------------------------------------------"
     echo ""
-    echo "Note: Full agent testing requires agents to be deployed."
-    echo "See docs/AGENT_DETAILED_QUESTIONS.md for comprehensive test questions."
+    echo "Agents are best tested through Snowsight UI:"
+    echo ""
+    echo "1. Navigate to Snowsight → Agents"
+    echo "2. Select an agent from ${DATABASE}.GOLD schema:"
+    echo "   • Hotel Guest Analytics Agent"
+    echo "   • Hotel Personalization Specialist"
+    echo "   • Hotel Amenities Intelligence Agent"
+    echo "   • Guest Experience Optimizer"
+    echo "   • Hotel Intelligence Master Agent"
+    echo ""
+    echo "3. Try sample questions:"
+    echo "   • 'Show me our top 10 guests by total revenue'"
+    echo "   • 'Which guests have the highest spa upsell propensity?'"
+    echo "   • 'What is our amenity revenue breakdown by category?'"
+    echo "   • 'Identify guests at risk of churning'"
+    echo ""
+    echo "See docs/AGENT_DETAILED_QUESTIONS.md for 100+ sample questions"
     echo ""
 }
 

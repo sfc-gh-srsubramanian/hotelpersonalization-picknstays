@@ -82,9 +82,11 @@ snow connection add demo
 # Test Intelligence Agents
 ./run.sh test-agents
 
-# View semantic data
-./run.sh query "SELECT * FROM SEMANTIC_VIEWS.GUEST_ANALYTICS_VIEW"
+# Query semantic views (use specific dimensions and metrics, not SELECT *)
+./run.sh query "SELECT first_name, last_name, loyalty_tier, SUM(total_revenue) as revenue FROM TABLE(SEMANTIC_VIEWS.GUEST_ANALYTICS_VIEW(DIMENSIONS => ['first_name', 'last_name', 'loyalty_tier'], METRICS => ['TOTAL_REVENUE'])) GROUP BY 1,2,3 LIMIT 10"
 ```
+
+**Note:** Semantic views require specific dimension/metric selection. They are primarily designed for Snowflake Intelligence Agents, not direct SQL queries.
 
 ### Available Scripts
 
