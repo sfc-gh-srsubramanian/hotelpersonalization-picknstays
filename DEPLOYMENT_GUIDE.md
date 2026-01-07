@@ -18,11 +18,9 @@ Hotel-Personalization-System/
 │   ├── 05_intelligence_agents.sql     # AI agent creation
 │   └── 08_sample_queries.sql          # Example queries
 │
-├── python/                            # Python deployment scripts
-│   ├── deployment/
-│   │   ├── complete_deployment.py     # Alternative Python deployment
-│   │   └── 33_execute_role_creation.py # Role creation utility
-│   └── utilities/                     # Future utility scripts
+├── python/                            # Python utilities (legacy)
+│   ├── deployment/                    # Legacy deployment scripts (not used)
+│   └── utilities/                     # Utility scripts
 │
 ├── docs/                              # Documentation
 │   ├── DESIGN.md                      # System design documentation
@@ -73,19 +71,7 @@ cd "/path/to/Hotel-Personalization-System"
 ./run.sh test-agents                  # Test Intelligence Agents
 ```
 
-### **Option 2: Python Deployment Script**
-
-Alternative Python-based deployment:
-
-```bash
-# Navigate to project directory
-cd "/path/to/Hotel-Personalization-System"
-
-# Run Python deployment
-python python/deployment/complete_deployment.py
-```
-
-### **Option 3: Manual SQL Deployment**
+### **Option 2: Manual SQL Deployment**
 
 Execute SQL files in numbered order using Snowflake CLI:
 
@@ -171,11 +157,20 @@ Your Snowflake user needs:
 ### **Verify Data:**
 ```sql
 -- Check data volume
-SELECT 'Guests' as table_name, COUNT(*) as record_count FROM HOTEL_PERSONALIZATION.BRONZE.GUESTS
+SELECT 'Guest Profiles' as table_name, COUNT(*) as record_count 
+FROM HOTEL_PERSONALIZATION.BRONZE.GUEST_PROFILES
 UNION ALL
-SELECT 'Bookings', COUNT(*) FROM HOTEL_PERSONALIZATION.BRONZE.BOOKINGS
+SELECT 'Booking History', COUNT(*) 
+FROM HOTEL_PERSONALIZATION.BRONZE.BOOKING_HISTORY
 UNION ALL
-SELECT 'Revenue Opportunities', COUNT(*) FROM HOTEL_PERSONALIZATION.GOLD.REVENUE_OPPORTUNITIES;
+SELECT 'Amenity Transactions', COUNT(*) 
+FROM HOTEL_PERSONALIZATION.BRONZE.AMENITY_TRANSACTIONS
+UNION ALL
+SELECT 'Guest 360 View (Gold)', COUNT(*) 
+FROM HOTEL_PERSONALIZATION.GOLD.GUEST_360_VIEW_ENHANCED
+UNION ALL
+SELECT 'Personalization Scores (Gold)', COUNT(*) 
+FROM HOTEL_PERSONALIZATION.GOLD.PERSONALIZATION_SCORES_ENHANCED;
 ```
 
 ### **Test AI Agents:**

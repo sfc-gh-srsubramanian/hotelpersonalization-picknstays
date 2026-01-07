@@ -594,33 +594,68 @@ Hotel-Personalization-System/
 ## 🎯 **USE CASES & EXAMPLES**
 
 ### **🏨 Pre-Arrival Personalization**
+**Ask Intelligence Agent:** *"Show me VIP guests with upcoming stays and their room preferences"*
+
+Or query directly:
 ```sql
--- Automatically configure rooms for arriving VIP guests
-SELECT * FROM SEMANTIC_VIEW(
-    SEMANTIC_VIEWS.personalization_insights
-    DIMENSIONS opportunities.full_name, opportunities.preferred_room_type
-    METRICS opportunities.temperature_preference
-) WHERE opportunities.guest_category = 'VIP Champion'
+-- Get VIP guests with high upsell propensity
+SELECT 
+    g.first_name,
+    g.last_name,
+    g.loyalty_tier,
+    g.customer_segment,
+    p.spa_upsell_propensity,
+    p.dining_upsell_propensity
+FROM GOLD.GUEST_360_VIEW_ENHANCED g
+JOIN GOLD.PERSONALIZATION_SCORES_ENHANCED p ON g.guest_id = p.guest_id
+WHERE g.customer_segment IN ('VIP Champion', 'High Value')
+  AND g.loyalty_tier IN ('Diamond', 'Platinum')
+ORDER BY p.upsell_propensity_score DESC
+LIMIT 20;
 ```
 
 ### **💰 Revenue Optimization**
+**Ask Intelligence Agent:** *"Which guests have the highest spa and dining upsell potential?"*
+
+Or query directly:
 ```sql
 -- Identify high-value upsell opportunities
-SELECT * FROM SEMANTIC_VIEW(
-    SEMANTIC_VIEWS.revenue_analytics
-    DIMENSIONS guest_revenue.customer_segment, guest_revenue.loyalty_tier
-    METRICS guest_revenue.total_revenue
-) WHERE guest_revenue.customer_segment IN ('VIP Champion', 'High Value')
+SELECT 
+    g.first_name,
+    g.last_name,
+    g.total_revenue,
+    p.spa_upsell_propensity,
+    p.dining_upsell_propensity,
+    p.tech_upsell_propensity,
+    p.upsell_propensity_score
+FROM GOLD.GUEST_360_VIEW_ENHANCED g
+JOIN GOLD.PERSONALIZATION_SCORES_ENHANCED p ON g.guest_id = p.guest_id
+WHERE p.upsell_propensity_score >= 70
+  AND g.customer_segment IN ('VIP Champion', 'High Value')
+ORDER BY p.upsell_propensity_score DESC, g.total_revenue DESC
+LIMIT 50;
 ```
 
 ### **😊 Churn Prevention**
+**Ask Intelligence Agent:** *"Show me high-value guests at risk of churning"*
+
+Or query directly:
 ```sql
 -- Find at-risk high-value guests needing attention
-SELECT full_name, guest_category, retention_risk, lifetime_value
-FROM BUSINESS_VIEWS.guest_profile_summary
-WHERE retention_risk IN ('High Risk', 'Medium Risk')
-  AND guest_category IN ('VIP Champion', 'High Value', 'Premium')
+SELECT 
+    first_name,
+    last_name,
+    customer_segment,
+    churn_risk,
+    total_revenue,
+    loyalty_tier,
+    total_bookings,
+    avg_amenity_satisfaction
+FROM GOLD.GUEST_360_VIEW_ENHANCED
+WHERE churn_risk IN ('High', 'Medium')
+  AND customer_segment IN ('VIP Champion', 'High Value', 'Premium')
 ORDER BY total_revenue DESC
+LIMIT 25;
 ```
 
 ---
@@ -630,20 +665,29 @@ ORDER BY total_revenue DESC
 ### **1. 🏗️ Deploy the System**
 ```bash
 # Execute the complete deployment (recommended)
-python python/deployment/complete_deployment.py
+./deploy.sh
 
-# Or follow the manual deployment guide
+# Or deploy with custom connection
+./deploy.sh -c your_connection_name
+
+# Follow the deployment guide for details
 cat DEPLOYMENT_GUIDE.md
 ```
 
-### **4. 📊 Verify Installation**
+### **2. 📊 Verify Installation**
 ```sql
 -- Check data volumes
-SELECT 'Guests' as table_name, COUNT(*) as record_count FROM HOTEL_PERSONALIZATION.BRONZE.GUESTS
+SELECT 'Guest Profiles' as table_name, COUNT(*) as record_count 
+FROM HOTEL_PERSONALIZATION.BRONZE.GUEST_PROFILES
 UNION ALL
-SELECT 'Bookings', COUNT(*) FROM HOTEL_PERSONALIZATION.BRONZE.BOOKINGS
+SELECT 'Bookings', COUNT(*) 
+FROM HOTEL_PERSONALIZATION.BRONZE.BOOKING_HISTORY
 UNION ALL
-SELECT 'Revenue Opportunities', COUNT(*) FROM HOTEL_PERSONALIZATION.GOLD.REVENUE_OPPORTUNITIES;
+SELECT 'Amenity Transactions', COUNT(*) 
+FROM HOTEL_PERSONALIZATION.BRONZE.AMENITY_TRANSACTIONS
+UNION ALL
+SELECT 'Guest 360 View', COUNT(*) 
+FROM HOTEL_PERSONALIZATION.GOLD.GUEST_360_VIEW_ENHANCED;
 ```
 
 ### **5. 🎯 Test Natural Language Queries**
