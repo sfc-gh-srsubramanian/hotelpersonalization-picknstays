@@ -140,8 +140,9 @@ cmd_status() {
     
     # Check database
     echo "Checking database..."
-    DB_EXISTS=$(snow sql $SNOW_CONN -q "SHOW DATABASES LIKE '${DATABASE}'" -o tsv 2>/dev/null | wc -l || echo "0")
-    if [ "$DB_EXISTS" -gt 0 ]; then
+    DB_EXISTS=$(snow sql $SNOW_CONN -q "SHOW DATABASES LIKE '${DATABASE}'" --format CSV 2>/dev/null | tail -n +2 | wc -l | xargs)
+    DB_EXISTS=${DB_EXISTS:-0}
+    if [ "$DB_EXISTS" -gt 0 ] 2>/dev/null; then
         echo -e "  ${GREEN}✓${NC} Database exists"
     else
         echo -e "  ${RED}✗${NC} Database not found"
@@ -151,8 +152,9 @@ cmd_status() {
     # Check schemas
     echo "Checking schemas..."
     for schema in BRONZE SILVER GOLD BUSINESS_VIEWS SEMANTIC_VIEWS; do
-        SCHEMA_EXISTS=$(snow sql $SNOW_CONN -q "SHOW SCHEMAS LIKE '${schema}' IN DATABASE ${DATABASE}" -o tsv 2>/dev/null | wc -l || echo "0")
-        if [ "$SCHEMA_EXISTS" -gt 0 ]; then
+        SCHEMA_EXISTS=$(snow sql $SNOW_CONN -q "SHOW SCHEMAS LIKE '${schema}' IN DATABASE ${DATABASE}" --format CSV 2>/dev/null | tail -n +2 | wc -l | xargs)
+        SCHEMA_EXISTS=${SCHEMA_EXISTS:-0}
+        if [ "$SCHEMA_EXISTS" -gt 0 ] 2>/dev/null; then
             echo -e "    ${GREEN}✓${NC} $schema"
         else
             echo -e "    ${RED}✗${NC} $schema"
@@ -189,8 +191,9 @@ cmd_status() {
     echo ""
     echo "Checking semantic views..."
     for view in GUEST_ANALYTICS_VIEW PERSONALIZATION_INSIGHTS_VIEW AMENITY_ANALYTICS_VIEW; do
-        VIEW_EXISTS=$(snow sql $SNOW_CONN -q "SHOW VIEWS LIKE '${view}' IN SCHEMA ${DATABASE}.SEMANTIC_VIEWS" -o tsv 2>/dev/null | wc -l || echo "0")
-        if [ "$VIEW_EXISTS" -gt 0 ]; then
+        VIEW_EXISTS=$(snow sql $SNOW_CONN -q "SHOW VIEWS LIKE '${view}' IN SCHEMA ${DATABASE}.SEMANTIC_VIEWS" --format CSV 2>/dev/null | tail -n +2 | wc -l | xargs)
+        VIEW_EXISTS=${VIEW_EXISTS:-0}
+        if [ "$VIEW_EXISTS" -gt 0 ] 2>/dev/null; then
             echo -e "  ${GREEN}✓${NC} $view"
         else
             echo -e "  ${RED}✗${NC} $view"
@@ -201,8 +204,9 @@ cmd_status() {
     echo ""
     echo "Checking Intelligence Agents..."
     for agent in "Hotel Guest Analytics Agent" "Hotel Personalization Specialist" "Hotel Amenities Intelligence Agent" "Guest Experience Optimizer" "Hotel Intelligence Master Agent"; do
-        AGENT_EXISTS=$(snow sql $SNOW_CONN -q "SHOW AGENTS LIKE '${agent}' IN SCHEMA SNOWFLAKE_INTELLIGENCE.AGENTS" -o tsv 2>/dev/null | wc -l || echo "0")
-        if [ "$AGENT_EXISTS" -gt 0 ]; then
+        AGENT_EXISTS=$(snow sql $SNOW_CONN -q "SHOW AGENTS LIKE '${agent}' IN SCHEMA ${DATABASE}.GOLD" --format CSV 2>/dev/null | tail -n +2 | wc -l | xargs)
+        AGENT_EXISTS=${AGENT_EXISTS:-0}
+        if [ "$AGENT_EXISTS" -gt 0 ] 2>/dev/null; then
             echo -e "  ${GREEN}✓${NC} $agent"
         else
             echo -e "  ${YELLOW}○${NC} $agent (not deployed)"
