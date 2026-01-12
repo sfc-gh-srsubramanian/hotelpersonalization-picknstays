@@ -202,10 +202,10 @@ with tab2:
     
     if not filtered_df.empty:
         # Check if we have actual data in the columns
-        has_spa_data = filtered_df['SPA_UPSELL_PROPENSITY'].notna().any()
-        has_dining_data = filtered_df['DINING_UPSELL_PROPENSITY'].notna().any()
-        has_tech_data = filtered_df['TECH_UPSELL_PROPENSITY'].notna().any()
-        has_pool_data = filtered_df['POOL_SERVICES_UPSELL_PROPENSITY'].notna().any()
+        has_spa_data = filtered_df['SPA_UPSELL_PROPENSITY'].notna().sum() > 0
+        has_dining_data = filtered_df['DINING_UPSELL_PROPENSITY'].notna().sum() > 0
+        has_tech_data = filtered_df['TECH_UPSELL_PROPENSITY'].notna().sum() > 0
+        has_pool_data = filtered_df['POOL_SERVICES_UPSELL_PROPENSITY'].notna().sum() > 0
         
         if not (has_spa_data or has_dining_data or has_tech_data or has_pool_data):
             st.warning("⚠️ No propensity score data available. The scores may not have been calculated yet.")
@@ -214,14 +214,15 @@ with tab2:
             
             with col1:
                 if has_spa_data:
-                    fig = px.histogram(
-                        filtered_df.dropna(subset=['SPA_UPSELL_PROPENSITY']), 
-                        x='SPA_UPSELL_PROPENSITY', 
+                    spa_data = filtered_df['SPA_UPSELL_PROPENSITY'].dropna()
+                    fig = go.Figure(data=[go.Histogram(x=spa_data, nbinsx=20)])
+                    fig.update_layout(
                         title='Spa Upsell Propensity Distribution',
-                        nbins=20,
-                        labels={'SPA_UPSELL_PROPENSITY': 'Spa Upsell Propensity Score', 'count': 'Number of Guests'}
+                        xaxis_title='Spa Upsell Propensity Score',
+                        yaxis_title='Number of Guests',
+                        showlegend=False,
+                        bargap=0.1
                     )
-                    fig.update_layout(showlegend=False, bargap=0.1)
                     fig.update_xaxes(range=[0, 100])
                     st.plotly_chart(fig, use_container_width=True)
                 else:
@@ -229,14 +230,15 @@ with tab2:
             
             with col2:
                 if has_dining_data:
-                    fig = px.histogram(
-                        filtered_df.dropna(subset=['DINING_UPSELL_PROPENSITY']), 
-                        x='DINING_UPSELL_PROPENSITY',
+                    dining_data = filtered_df['DINING_UPSELL_PROPENSITY'].dropna()
+                    fig = go.Figure(data=[go.Histogram(x=dining_data, nbinsx=20)])
+                    fig.update_layout(
                         title='Dining Upsell Propensity Distribution',
-                        nbins=20,
-                        labels={'DINING_UPSELL_PROPENSITY': 'Dining Upsell Propensity Score', 'count': 'Number of Guests'}
+                        xaxis_title='Dining Upsell Propensity Score',
+                        yaxis_title='Number of Guests',
+                        showlegend=False,
+                        bargap=0.1
                     )
-                    fig.update_layout(showlegend=False, bargap=0.1)
                     fig.update_xaxes(range=[0, 100])
                     st.plotly_chart(fig, use_container_width=True)
                 else:
@@ -247,14 +249,15 @@ with tab2:
             
             with col3:
                 if has_tech_data:
-                    fig = px.histogram(
-                        filtered_df.dropna(subset=['TECH_UPSELL_PROPENSITY']), 
-                        x='TECH_UPSELL_PROPENSITY',
+                    tech_data = filtered_df['TECH_UPSELL_PROPENSITY'].dropna()
+                    fig = go.Figure(data=[go.Histogram(x=tech_data, nbinsx=20)])
+                    fig.update_layout(
                         title='Tech Upsell Propensity Distribution',
-                        nbins=20,
-                        labels={'TECH_UPSELL_PROPENSITY': 'Tech Upsell Propensity Score', 'count': 'Number of Guests'}
+                        xaxis_title='Tech Upsell Propensity Score',
+                        yaxis_title='Number of Guests',
+                        showlegend=False,
+                        bargap=0.1
                     )
-                    fig.update_layout(showlegend=False, bargap=0.1)
                     fig.update_xaxes(range=[0, 100])
                     st.plotly_chart(fig, use_container_width=True)
                 else:
@@ -262,14 +265,15 @@ with tab2:
             
             with col4:
                 if has_pool_data:
-                    fig = px.histogram(
-                        filtered_df.dropna(subset=['POOL_SERVICES_UPSELL_PROPENSITY']), 
-                        x='POOL_SERVICES_UPSELL_PROPENSITY',
+                    pool_data = filtered_df['POOL_SERVICES_UPSELL_PROPENSITY'].dropna()
+                    fig = go.Figure(data=[go.Histogram(x=pool_data, nbinsx=20)])
+                    fig.update_layout(
                         title='Pool Services Upsell Propensity Distribution',
-                        nbins=20,
-                        labels={'POOL_SERVICES_UPSELL_PROPENSITY': 'Pool Services Upsell Propensity Score', 'count': 'Number of Guests'}
+                        xaxis_title='Pool Services Upsell Propensity Score',
+                        yaxis_title='Number of Guests',
+                        showlegend=False,
+                        bargap=0.1
                     )
-                    fig.update_layout(showlegend=False, bargap=0.1)
                     fig.update_xaxes(range=[0, 100])
                     st.plotly_chart(fig, use_container_width=True)
                 else:

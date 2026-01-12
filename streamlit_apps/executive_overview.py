@@ -102,9 +102,16 @@ with tab1:
             create_kpi_card("Highest Lifetime Value", format_currency(max_ltv))
             
             # LTV distribution
-            fig = px.histogram(guests_df, x='TOTAL_REVENUE',
-                              title='Customer Lifetime Value Distribution',
-                              nbins=30)
+            revenue_data = guests_df['TOTAL_REVENUE'].dropna()
+            fig = go.Figure(data=[go.Histogram(x=revenue_data, nbinsx=30)])
+            fig.update_layout(
+                title='Customer Lifetime Value Distribution',
+                xaxis_title='Total Revenue ($)',
+                yaxis_title='Number of Guests',
+                showlegend=False,
+                bargap=0.1
+            )
+            # Don't set fixed range - let it auto-scale to actual data
             st.plotly_chart(fig, use_container_width=True)
     
     with col2:
