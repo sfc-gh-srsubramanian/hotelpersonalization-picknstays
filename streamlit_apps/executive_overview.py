@@ -86,20 +86,35 @@ tab1, tab2, tab3, tab4 = st.tabs([
 with tab1:
     st.markdown("## 💼 Strategic Business Metrics")
     
+    # Summary metrics row at top
+    if not guests_df.empty:
+        revenue_data = guests_df['TOTAL_REVENUE'].dropna()
+        zero_rev = len(revenue_data[revenue_data == 0])
+        non_zero_data = revenue_data[revenue_data > 0]
+        
+        col_a, col_b, col_c = st.columns(3)
+        with col_a:
+            create_kpi_card("Zero Revenue Guests", format_number(zero_rev))
+        with col_b:
+            create_kpi_card("Active Revenue Guests", format_number(len(non_zero_data)))
+        with col_c:
+            if len(non_zero_data) > 0:
+                create_kpi_card("Avg Active Guest Value", format_currency(non_zero_data.mean()))
+            else:
+                create_kpi_card("Avg Active Guest Value", "$0")
+        
+        st.markdown("---")
+    
     col1, col2 = st.columns(2)
     
     with col1:
         # Customer lifetime value metrics
-        st.markdown("### Customer Value Metrics")
+        st.markdown("### Customer Value Distribution")
         
         if not guests_df.empty:
             avg_ltv = guests_df['TOTAL_REVENUE'].mean()
             median_ltv = guests_df['TOTAL_REVENUE'].median()
             max_ltv = guests_df['TOTAL_REVENUE'].max()
-            
-            create_kpi_card("Avg Lifetime Value", format_currency(avg_ltv))
-            create_kpi_card("Median Lifetime Value", format_currency(median_ltv))
-            create_kpi_card("Highest Lifetime Value", format_currency(max_ltv))
             
             # LTV distribution
             st.markdown("#### Customer Lifetime Value Distribution")
@@ -150,15 +165,6 @@ with tab1:
                     )
                     fig.update_xaxes(tickangle=-45)
                     st.plotly_chart(fig, use_container_width=True)
-                    
-                    # Show summary stats below chart
-                    col1, col2, col3 = st.columns(3)
-                    with col1:
-                        st.metric("Zero Revenue Guests", format_number(zero_rev))
-                    with col2:
-                        st.metric("Active Revenue Guests", format_number(len(non_zero_data)))
-                    with col3:
-                        st.metric("Avg Active Guest Value", format_currency(non_zero_data.mean()))
                 else:
                     st.warning("All guests have zero revenue.")
             else:
