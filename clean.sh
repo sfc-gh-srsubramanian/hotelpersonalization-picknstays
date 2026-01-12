@@ -197,7 +197,27 @@ else
 fi
 
 ###############################################################################
-# Step 2: Drop Semantic Views
+# Step 2: Drop Streamlit Dashboards
+###############################################################################
+echo "Step 2: Dropping Streamlit Dashboards..."
+echo "-------------------------------------------------------------------------"
+
+snow sql $SNOW_CONN -q "
+    USE ROLE ACCOUNTADMIN;
+    
+    DROP STREAMLIT IF EXISTS ${DATABASE}.STREAMLIT.GUEST_360_DASHBOARD;
+    DROP STREAMLIT IF EXISTS ${DATABASE}.STREAMLIT.PERSONALIZATION_HUB;
+    DROP STREAMLIT IF EXISTS ${DATABASE}.STREAMLIT.AMENITY_PERFORMANCE;
+    DROP STREAMLIT IF EXISTS ${DATABASE}.STREAMLIT.REVENUE_ANALYTICS;
+    DROP STREAMLIT IF EXISTS ${DATABASE}.STREAMLIT.EXECUTIVE_OVERVIEW;
+    DROP STAGE IF EXISTS ${DATABASE}.STREAMLIT.STAGE;
+" 2>/dev/null || true
+
+echo -e "${GREEN}✓${NC} Streamlit Dashboards dropped"
+echo ""
+
+###############################################################################
+# Step 3: Drop Semantic Views
 ###############################################################################
 echo "Step 2: Dropping Semantic Views..."
 echo "-------------------------------------------------------------------------"
@@ -214,7 +234,7 @@ echo -e "${GREEN}✓${NC} Semantic Views dropped"
 echo ""
 
 ###############################################################################
-# Step 3: Drop Warehouse
+# Step 4: Drop Warehouse
 ###############################################################################
 echo "Step 3: Dropping Warehouse..."
 echo "-------------------------------------------------------------------------"
@@ -230,7 +250,7 @@ echo ""
 ###############################################################################
 # Step 4: Drop Database (cascades to all schemas and tables)
 ###############################################################################
-echo "Step 4: Dropping Database (includes all schemas, tables, views)..."
+echo "Step 5: Dropping Database (includes all schemas, tables, views)..."
 echo "-------------------------------------------------------------------------"
 
 snow sql $SNOW_CONN -q "
@@ -242,7 +262,7 @@ echo -e "${GREEN}✓${NC} Database dropped"
 echo ""
 
 ###############################################################################
-# Step 5: Drop Role
+# Step 6: Drop Role
 ###############################################################################
 echo "Step 5: Dropping Role..."
 echo "-------------------------------------------------------------------------"

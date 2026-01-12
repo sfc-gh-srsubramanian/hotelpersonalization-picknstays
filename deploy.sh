@@ -441,6 +441,92 @@ else
 fi
 
 ###############################################################################
+# Step 7: Deploy Streamlit Dashboards (Optional)
+###############################################################################
+if should_run_step "dashboards" && [ "$SKIP_AGENTS" = false ]; then
+    echo "Step 7: Deploying Streamlit Dashboards..."
+    echo "-------------------------------------------------------------------------"
+    echo "Creating interactive business intelligence dashboards"
+    echo ""
+    
+    # Create stage and upload files
+    {
+        echo "CREATE STAGE IF NOT EXISTS ${FULL_PREFIX}.STREAMLIT.STAGE;"
+        echo ""
+        echo "-- Upload will be done via snow streamlit deploy command"
+    } | snow sql $SNOW_CONN -i 2>/dev/null || true
+    
+    # Deploy each dashboard using Snowflake CLI
+    echo "Deploying Guest 360 Dashboard..."
+    cd streamlit_apps
+    snow streamlit deploy -c $CONNECTION_NAME \
+        --database "${FULL_PREFIX}" \
+        --schema "STREAMLIT" \
+        --name "GUEST_360_DASHBOARD" \
+        --file "guest_360_dashboard.py" \
+        --replace 2>/dev/null || echo "  Note: Manual deployment may be required"
+    
+    echo "Deploying Personalization Hub..."
+    snow streamlit deploy -c $CONNECTION_NAME \
+        --database "${FULL_PREFIX}" \
+        --schema "STREAMLIT" \
+        --name "PERSONALIZATION_HUB" \
+        --file "personalization_hub.py" \
+        --replace 2>/dev/null || echo "  Note: Manual deployment may be required"
+    
+    echo "Deploying Amenity Performance Dashboard..."
+    snow streamlit deploy -c $CONNECTION_NAME \
+        --database "${FULL_PREFIX}" \
+        --schema "STREAMLIT" \
+        --name "AMENITY_PERFORMANCE" \
+        --file "amenity_performance.py" \
+        --replace 2>/dev/null || echo "  Note: Manual deployment may be required"
+    
+    echo "Deploying Revenue Analytics Dashboard..."
+    snow streamlit deploy -c $CONNECTION_NAME \
+        --database "${FULL_PREFIX}" \
+        --schema "STREAMLIT" \
+        --name "REVENUE_ANALYTICS" \
+        --file "revenue_analytics.py" \
+        --replace 2>/dev/null || echo "  Note: Manual deployment may be required"
+    
+    echo "Deploying Executive Overview Dashboard..."
+    snow streamlit deploy -c $CONNECTION_NAME \
+        --database "${FULL_PREFIX}" \
+        --schema "STREAMLIT" \
+        --name "EXECUTIVE_OVERVIEW" \
+        --file "executive_overview.py" \
+        --replace 2>/dev/null || echo "  Note: Manual deployment may be required"
+    
+    cd ..
+    
+    # Grant permissions
+    {
+        echo "SET FULL_PREFIX = '${FULL_PREFIX}';"
+        echo ""
+        cat sql/06_streamlit_dashboards.sql | grep "GRANT USAGE"
+    } | snow sql $SNOW_CONN -i 2>/dev/null || true
+    
+    echo ""
+    echo -e "${GREEN}✓${NC} Streamlit Dashboards deployed"
+    echo "  • Guest 360 Dashboard"
+    echo "  • Personalization Hub"
+    echo "  • Amenity Performance Analytics"
+    echo "  • Revenue Analytics"
+    echo "  • Executive Overview"
+    echo ""
+    echo "📊 Access dashboards in Snowsight → Streamlit section"
+    echo ""
+else
+    if [ "$SKIP_AGENTS" = true ]; then
+        echo "Step 7: Skipped (--skip-agents also skips dashboards)"
+    else
+        echo "Step 7: Skipped (--only-$ONLY_COMPONENT)"
+    fi
+    echo ""
+fi
+
+###############################################################################
 # Deployment Complete
 ###############################################################################
 echo "========================================================================="
