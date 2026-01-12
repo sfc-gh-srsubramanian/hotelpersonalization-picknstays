@@ -21,6 +21,13 @@ apply_custom_css()
 
 st.title("💰 Revenue Analytics & Optimization")
 st.markdown("**Comprehensive Revenue Performance & Forecasting**")
+
+# Add cache clear button in sidebar
+with st.sidebar:
+    if st.button("🔄 Refresh Data"):
+        st.cache_data.clear()
+        st.rerun()
+
 st.markdown("---")
 
 # Load data from GOLD layer (single source of truth)
@@ -258,6 +265,11 @@ with tab4:
         st.markdown("### Booking Frequency vs Average Revenue")
         
         if not guests_df.empty and 'TOTAL_BOOKINGS' in guests_df.columns and 'TOTAL_REVENUE' in guests_df.columns:
+            # Show data info
+            total_guests = len(guests_df)
+            guests_with_bookings = len(guests_df[guests_df['TOTAL_BOOKINGS'] > 0])
+            st.info(f"📊 Analyzing {format_number(total_guests)} guests ({format_number(guests_with_bookings)} with bookings)")
+            
             # Filter out guests with 0 bookings and aggregate
             frequency_data = guests_df[guests_df['TOTAL_BOOKINGS'] > 0].copy()
             
@@ -269,39 +281,52 @@ with tab4:
                 }).reset_index()
                 frequency_analysis.columns = ['Booking Count', 'Guests', 'Avg Total Revenue', 'Avg Booking Value']
                 
-                # Limit to reasonable range for visualization (but keep at least some data)
-                max_bookings = min(20, frequency_analysis['Booking Count'].max())
+                # Limit to reasonable range for visualization
+                max_bookings = min(20, int(frequency_analysis['Booking Count'].max()))
                 frequency_analysis = frequency_analysis[frequency_analysis['Booking Count'] <= max_bookings]
                 
                 if not frequency_analysis.empty and len(frequency_analysis) > 0:
-                    # Create bar chart instead of scatter for better visualization
+                    # Create bar chart with improved styling
                     fig = go.Figure()
                     fig.add_trace(go.Bar(
-                        x=frequency_analysis['Booking Count'],
+                        x=frequency_analysis['Booking Count'].astype(int),
                         y=frequency_analysis['Avg Total Revenue'],
                         name='Avg Total Revenue',
                         marker_color='royalblue',
+                        marker_line_color='darkblue',
+                        marker_line_width=1.5,
                         text=frequency_analysis['Avg Total Revenue'].apply(lambda x: format_currency(x)),
                         textposition='outside',
+                        textfont=dict(size=11, color='black'),
                         hovertemplate='<b>Bookings:</b> %{x}<br>' +
                                       '<b>Avg Revenue:</b> %{text}<br>' +
-                                      '<b>Guests:</b> %{customdata}<extra></extra>',
+                                      '<b>Guests:</b> %{customdata:,}<extra></extra>',
                         customdata=frequency_analysis['Guests']
                     ))
                     fig.update_layout(
-                        title='Average Guest Revenue by Booking Frequency',
+                        title={
+                            'text': 'Average Guest Revenue by Booking Frequency',
+                            'x': 0.5,
+                            'xanchor': 'center'
+                        },
                         xaxis_title='Number of Bookings',
                         yaxis_title='Average Total Revenue ($)',
-                        height=400,
+                        height=450,
                         showlegend=False,
+                        plot_bgcolor='white',
                         xaxis=dict(
-                            type='linear',
-                            dtick=1,  # Show every booking count
-                            range=[0.5, max_bookings + 0.5]  # Add padding
+                            type='category',  # Treat as categories for sparse data
+                            showgrid=True,
+                            gridcolor='lightgray',
+                            gridwidth=0.5
                         ),
                         yaxis=dict(
-                            rangemode='tozero'  # Start y-axis at 0
-                        )
+                            rangemode='tozero',
+                            showgrid=True,
+                            gridcolor='lightgray',
+                            gridwidth=0.5
+                        ),
+                        margin=dict(t=80, b=60, l=60, r=40)
                     )
                     st.plotly_chart(fig, use_container_width=True)
                     
