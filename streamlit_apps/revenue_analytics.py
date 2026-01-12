@@ -288,47 +288,58 @@ with tab4:
                 if not frequency_analysis.empty and len(frequency_analysis) > 0:
                     # Create bar chart with improved styling
                     fig = go.Figure()
+                    
+                    # Convert to string labels for better category handling
+                    x_labels = [f"{int(x)} Bookings" for x in frequency_analysis['Booking Count']]
+                    
                     fig.add_trace(go.Bar(
-                        x=frequency_analysis['Booking Count'].astype(int),
-                        y=frequency_analysis['Avg Total Revenue'],
+                        x=x_labels,
+                        y=frequency_analysis['Avg Total Revenue'].values,
                         name='Avg Total Revenue',
                         marker_color='royalblue',
                         marker_line_color='darkblue',
                         marker_line_width=1.5,
+                        width=0.6,  # Explicit bar width
                         text=frequency_analysis['Avg Total Revenue'].apply(lambda x: format_currency(x)),
                         textposition='outside',
-                        textfont=dict(size=11, color='black'),
-                        hovertemplate='<b>Bookings:</b> %{x}<br>' +
+                        textfont=dict(size=12, color='black', family='Arial, sans-serif'),
+                        hovertemplate='<b>%{x}</b><br>' +
                                       '<b>Avg Revenue:</b> %{text}<br>' +
                                       '<b>Guests:</b> %{customdata:,}<extra></extra>',
-                        customdata=frequency_analysis['Guests']
+                        customdata=frequency_analysis['Guests'].values
                     ))
                     fig.update_layout(
                         title={
                             'text': 'Average Guest Revenue by Booking Frequency',
                             'x': 0.5,
-                            'xanchor': 'center'
+                            'xanchor': 'center',
+                            'font': {'size': 16, 'color': 'black', 'family': 'Arial, sans-serif'}
                         },
                         xaxis_title='Number of Bookings',
                         yaxis_title='Average Total Revenue ($)',
-                        height=450,
+                        height=500,
                         showlegend=False,
-                        plot_bgcolor='white',
+                        plot_bgcolor='rgba(240, 240, 240, 0.5)',
+                        paper_bgcolor='white',
                         xaxis=dict(
-                            type='category',  # Treat as categories for sparse data
-                            showgrid=True,
-                            gridcolor='lightgray',
-                            gridwidth=0.5
+                            showgrid=False,
+                            zeroline=False,
+                            tickfont=dict(size=12, color='black')
                         ),
                         yaxis=dict(
                             rangemode='tozero',
                             showgrid=True,
-                            gridcolor='lightgray',
-                            gridwidth=0.5
+                            gridcolor='rgba(200, 200, 200, 0.3)',
+                            gridwidth=1,
+                            zeroline=True,
+                            zerolinecolor='gray',
+                            zerolinewidth=1,
+                            tickfont=dict(size=12, color='black')
                         ),
-                        margin=dict(t=80, b=60, l=60, r=40)
+                        margin=dict(t=80, b=80, l=80, r=40),
+                        bargap=0.3
                     )
-                    st.plotly_chart(fig, use_container_width=True)
+                    st.plotly_chart(fig, use_container_width=True, key=f"booking_freq_chart_{len(frequency_analysis)}")
                     
                     # Show summary table
                     with st.expander("📊 View Detailed Frequency Data"):
