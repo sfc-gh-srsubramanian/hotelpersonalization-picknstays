@@ -189,19 +189,58 @@ with tab2:
     
     # Distribution histograms
     st.markdown("### Score Distributions")
-    col1, col2 = st.columns(2)
     
-    with col1:
-        fig = px.histogram(filtered_df, x='SPA_UPSELL_PROPENSITY', 
-                          title='Spa Upsell Propensity Distribution',
-                          nbins=20)
-        st.plotly_chart(fig, use_container_width=True)
-    
-    with col2:
-        fig = px.histogram(filtered_df, x='DINING_UPSELL_PROPENSITY',
-                          title='Dining Upsell Propensity Distribution',
-                          nbins=20)
-        st.plotly_chart(fig, use_container_width=True)
+    if not filtered_df.empty:
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            fig = px.histogram(
+                filtered_df, 
+                x='SPA_UPSELL_PROPENSITY', 
+                title='Spa Upsell Propensity Distribution',
+                nbins=20,
+                labels={'SPA_UPSELL_PROPENSITY': 'Spa Upsell Propensity Score', 'count': 'Number of Guests'}
+            )
+            fig.update_layout(showlegend=False)
+            st.plotly_chart(fig, use_container_width=True)
+        
+        with col2:
+            fig = px.histogram(
+                filtered_df, 
+                x='DINING_UPSELL_PROPENSITY',
+                title='Dining Upsell Propensity Distribution',
+                nbins=20,
+                labels={'DINING_UPSELL_PROPENSITY': 'Dining Upsell Propensity Score', 'count': 'Number of Guests'}
+            )
+            fig.update_layout(showlegend=False)
+            st.plotly_chart(fig, use_container_width=True)
+        
+        # Additional distributions
+        col3, col4 = st.columns(2)
+        
+        with col3:
+            fig = px.histogram(
+                filtered_df, 
+                x='TECH_UPSELL_PROPENSITY',
+                title='Tech Upsell Propensity Distribution',
+                nbins=20,
+                labels={'TECH_UPSELL_PROPENSITY': 'Tech Upsell Propensity Score', 'count': 'Number of Guests'}
+            )
+            fig.update_layout(showlegend=False)
+            st.plotly_chart(fig, use_container_width=True)
+        
+        with col4:
+            fig = px.histogram(
+                filtered_df, 
+                x='POOL_SERVICES_UPSELL_PROPENSITY',
+                title='Pool Services Upsell Propensity Distribution',
+                nbins=20,
+                labels={'POOL_SERVICES_UPSELL_PROPENSITY': 'Pool Services Upsell Propensity Score', 'count': 'Number of Guests'}
+            )
+            fig.update_layout(showlegend=False)
+            st.plotly_chart(fig, use_container_width=True)
+    else:
+        st.warning("No data available for score distributions. Please adjust your filters.")
 
 with tab3:
     st.markdown("## 👥 Customer Segmentation Analysis")

@@ -22,10 +22,10 @@ def format_currency(value):
         return f"${value/1_000_000_000:.2f}B"
     elif abs(value) >= 1_000_000:
         return f"${value/1_000_000:.2f}M"
-    elif abs(value) >= 1_000:
-        return f"${value/1_000:.2f}K"
+    elif abs(value) >= 10_000:  # Changed from 1_000 to 10_000 for better readability
+        return f"${value/1_000:.1f}K"
     else:
-        return f"${value:.2f}"
+        return f"${value:,.0f}"
 
 def format_number(value):
     """Format value as number with K/M/B suffixes"""
@@ -36,8 +36,8 @@ def format_number(value):
         return f"{value/1_000_000_000:.2f}B"
     elif abs(value) >= 1_000_000:
         return f"{value/1_000_000:.2f}M"
-    elif abs(value) >= 1_000:
-        return f"{value/1_000:.2f}K"
+    elif abs(value) >= 10_000:  # Changed from 1_000 to 10_000 for better readability
+        return f"{value/1_000:.1f}K"
     else:
         return f"{value:,.0f}"
 
