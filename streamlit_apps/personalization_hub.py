@@ -28,9 +28,22 @@ st.markdown("---")
 scores_df = get_personalization_scores()
 guests_df = get_guest_360_data()
 
-# Merge for enriched analysis
-merged_df = pd.merge(scores_df, guests_df[['GUEST_ID', 'FIRST_NAME', 'LAST_NAME', 'LOYALTY_TIER', 'CUSTOMER_SEGMENT', 'TOTAL_REVENUE', 'CHURN_RISK']], 
-                     on='GUEST_ID', how='left')
+# Check if we have data
+if scores_df.empty:
+    st.error("No personalization scores data available. Please ensure the data has been generated.")
+    st.stop()
+
+# Merge for enriched analysis - scores_df already has CUSTOMER_SEGMENT, LOYALTY_TIER, TOTAL_REVENUE
+# Only get CHURN_RISK from guests_df if available
+if not guests_df.empty and 'CHURN_RISK' in guests_df.columns:
+    merged_df = pd.merge(
+        scores_df, 
+        guests_df[['GUEST_ID', 'CHURN_RISK']], 
+        on='GUEST_ID', 
+        how='left'
+    )
+else:
+    merged_df = scores_df.copy()
 
 # Sidebar filters
 with st.sidebar:
@@ -38,23 +51,41 @@ with st.sidebar:
     
     score_threshold = st.slider("Min Upsell Propensity Score", 0, 100, 70)
     
-    selected_segments = st.multiselect(
-        "Customer Segments",
-        options=merged_df['CUSTOMER_SEGMENT'].unique().tolist(),
-        default=merged_df['CUSTOMER_SEGMENT'].unique().tolist()
-    )
+    if not merged_df.empty and 'CUSTOMER_SEGMENT' in merged_df.columns:
+        segment_options = sorted([x for x in merged_df['CUSTOMER_SEGMENT'].dropna().unique() if x])
+        selected_segments = st.multiselect(
+            "Customer Segments",
+            options=segment_options,
+            default=segment_options
+        )
+    else:
+        selected_segments = []
+        st.warning("No customer segment data available")
     
-    selected_tiers = st.multiselect(
-        "Loyalty Tiers",
-        options=merged_df['LOYALTY_TIER'].unique().tolist(),
-        default=merged_df['LOYALTY_TIER'].unique().tolist()
-    )
+    if not merged_df.empty and 'LOYALTY_TIER' in merged_df.columns:
+        tier_options = sorted([x for x in merged_df['LOYALTY_TIER'].dropna().unique() if x])
+        selected_tiers = st.multiselect(
+            "Loyalty Tiers",
+            options=tier_options,
+            default=tier_options
+        )
+    else:
+        selected_tiers = []
+        st.warning("No loyalty tier data available")
 
 # Apply filters
-filtered_df = merged_df[
-    (merged_df['CUSTOMER_SEGMENT'].isin(selected_segments)) &
-    (merged_df['LOYALTY_TIER'].isin(selected_tiers))
-]
+if not merged_df.empty:
+    filter_mask = pd.Series([True] * len(merged_df), index=merged_df.index)
+    
+    if selected_segments and 'CUSTOMER_SEGMENT' in merged_df.columns:
+        filter_mask &= merged_df['CUSTOMER_SEGMENT'].isin(selected_segments)
+    
+    if selected_tiers and 'LOYALTY_TIER' in merged_df.columns:
+        filter_mask &= merged_df['LOYALTY_TIER'].isin(selected_tiers)
+    
+    filtered_df = merged_df[filter_mask]
+else:
+    filtered_df = pd.DataFrame()
 
 # Summary Metrics
 col1, col2, col3, col4 = st.columns(4)
