@@ -14,12 +14,14 @@
 --   $FULL_PREFIX
 -- ============================================================================
 
-USE ROLE ACCOUNTADMIN;
 USE DATABASE IDENTIFIER($FULL_PREFIX);
 
 -- Create Streamlit schema if not exists
 CREATE SCHEMA IF NOT EXISTS STREAMLIT;
 USE SCHEMA STREAMLIT;
+
+-- Create stage for Streamlit files
+CREATE STAGE IF NOT EXISTS STREAMLIT.STAGE;
 
 -- ============================================================================
 -- 1. GUEST 360 DASHBOARD
