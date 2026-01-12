@@ -2,15 +2,13 @@
 """
 Generate presentation-quality diagrams for Hotel Personalization Solution Overview.
 
-Creates 8 professional diagrams:
-1. Architecture Overview
+Creates 6 professional diagrams:
+1. Architecture Overview (with Consumption Layer including Streamlit)
 2. Data Sources
-3. Medallion Architecture
+3. Medallion Architecture (Complete: Bronze → Silver → Gold → Semantic → Consumption)
 4. ML Scoring Models
 5. Intelligence Agents
 6. Unified Amenity Analytics
-7. Data Flow
-8. Use Case Workflow
 
 Requirements:
     pip install matplotlib pillow
@@ -39,63 +37,84 @@ GRAY = '#6B7280'
 
 def create_architecture_diagram():
     """Create architecture overview diagram."""
-    fig, ax = plt.subplots(1, 1, figsize=(14, 10))
+    fig, ax = plt.subplots(1, 1, figsize=(14, 12))
     ax.set_xlim(0, 10)
-    ax.set_ylim(0, 10)
+    ax.set_ylim(0, 11)
     ax.axis('off')
     
     # Title
-    ax.text(5, 9.5, 'Hotel Personalization Platform - Architecture', 
+    ax.text(5, 10.5, 'Hotel Personalization Platform - Architecture', 
             ha='center', fontsize=18, fontweight='bold')
     
     # Data Sources Layer
     sources = ['PMS', 'Booking\nSystems', 'Amenity\nSystems', 'WiFi/TV', 'Social\nMedia']
     for i, source in enumerate(sources):
         x = 1 + i * 1.8
-        rect = patches.FancyBboxPatch((x - 0.3, 7.5), 0.6, 0.8,
+        rect = patches.FancyBboxPatch((x - 0.3, 8.5), 0.6, 0.8,
                                        boxstyle="round,pad=0.05", 
                                        edgecolor=GRAY, facecolor=LIGHT_BLUE)
         ax.add_patch(rect)
-        ax.text(x, 7.9, source, ha='center', va='center', fontsize=9)
+        ax.text(x, 8.9, source, ha='center', va='center', fontsize=9)
     
     # Bronze Layer
-    rect = patches.FancyBboxPatch((0.5, 5.8), 9, 1.2,
+    rect = patches.FancyBboxPatch((0.5, 6.8), 9, 1.2,
                                    boxstyle="round,pad=0.1",
                                    edgecolor=DARK_BLUE, facecolor='#FEF3C7', linewidth=2)
     ax.add_patch(rect)
-    ax.text(5, 6.7, 'BRONZE LAYER', ha='center', fontweight='bold', fontsize=12)
-    ax.text(5, 6.2, '13 Raw Tables: Guests, Bookings, Amenities, Usage', 
+    ax.text(5, 7.7, 'BRONZE LAYER', ha='center', fontweight='bold', fontsize=12)
+    ax.text(5, 7.2, '13 Raw Tables: Guests, Bookings, Amenities, Usage', 
             ha='center', fontsize=9)
     
     # Silver Layer
-    rect = patches.FancyBboxPatch((0.5, 4.2), 9, 1.2,
+    rect = patches.FancyBboxPatch((0.5, 5.2), 9, 1.2,
                                    boxstyle="round,pad=0.1",
                                    edgecolor=DARK_BLUE, facecolor='#DBEAFE', linewidth=2)
     ax.add_patch(rect)
-    ax.text(5, 5.1, 'SILVER LAYER', ha='center', fontweight='bold', fontsize=12)
-    ax.text(5, 4.6, '7 Enriched Tables: Cleaned, Standardized, Behavioral Analysis', 
+    ax.text(5, 6.1, 'SILVER LAYER', ha='center', fontweight='bold', fontsize=12)
+    ax.text(5, 5.6, '7 Enriched Tables: Cleaned, Standardized, Behavioral Analysis', 
             ha='center', fontsize=9)
     
     # Gold Layer
-    rect = patches.FancyBboxPatch((0.5, 2.6), 9, 1.2,
+    rect = patches.FancyBboxPatch((0.5, 3.6), 9, 1.2,
                                    boxstyle="round,pad=0.1",
                                    edgecolor=DARK_BLUE, facecolor='#FDE68A', linewidth=2)
     ax.add_patch(rect)
-    ax.text(5, 3.5, 'GOLD LAYER', ha='center', fontweight='bold', fontsize=12)
-    ax.text(5, 3.0, '3 Analytics Tables: 360° Profiles, ML Scores, Amenity Analytics', 
+    ax.text(5, 4.5, 'GOLD LAYER', ha='center', fontweight='bold', fontsize=12)
+    ax.text(5, 4.0, '3 Analytics Tables: 360° Profiles, ML Scores, Amenity Analytics', 
             ha='center', fontsize=9)
     
     # Semantic Layer
-    rect = patches.FancyBboxPatch((0.5, 1.0), 9, 1.2,
+    rect = patches.FancyBboxPatch((0.5, 2.0), 9, 1.2,
                                    boxstyle="round,pad=0.1",
                                    edgecolor=DARK_BLUE, facecolor='#E9D5FF', linewidth=2)
     ax.add_patch(rect)
-    ax.text(5, 1.9, 'SEMANTIC LAYER', ha='center', fontweight='bold', fontsize=12)
-    ax.text(5, 1.4, '3 Semantic Views + 5 Intelligence Agents', 
+    ax.text(5, 2.9, 'SEMANTIC LAYER', ha='center', fontweight='bold', fontsize=12)
+    ax.text(5, 2.4, '3 Semantic Views + 5 Intelligence Agents', 
             ha='center', fontsize=9)
     
+    # Consumption Layer (NEW)
+    rect = patches.FancyBboxPatch((0.5, 0.3), 9, 1.3,
+                                   boxstyle="round,pad=0.1",
+                                   edgecolor=DARK_BLUE, facecolor='#D1FAE5', linewidth=2)
+    ax.add_patch(rect)
+    ax.text(5, 1.35, 'CONSUMPTION LAYER', ha='center', fontweight='bold', fontsize=12)
+    
+    # Consumption components as boxes
+    consumption_items = [
+        ('Streamlit\nDashboard\n(5 Pages)', 1.5),
+        ('Snowflake\nIntelligence\nUI', 3.5),
+        ('Direct SQL\n& API\nAccess', 5.5),
+        ('BI Tools\nIntegration', 7.5)
+    ]
+    for item, x in consumption_items:
+        small_rect = patches.FancyBboxPatch((x - 0.45, 0.5), 0.9, 0.65,
+                                           boxstyle="round,pad=0.03",
+                                           edgecolor=GREEN, facecolor='white', linewidth=1.5)
+        ax.add_patch(small_rect)
+        ax.text(x, 0.82, item, ha='center', va='center', fontsize=7)
+    
     # Arrows
-    for y in [7.3, 5.7, 4.1, 2.5]:
+    for y in [8.3, 6.7, 5.1, 3.5, 1.9]:
         ax.arrow(5, y, 0, -0.3, head_width=0.3, head_length=0.1, 
                 fc=DARK_BLUE, ec=DARK_BLUE, linewidth=2)
     
@@ -271,32 +290,48 @@ def create_data_sources_diagram():
     print(f"✓ Created data_sources.png")
 
 def create_medallion_diagram():
-    """Create medallion architecture diagram."""
-    fig, ax = plt.subplots(1, 1, figsize=(10, 8))
+    """Create medallion architecture diagram with consumption layer."""
+    fig, ax = plt.subplots(1, 1, figsize=(10, 10))
     ax.set_xlim(0, 10)
-    ax.set_ylim(0, 10)
+    ax.set_ylim(0, 11)
     ax.axis('off')
     
-    ax.text(5, 9.5, 'Medallion Architecture: Bronze → Silver → Gold', 
+    ax.text(5, 10.3, 'Complete Data Architecture', 
             ha='center', fontsize=14, fontweight='bold')
+    ax.text(5, 9.8, 'Bronze → Silver → Gold → Semantic → Consumption', 
+            ha='center', fontsize=10, style='italic', color=GRAY)
     
     layers = [
-        ('BRONZE', 7, '#FEF3C7', '13 Raw Tables\nNo Transformation\nSource Fidelity'),
-        ('SILVER', 4.5, '#DBEAFE', '7 Enriched Tables\nCleaned & Standardized\nBehavioral Analysis'),
-        ('GOLD', 2, '#FDE68A', '3 Analytics Tables\n360° Profiles\nML Scores')
+        ('BRONZE', 8, '#FEF3C7', '13 Raw Tables\nNo Transformation\nSource Fidelity'),
+        ('SILVER', 6, '#DBEAFE', '7 Enriched Tables\nCleaned & Standardized\nBehavioral Analysis'),
+        ('GOLD', 4, '#FDE68A', '3 Analytics Tables\n360° Profiles\nML Scores'),
+        ('SEMANTIC', 2, '#E9D5FF', '3 Semantic Views\n5 Intelligence Agents\nNatural Language')
     ]
     
     for name, y, color, desc in layers:
-        rect = patches.FancyBboxPatch((2, y - 0.8), 6, 1.6,
+        rect = patches.FancyBboxPatch((2, y - 0.7), 6, 1.4,
                                        boxstyle="round,pad=0.1",
                                        edgecolor=DARK_BLUE, facecolor=color, linewidth=2)
         ax.add_patch(rect)
-        ax.text(5, y + 0.4, name, ha='center', fontweight='bold', fontsize=12)
-        ax.text(5, y - 0.3, desc, ha='center', fontsize=8)
+        ax.text(5, y + 0.35, name, ha='center', fontweight='bold', fontsize=11)
+        ax.text(5, y - 0.25, desc, ha='center', fontsize=7.5)
         
         if y > 2:
-            ax.arrow(5, y - 0.9, 0, -0.5, head_width=0.3, head_length=0.1, 
+            ax.arrow(5, y - 0.8, 0, -0.4, head_width=0.3, head_length=0.1, 
                     fc=DARK_BLUE, ec=DARK_BLUE, linewidth=2)
+    
+    # Consumption Layer
+    rect = patches.FancyBboxPatch((1.5, 0.2), 7, 1.0,
+                                   boxstyle="round,pad=0.1",
+                                   edgecolor=GREEN, facecolor='#D1FAE5', linewidth=2.5)
+    ax.add_patch(rect)
+    ax.text(5, 0.9, 'CONSUMPTION', ha='center', fontweight='bold', fontsize=11)
+    ax.text(5, 0.5, 'Streamlit (5 Pages) • Intelligence UI • SQL Access • BI Tools', 
+            ha='center', fontsize=7.5)
+    
+    # Arrow to consumption
+    ax.arrow(5, 1.2, 0, -0.15, head_width=0.3, head_length=0.08, 
+            fc=DARK_BLUE, ec=DARK_BLUE, linewidth=2)
     
     plt.tight_layout()
     plt.savefig(f'{OUTPUT_DIR}/medallion_architecture.png', dpi=300, bbox_inches='tight')
