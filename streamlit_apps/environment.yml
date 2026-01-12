@@ -3,7 +3,6 @@ name: streamlit
 channels:
   - snowflake
 dependencies:
-  - python=3.12
   - snowflake-snowpark-python
   - plotly
   - pandas
