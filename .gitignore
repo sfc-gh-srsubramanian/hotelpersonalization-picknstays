@@ -45,6 +45,9 @@ Thumbs.db
 # Logs
 *.log
 logs/
+deploy_debug.log
+deploy_full.log
+deploy_streamlit.log
 
 # Temporary files
 *.tmp
@@ -67,4 +70,7 @@ credentials/
 # Cache
 .cache/
 *.cache
+
+# Streamlit build artifacts
+streamlit_apps/output/
 
