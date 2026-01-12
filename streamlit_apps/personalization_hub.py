@@ -200,6 +200,12 @@ with tab2:
     # Distribution histograms
     st.markdown("### Score Distributions")
     
+    # DEBUG INFO
+    st.write(f"**DEBUG:** Total filtered records: {len(filtered_df)}")
+    if not filtered_df.empty:
+        st.write(f"**DEBUG:** SPA scores - Min: {filtered_df['SPA_UPSELL_PROPENSITY'].min()}, Max: {filtered_df['SPA_UPSELL_PROPENSITY'].max()}, Count: {filtered_df['SPA_UPSELL_PROPENSITY'].notna().sum()}")
+        st.write(f"**DEBUG:** Sample SPA values: {filtered_df['SPA_UPSELL_PROPENSITY'].head(10).tolist()}")
+    
     if not filtered_df.empty:
         # Check if we have actual data in the columns
         has_spa_data = filtered_df['SPA_UPSELL_PROPENSITY'].notna().sum() > 0
@@ -208,41 +214,53 @@ with tab2:
         has_pool_data = filtered_df['POOL_SERVICES_UPSELL_PROPENSITY'].notna().sum() > 0
         
         if not (has_spa_data or has_dining_data or has_tech_data or has_pool_data):
-            st.warning("⚠️ No propensity score data available. The scores may not have been calculated yet.")
+            st.error("⚠️ No propensity score data available. The scores may not have been calculated yet.")
         else:
             col1, col2 = st.columns(2)
             
             with col1:
                 if has_spa_data:
                     spa_data = filtered_df['SPA_UPSELL_PROPENSITY'].dropna()
-                    fig = go.Figure(data=[go.Histogram(x=spa_data, nbinsx=20)])
+                    st.write(f"Creating histogram with {len(spa_data)} data points")
+                    fig = go.Figure(data=[go.Histogram(
+                        x=spa_data, 
+                        nbinsx=20,
+                        marker_color='blue'
+                    )])
                     fig.update_layout(
                         title='Spa Upsell Propensity Distribution',
                         xaxis_title='Spa Upsell Propensity Score',
                         yaxis_title='Number of Guests',
                         showlegend=False,
-                        bargap=0.1
+                        bargap=0.1,
+                        height=400
                     )
                     fig.update_xaxes(range=[0, 100])
                     st.plotly_chart(fig, use_container_width=True)
                 else:
-                    st.warning("No Spa propensity data")
+                    st.error("No Spa propensity data")
             
             with col2:
                 if has_dining_data:
                     dining_data = filtered_df['DINING_UPSELL_PROPENSITY'].dropna()
-                    fig = go.Figure(data=[go.Histogram(x=dining_data, nbinsx=20)])
+                    st.write(f"Creating histogram with {len(dining_data)} data points")
+                    fig = go.Figure(data=[go.Histogram(
+                        x=dining_data, 
+                        nbinsx=20,
+                        marker_color='green'
+                    )])
                     fig.update_layout(
                         title='Dining Upsell Propensity Distribution',
                         xaxis_title='Dining Upsell Propensity Score',
                         yaxis_title='Number of Guests',
                         showlegend=False,
-                        bargap=0.1
+                        bargap=0.1,
+                        height=400
                     )
                     fig.update_xaxes(range=[0, 100])
                     st.plotly_chart(fig, use_container_width=True)
                 else:
-                    st.warning("No Dining propensity data")
+                    st.error("No Dining propensity data")
             
             # Additional distributions
             col3, col4 = st.columns(2)
@@ -250,36 +268,46 @@ with tab2:
             with col3:
                 if has_tech_data:
                     tech_data = filtered_df['TECH_UPSELL_PROPENSITY'].dropna()
-                    fig = go.Figure(data=[go.Histogram(x=tech_data, nbinsx=20)])
+                    fig = go.Figure(data=[go.Histogram(
+                        x=tech_data, 
+                        nbinsx=20,
+                        marker_color='purple'
+                    )])
                     fig.update_layout(
                         title='Tech Upsell Propensity Distribution',
                         xaxis_title='Tech Upsell Propensity Score',
                         yaxis_title='Number of Guests',
                         showlegend=False,
-                        bargap=0.1
+                        bargap=0.1,
+                        height=400
                     )
                     fig.update_xaxes(range=[0, 100])
                     st.plotly_chart(fig, use_container_width=True)
                 else:
-                    st.warning("No Tech propensity data")
+                    st.error("No Tech propensity data")
             
             with col4:
                 if has_pool_data:
                     pool_data = filtered_df['POOL_SERVICES_UPSELL_PROPENSITY'].dropna()
-                    fig = go.Figure(data=[go.Histogram(x=pool_data, nbinsx=20)])
+                    fig = go.Figure(data=[go.Histogram(
+                        x=pool_data, 
+                        nbinsx=20,
+                        marker_color='orange'
+                    )])
                     fig.update_layout(
                         title='Pool Services Upsell Propensity Distribution',
                         xaxis_title='Pool Services Upsell Propensity Score',
                         yaxis_title='Number of Guests',
                         showlegend=False,
-                        bargap=0.1
+                        bargap=0.1,
+                        height=400
                     )
                     fig.update_xaxes(range=[0, 100])
                     st.plotly_chart(fig, use_container_width=True)
                 else:
-                    st.warning("No Pool Services propensity data")
+                    st.error("No Pool Services propensity data")
     else:
-        st.warning("No data available for score distributions. Please adjust your filters.")
+        st.error("❌ Filtered dataframe is empty! Please adjust your filters.")
 
 with tab3:
     st.markdown("## 👥 Customer Segmentation Analysis")
