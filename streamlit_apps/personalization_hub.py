@@ -146,7 +146,7 @@ with tab2:
         
         fig = create_bar_chart(category_scores, 'Category', 'Avg Score', 
                               'Average Propensity Score by Category')
-        fig.update_yaxis(range=[0, 100])
+        fig.update_yaxes(range=[0, 100])
         st.plotly_chart(fig, use_container_width=True)
     
     with col2:

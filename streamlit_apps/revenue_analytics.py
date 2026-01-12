@@ -179,7 +179,7 @@ with tab3:
             'GUEST_ID': 'count',
             'TOTAL_REVENUE': ['sum', 'mean'],
             'TOTAL_BOOKINGS': 'mean',
-            'AVG_SATISFACTION_SCORE': 'mean'
+            'AVG_AMENITY_SATISFACTION': 'mean'
         }).round(2)
         segment_metrics.columns = ['Guest Count', 'Total Revenue', 'Avg Revenue/Guest', 'Avg Bookings', 'Avg Satisfaction']
         st.dataframe(segment_metrics, use_container_width=True)

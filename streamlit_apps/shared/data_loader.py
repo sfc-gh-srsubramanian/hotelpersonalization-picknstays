@@ -99,7 +99,7 @@ def get_summary_metrics():
     guest_df = session.table("GOLD.GUEST_360_VIEW_ENHANCED")
     total_guests = guest_df.count()
     total_revenue = guest_df.select(sum_("TOTAL_REVENUE").alias("total")).to_pandas()['TOTAL'].iloc[0]
-    avg_satisfaction = guest_df.select(avg("AVG_SATISFACTION_SCORE").alias("avg")).to_pandas()['AVG'].iloc[0]
+    avg_satisfaction = guest_df.select(avg("AVG_AMENITY_SATISFACTION").alias("avg")).to_pandas()['AVG'].iloc[0]
     
     return {
         'total_guests': total_guests,

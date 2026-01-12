@@ -111,7 +111,7 @@ with tab2:
             
             fig = create_bar_chart(satisfaction_by_category, 'Category', 'Avg Satisfaction',
                                   'Average Satisfaction by Category')
-            fig.update_yaxis(range=[0, 5])
+            fig.update_yaxes(range=[0, 5])
             st.plotly_chart(fig, use_container_width=True)
         
         with col2:

@@ -46,7 +46,7 @@ with col2:
     create_kpi_card("Total Revenue", format_currency(total_revenue))
 
 with col3:
-    avg_satisfaction = guests_df['AVG_SATISFACTION_SCORE'].mean() if not guests_df.empty else 0
+    avg_satisfaction = guests_df['AVG_AMENITY_SATISFACTION'].mean() if not guests_df.empty else 0
     create_kpi_card("Avg Satisfaction", f"{avg_satisfaction:.2f}/5.0")
 
 with col4:
@@ -155,7 +155,7 @@ with tab2:
             'GUEST_ID': 'count',
             'TOTAL_REVENUE': ['sum', 'mean'],
             'TOTAL_BOOKINGS': 'mean',
-            'AVG_SATISFACTION_SCORE': 'mean',
+            'AVG_AMENITY_SATISFACTION': 'mean',
             'LOYALTY_POINTS': 'mean'
         }).round(2)
         segment_matrix.columns = ['Guest Count', 'Total Revenue', 'Avg Revenue', 'Avg Bookings', 'Avg Satisfaction', 'Avg Loyalty Points']
@@ -237,7 +237,7 @@ with tab3:
                 recommendations.append(f"⭐ **LOYALTY**: Strong loyalty propensity ({avg_loyalty:.1f}) - enhance loyalty program benefits")
         
         if not guests_df.empty:
-            low_satisfaction = len(guests_df[guests_df['AVG_SATISFACTION_SCORE'] < 3])
+            low_satisfaction = len(guests_df[guests_df['AVG_AMENITY_SATISFACTION'] < 3])
             if low_satisfaction > 0:
                 recommendations.append(f"📉 **SATISFACTION**: {low_satisfaction} guests with low satisfaction - immediate follow-up needed")
         

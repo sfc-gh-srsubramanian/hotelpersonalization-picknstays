@@ -84,7 +84,7 @@ if selected_guest:
         
         with col3:
             create_kpi_card("Loyalty Points", format_number(guest['LOYALTY_POINTS']))
-            create_kpi_card("Avg Satisfaction", f"{guest['AVG_SATISFACTION_SCORE']:.1f}/5.0")
+            create_kpi_card("Avg Satisfaction", f"{guest['AVG_AMENITY_SATISFACTION']:.1f}/5.0")
         
         with col4:
             st.markdown("**Churn Risk**")
@@ -255,7 +255,7 @@ if selected_guest:
                 
                 fig = create_bar_chart(satisfaction_data, 'Service', 'Score',
                                      'Average Satisfaction Scores')
-                fig.update_yaxis(range=[0, 5])
+                fig.update_yaxes(range=[0, 5])
                 st.plotly_chart(fig, use_container_width=True)
         
         with tab4:
@@ -321,7 +321,7 @@ if selected_guest:
                     
                     fig = create_bar_chart(upsell_data, 'Category', 'Score',
                                          'Upsell Propensity by Category')
-                    fig.update_yaxis(range=[0, 100])
+                    fig.update_yaxes(range=[0, 100])
                     st.plotly_chart(fig, use_container_width=True)
                 
                 with col2:
