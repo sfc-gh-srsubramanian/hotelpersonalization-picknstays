@@ -157,88 +157,119 @@ with tab1:
 with tab2:
     st.markdown("## 🎯 Propensity Score Analysis")
     
+    # Debug info
+    if filtered_df.empty:
+        st.error("⚠️ No data available after filtering. Please adjust your filters.")
+        st.stop()
+    
+    # Show data info
+    st.info(f"📊 Analyzing {len(filtered_df):,} guests")
+    
     col1, col2 = st.columns(2)
     
     with col1:
         # Category breakdown
-        category_scores = pd.DataFrame({
-            'Category': ['Spa', 'Dining', 'Tech', 'Pool'],
-            'Avg Score': [
-                filtered_df['SPA_UPSELL_PROPENSITY'].mean(),
-                filtered_df['DINING_UPSELL_PROPENSITY'].mean(),
-                filtered_df['TECH_UPSELL_PROPENSITY'].mean(),
-                filtered_df['POOL_SERVICES_UPSELL_PROPENSITY'].mean()
-            ],
-            'High Scorers': [
-                len(filtered_df[filtered_df['SPA_UPSELL_PROPENSITY'] > score_threshold]),
-                len(filtered_df[filtered_df['DINING_UPSELL_PROPENSITY'] > score_threshold]),
-                len(filtered_df[filtered_df['TECH_UPSELL_PROPENSITY'] > score_threshold]),
-                len(filtered_df[filtered_df['POOL_SERVICES_UPSELL_PROPENSITY'] > score_threshold])
-            ]
-        })
-        
-        fig = create_bar_chart(category_scores, 'Category', 'Avg Score', 
-                              'Average Propensity Score by Category')
-        fig.update_yaxes(range=[0, 100])
-        st.plotly_chart(fig, use_container_width=True)
+        if not filtered_df.empty:
+            category_scores = pd.DataFrame({
+                'Category': ['Spa', 'Dining', 'Tech', 'Pool'],
+                'Avg Score': [
+                    filtered_df['SPA_UPSELL_PROPENSITY'].mean(),
+                    filtered_df['DINING_UPSELL_PROPENSITY'].mean(),
+                    filtered_df['TECH_UPSELL_PROPENSITY'].mean(),
+                    filtered_df['POOL_SERVICES_UPSELL_PROPENSITY'].mean()
+                ],
+                'High Scorers': [
+                    len(filtered_df[filtered_df['SPA_UPSELL_PROPENSITY'] > score_threshold]),
+                    len(filtered_df[filtered_df['DINING_UPSELL_PROPENSITY'] > score_threshold]),
+                    len(filtered_df[filtered_df['TECH_UPSELL_PROPENSITY'] > score_threshold]),
+                    len(filtered_df[filtered_df['POOL_SERVICES_UPSELL_PROPENSITY'] > score_threshold])
+                ]
+            })
+            
+            fig = create_bar_chart(category_scores, 'Category', 'Avg Score', 
+                                  'Average Propensity Score by Category')
+            fig.update_yaxes(range=[0, 100])
+            st.plotly_chart(fig, use_container_width=True)
     
     with col2:
-        fig = create_bar_chart(category_scores, 'Category', 'High Scorers',
-                              f'Number of High-Propensity Guests (>{score_threshold})')
-        st.plotly_chart(fig, use_container_width=True)
+        if not filtered_df.empty:
+            fig = create_bar_chart(category_scores, 'Category', 'High Scorers',
+                                  f'Number of High-Propensity Guests (>{score_threshold})')
+            st.plotly_chart(fig, use_container_width=True)
     
     # Distribution histograms
     st.markdown("### Score Distributions")
     
     if not filtered_df.empty:
-        col1, col2 = st.columns(2)
+        # Check if we have actual data in the columns
+        has_spa_data = filtered_df['SPA_UPSELL_PROPENSITY'].notna().any()
+        has_dining_data = filtered_df['DINING_UPSELL_PROPENSITY'].notna().any()
+        has_tech_data = filtered_df['TECH_UPSELL_PROPENSITY'].notna().any()
+        has_pool_data = filtered_df['POOL_SERVICES_UPSELL_PROPENSITY'].notna().any()
         
-        with col1:
-            fig = px.histogram(
-                filtered_df, 
-                x='SPA_UPSELL_PROPENSITY', 
-                title='Spa Upsell Propensity Distribution',
-                nbins=20,
-                labels={'SPA_UPSELL_PROPENSITY': 'Spa Upsell Propensity Score', 'count': 'Number of Guests'}
-            )
-            fig.update_layout(showlegend=False)
-            st.plotly_chart(fig, use_container_width=True)
-        
-        with col2:
-            fig = px.histogram(
-                filtered_df, 
-                x='DINING_UPSELL_PROPENSITY',
-                title='Dining Upsell Propensity Distribution',
-                nbins=20,
-                labels={'DINING_UPSELL_PROPENSITY': 'Dining Upsell Propensity Score', 'count': 'Number of Guests'}
-            )
-            fig.update_layout(showlegend=False)
-            st.plotly_chart(fig, use_container_width=True)
-        
-        # Additional distributions
-        col3, col4 = st.columns(2)
-        
-        with col3:
-            fig = px.histogram(
-                filtered_df, 
-                x='TECH_UPSELL_PROPENSITY',
-                title='Tech Upsell Propensity Distribution',
-                nbins=20,
-                labels={'TECH_UPSELL_PROPENSITY': 'Tech Upsell Propensity Score', 'count': 'Number of Guests'}
-            )
-            fig.update_layout(showlegend=False)
-            st.plotly_chart(fig, use_container_width=True)
-        
-        with col4:
-            fig = px.histogram(
-                filtered_df, 
-                x='POOL_SERVICES_UPSELL_PROPENSITY',
-                title='Pool Services Upsell Propensity Distribution',
-                nbins=20,
-                labels={'POOL_SERVICES_UPSELL_PROPENSITY': 'Pool Services Upsell Propensity Score', 'count': 'Number of Guests'}
-            )
-            fig.update_layout(showlegend=False)
-            st.plotly_chart(fig, use_container_width=True)
+        if not (has_spa_data or has_dining_data or has_tech_data or has_pool_data):
+            st.warning("⚠️ No propensity score data available. The scores may not have been calculated yet.")
+        else:
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                if has_spa_data:
+                    fig = px.histogram(
+                        filtered_df.dropna(subset=['SPA_UPSELL_PROPENSITY']), 
+                        x='SPA_UPSELL_PROPENSITY', 
+                        title='Spa Upsell Propensity Distribution',
+                        nbins=20,
+                        labels={'SPA_UPSELL_PROPENSITY': 'Spa Upsell Propensity Score', 'count': 'Number of Guests'}
+                    )
+                    fig.update_layout(showlegend=False, bargap=0.1)
+                    st.plotly_chart(fig, use_container_width=True)
+                else:
+                    st.warning("No Spa propensity data")
+            
+            with col2:
+                if has_dining_data:
+                    fig = px.histogram(
+                        filtered_df.dropna(subset=['DINING_UPSELL_PROPENSITY']), 
+                        x='DINING_UPSELL_PROPENSITY',
+                        title='Dining Upsell Propensity Distribution',
+                        nbins=20,
+                        labels={'DINING_UPSELL_PROPENSITY': 'Dining Upsell Propensity Score', 'count': 'Number of Guests'}
+                    )
+                    fig.update_layout(showlegend=False, bargap=0.1)
+                    st.plotly_chart(fig, use_container_width=True)
+                else:
+                    st.warning("No Dining propensity data")
+            
+            # Additional distributions
+            col3, col4 = st.columns(2)
+            
+            with col3:
+                if has_tech_data:
+                    fig = px.histogram(
+                        filtered_df.dropna(subset=['TECH_UPSELL_PROPENSITY']), 
+                        x='TECH_UPSELL_PROPENSITY',
+                        title='Tech Upsell Propensity Distribution',
+                        nbins=20,
+                        labels={'TECH_UPSELL_PROPENSITY': 'Tech Upsell Propensity Score', 'count': 'Number of Guests'}
+                    )
+                    fig.update_layout(showlegend=False, bargap=0.1)
+                    st.plotly_chart(fig, use_container_width=True)
+                else:
+                    st.warning("No Tech propensity data")
+            
+            with col4:
+                if has_pool_data:
+                    fig = px.histogram(
+                        filtered_df.dropna(subset=['POOL_SERVICES_UPSELL_PROPENSITY']), 
+                        x='POOL_SERVICES_UPSELL_PROPENSITY',
+                        title='Pool Services Upsell Propensity Distribution',
+                        nbins=20,
+                        labels={'POOL_SERVICES_UPSELL_PROPENSITY': 'Pool Services Upsell Propensity Score', 'count': 'Number of Guests'}
+                    )
+                    fig.update_layout(showlegend=False, bargap=0.1)
+                    st.plotly_chart(fig, use_container_width=True)
+                else:
+                    st.warning("No Pool Services propensity data")
     else:
         st.warning("No data available for score distributions. Please adjust your filters.")
 
