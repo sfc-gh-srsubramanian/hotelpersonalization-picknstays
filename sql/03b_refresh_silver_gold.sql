@@ -365,7 +365,67 @@ USE SCHEMA GOLD;
 
 -- ----------------------------------------------------------------------------
 -- Guest 360 View Enhanced (Complete guest profile with amenity data)
+-- FIX: Pre-aggregate to avoid cartesian product from multiple LEFT JOINs
 -- ----------------------------------------------------------------------------
+
+-- Pre-aggregate bookings data
+CREATE OR REPLACE TEMPORARY TABLE temp_booking_agg AS
+SELECT 
+    guest_id,
+    COUNT(DISTINCT booking_id) as total_bookings,
+    SUM(total_amount) as total_revenue,
+    AVG(total_amount) as avg_booking_value,
+    AVG(num_nights) as avg_stay_length,
+    MAX(check_in_date) as last_check_in
+FROM SILVER.bookings_enriched
+GROUP BY guest_id;
+
+-- Pre-aggregate amenity spending data
+CREATE OR REPLACE TEMPORARY TABLE temp_amenity_spend_agg AS
+SELECT 
+    guest_id,
+    SUM(amount) as total_amenity_spend,
+    AVG(amount) as avg_amenity_per_transaction,
+    SUM(CASE WHEN amenity_category = 'spa' THEN amount ELSE 0 END) as total_spa_spend,
+    SUM(CASE WHEN amenity_category = 'restaurant' THEN amount ELSE 0 END) as total_restaurant_spend,
+    SUM(CASE WHEN amenity_category = 'bar' THEN amount ELSE 0 END) as total_bar_spend,
+    SUM(CASE WHEN amenity_category = 'room_service' THEN amount ELSE 0 END) as total_room_service_spend,
+    SUM(CASE WHEN amenity_category = 'wifi' THEN amount ELSE 0 END) as total_wifi_spend,
+    SUM(CASE WHEN amenity_category = 'smart_tv' THEN amount ELSE 0 END) as total_smart_tv_spend,
+    SUM(CASE WHEN amenity_category = 'pool_services' THEN amount ELSE 0 END) as total_pool_services_spend,
+    COUNT(DISTINCT CASE WHEN amenity_category = 'spa' THEN transaction_id END) as spa_visits,
+    COUNT(DISTINCT CASE WHEN amenity_category = 'bar' THEN transaction_id END) as bar_visits,
+    COUNT(DISTINCT CASE WHEN amenity_category = 'restaurant' THEN transaction_id END) as restaurant_visits,
+    COUNT(DISTINCT CASE WHEN amenity_category = 'room_service' THEN transaction_id END) as room_service_orders,
+    COUNT(DISTINCT CASE WHEN amenity_category = 'wifi' THEN transaction_id END) as wifi_upgrades,
+    COUNT(DISTINCT CASE WHEN amenity_category = 'smart_tv' THEN transaction_id END) as smart_tv_upgrades,
+    COUNT(DISTINCT CASE WHEN amenity_category = 'pool_services' THEN transaction_id END) as pool_service_purchases,
+    COUNT(DISTINCT amenity_category) as amenity_diversity_score,
+    AVG(guest_satisfaction) as avg_amenity_satisfaction
+FROM SILVER.amenity_spending_enriched
+GROUP BY guest_id;
+
+-- Pre-aggregate amenity usage data
+CREATE OR REPLACE TEMPORARY TABLE temp_amenity_usage_agg AS
+SELECT 
+    guest_id,
+    COUNT(DISTINCT CASE WHEN amenity_category = 'wifi' THEN usage_id END) as total_wifi_sessions,
+    COUNT(DISTINCT CASE WHEN amenity_category = 'smart_tv' THEN usage_id END) as total_smart_tv_sessions,
+    COUNT(DISTINCT CASE WHEN amenity_category = 'pool' THEN usage_id END) as total_pool_sessions,
+    AVG(CASE WHEN amenity_category = 'wifi' THEN usage_duration_minutes END) as avg_wifi_duration,
+    AVG(CASE WHEN amenity_category = 'smart_tv' THEN usage_duration_minutes END) as avg_smart_tv_duration,
+    AVG(CASE WHEN amenity_category = 'pool' THEN usage_duration_minutes END) as avg_pool_duration,
+    SUM(CASE WHEN amenity_category = 'wifi' THEN data_consumed_mb ELSE 0 END) as total_wifi_data_mb,
+    AVG(CASE WHEN amenity_category IN ('wifi', 'smart_tv', 'pool') THEN guest_satisfaction END) as avg_infrastructure_satisfaction,
+    COUNT(DISTINCT CASE WHEN amenity_category = 'wifi' AND usage_type = 'paid' THEN usage_id END) as wifi_paid_sessions,
+    COUNT(DISTINCT CASE WHEN amenity_category IN ('wifi', 'smart_tv') THEN usage_id END) as tech_sessions,
+    COUNT(DISTINCT CASE WHEN amenity_category IN ('wifi', 'smart_tv', 'pool') THEN usage_id END) as infra_sessions,
+    AVG(CASE WHEN amenity_category IN ('wifi', 'smart_tv', 'pool') THEN usage_duration_minutes END) as avg_infra_duration,
+    COUNT(DISTINCT CASE WHEN usage_type = 'paid' THEN usage_id END) as paid_usage_sessions
+FROM SILVER.amenity_usage_enriched
+GROUP BY guest_id;
+
+-- Now build GOLD table with pre-aggregated data (NO cartesian product!)
 CREATE OR REPLACE TABLE guest_360_view_enhanced AS
 SELECT 
     g.guest_id,
@@ -384,75 +444,74 @@ SELECT
     lp.points_balance as loyalty_points,
     lp.lifetime_points,
     g.marketing_opt_in,
-    COALESCE(COUNT(DISTINCT be.booking_id), 0) as total_bookings,
-    COALESCE(SUM(be.total_amount), 0) as total_revenue,
-    COALESCE(AVG(be.total_amount), 0) as avg_booking_value,
-    COALESCE(AVG(be.num_nights), 0) as avg_stay_length,
+    COALESCE(ba.total_bookings, 0) as total_bookings,
+    COALESCE(ba.total_revenue, 0) as total_revenue,
+    COALESCE(ba.avg_booking_value, 0) as avg_booking_value,
+    COALESCE(ba.avg_stay_length, 0) as avg_stay_length,
     CASE 
-        WHEN COALESCE(SUM(be.total_amount), 0) >= 10000 THEN 'High Value'
-        WHEN COALESCE(SUM(be.total_amount), 0) >= 5000 THEN 'Premium'
-        WHEN COALESCE(COUNT(DISTINCT be.booking_id), 0) >= 5 THEN 'Regular'
-        WHEN COALESCE(SUM(be.total_amount), 0) >= 1000 THEN 'Developing'
+        WHEN COALESCE(ba.total_revenue, 0) >= 10000 THEN 'High Value'
+        WHEN COALESCE(ba.total_revenue, 0) >= 5000 THEN 'Premium'
+        WHEN COALESCE(ba.total_bookings, 0) >= 5 THEN 'Regular'
+        WHEN COALESCE(ba.total_revenue, 0) >= 1000 THEN 'Developing'
         ELSE 'New Guest'
     END as customer_segment,
     CASE 
-        WHEN MAX(be.check_in_date) IS NULL THEN 'Unknown'
-        WHEN DATEDIFF(day, MAX(be.check_in_date), CURRENT_DATE()) > 365 THEN 'High Risk'
-        WHEN DATEDIFF(day, MAX(be.check_in_date), CURRENT_DATE()) > 180 THEN 'Medium Risk'
-        WHEN DATEDIFF(day, MAX(be.check_in_date), CURRENT_DATE()) > 90 THEN 'Low Risk'
+        WHEN ba.last_check_in IS NULL THEN 'Unknown'
+        WHEN DATEDIFF(day, ba.last_check_in, CURRENT_DATE()) > 365 THEN 'High Risk'
+        WHEN DATEDIFF(day, ba.last_check_in, CURRENT_DATE()) > 180 THEN 'Medium Risk'
+        WHEN DATEDIFF(day, ba.last_check_in, CURRENT_DATE()) > 90 THEN 'Low Risk'
         ELSE 'Active'
     END as churn_risk,
-    COALESCE(SUM(ase.amount), 0) as total_amenity_spend,
-    COALESCE(AVG(ase.amount), 0) as avg_amenity_per_transaction,
-    COALESCE(SUM(CASE WHEN ase.amenity_category = 'spa' THEN ase.amount ELSE 0 END), 0) as total_spa_spend,
-    COALESCE(SUM(CASE WHEN ase.amenity_category = 'restaurant' THEN ase.amount ELSE 0 END), 0) as total_restaurant_spend,
-    COALESCE(SUM(CASE WHEN ase.amenity_category = 'bar' THEN ase.amount ELSE 0 END), 0) as total_bar_spend,
-    COALESCE(SUM(CASE WHEN ase.amenity_category = 'room_service' THEN ase.amount ELSE 0 END), 0) as total_room_service_spend,
-    COALESCE(SUM(CASE WHEN ase.amenity_category = 'wifi' THEN ase.amount ELSE 0 END), 0) as total_wifi_spend,
-    COALESCE(SUM(CASE WHEN ase.amenity_category = 'smart_tv' THEN ase.amount ELSE 0 END), 0) as total_smart_tv_spend,
-    COALESCE(SUM(CASE WHEN ase.amenity_category = 'pool_services' THEN ase.amount ELSE 0 END), 0) as total_pool_services_spend,
-    COUNT(DISTINCT CASE WHEN ase.amenity_category = 'spa' THEN ase.transaction_id END) as spa_visits,
-    COUNT(DISTINCT CASE WHEN ase.amenity_category = 'bar' THEN ase.transaction_id END) as bar_visits,
-    COUNT(DISTINCT CASE WHEN ase.amenity_category = 'restaurant' THEN ase.transaction_id END) as restaurant_visits,
-    COUNT(DISTINCT CASE WHEN ase.amenity_category = 'room_service' THEN ase.transaction_id END) as room_service_orders,
-    COUNT(DISTINCT CASE WHEN ase.amenity_category = 'wifi' THEN ase.transaction_id END) as wifi_upgrades,
-    COUNT(DISTINCT CASE WHEN ase.amenity_category = 'smart_tv' THEN ase.transaction_id END) as smart_tv_upgrades,
-    COUNT(DISTINCT CASE WHEN ase.amenity_category = 'pool_services' THEN ase.transaction_id END) as pool_service_purchases,
-    COUNT(DISTINCT ase.amenity_category) as amenity_diversity_score,
-    COALESCE(AVG(ase.guest_satisfaction), 0) as avg_amenity_satisfaction,
-    COALESCE(COUNT(DISTINCT CASE WHEN aue.amenity_category = 'wifi' THEN aue.usage_id END), 0) as total_wifi_sessions,
-    COALESCE(COUNT(DISTINCT CASE WHEN aue.amenity_category = 'smart_tv' THEN aue.usage_id END), 0) as total_smart_tv_sessions,
-    COALESCE(COUNT(DISTINCT CASE WHEN aue.amenity_category = 'pool' THEN aue.usage_id END), 0) as total_pool_sessions,
-    COALESCE(AVG(CASE WHEN aue.amenity_category = 'wifi' THEN aue.usage_duration_minutes END), 0) as avg_wifi_duration,
-    COALESCE(AVG(CASE WHEN aue.amenity_category = 'smart_tv' THEN aue.usage_duration_minutes END), 0) as avg_smart_tv_duration,
-    COALESCE(AVG(CASE WHEN aue.amenity_category = 'pool' THEN aue.usage_duration_minutes END), 0) as avg_pool_duration,
-    COALESCE(SUM(CASE WHEN aue.amenity_category = 'wifi' THEN aue.data_consumed_mb END), 0) as total_wifi_data_mb,
-    COALESCE(AVG(CASE WHEN aue.amenity_category IN ('wifi', 'smart_tv', 'pool') THEN aue.guest_satisfaction END), 0) as avg_infrastructure_satisfaction,
+    COALESCE(ase.total_amenity_spend, 0) as total_amenity_spend,
+    COALESCE(ase.avg_amenity_per_transaction, 0) as avg_amenity_per_transaction,
+    COALESCE(ase.total_spa_spend, 0) as total_spa_spend,
+    COALESCE(ase.total_restaurant_spend, 0) as total_restaurant_spend,
+    COALESCE(ase.total_bar_spend, 0) as total_bar_spend,
+    COALESCE(ase.total_room_service_spend, 0) as total_room_service_spend,
+    COALESCE(ase.total_wifi_spend, 0) as total_wifi_spend,
+    COALESCE(ase.total_smart_tv_spend, 0) as total_smart_tv_spend,
+    COALESCE(ase.total_pool_services_spend, 0) as total_pool_services_spend,
+    COALESCE(ase.spa_visits, 0) as spa_visits,
+    COALESCE(ase.bar_visits, 0) as bar_visits,
+    COALESCE(ase.restaurant_visits, 0) as restaurant_visits,
+    COALESCE(ase.room_service_orders, 0) as room_service_orders,
+    COALESCE(ase.wifi_upgrades, 0) as wifi_upgrades,
+    COALESCE(ase.smart_tv_upgrades, 0) as smart_tv_upgrades,
+    COALESCE(ase.pool_service_purchases, 0) as pool_service_purchases,
+    COALESCE(ase.amenity_diversity_score, 0) as amenity_diversity_score,
+    COALESCE(ase.avg_amenity_satisfaction, 0) as avg_amenity_satisfaction,
+    COALESCE(aue.total_wifi_sessions, 0) as total_wifi_sessions,
+    COALESCE(aue.total_smart_tv_sessions, 0) as total_smart_tv_sessions,
+    COALESCE(aue.total_pool_sessions, 0) as total_pool_sessions,
+    COALESCE(aue.avg_wifi_duration, 0) as avg_wifi_duration,
+    COALESCE(aue.avg_smart_tv_duration, 0) as avg_smart_tv_duration,
+    COALESCE(aue.avg_pool_duration, 0) as avg_pool_duration,
+    COALESCE(aue.total_wifi_data_mb, 0) as total_wifi_data_mb,
+    COALESCE(aue.avg_infrastructure_satisfaction, 0) as avg_infrastructure_satisfaction,
     CASE 
-        WHEN COUNT(DISTINCT CASE WHEN aue.amenity_category = 'wifi' AND aue.usage_type = 'paid' THEN aue.usage_id END) > 0 THEN 'Premium Tech User'
-        WHEN COUNT(DISTINCT CASE WHEN aue.amenity_category IN ('wifi', 'smart_tv') THEN aue.usage_id END) > 5 THEN 'High Tech User'
-        WHEN COUNT(DISTINCT CASE WHEN aue.amenity_category IN ('wifi', 'smart_tv') THEN aue.usage_id END) > 0 THEN 'Basic Tech User'
+        WHEN COALESCE(aue.wifi_paid_sessions, 0) > 0 THEN 'Premium Tech User'
+        WHEN COALESCE(aue.tech_sessions, 0) > 5 THEN 'High Tech User'
+        WHEN COALESCE(aue.tech_sessions, 0) > 0 THEN 'Basic Tech User'
         ELSE 'Non-Tech User'
     END as tech_adoption_profile,
     LEAST(100, GREATEST(0, 
-        (COUNT(DISTINCT CASE WHEN aue.amenity_category IN ('wifi', 'smart_tv', 'pool') THEN aue.usage_id END) * 5) + 
-        (COALESCE(AVG(CASE WHEN aue.amenity_category IN ('wifi', 'smart_tv', 'pool') THEN aue.usage_duration_minutes END), 0) / 10) + 
-        (COUNT(DISTINCT CASE WHEN aue.usage_type = 'paid' THEN aue.usage_id END) * 15)
+        (COALESCE(aue.infra_sessions, 0) * 5) + 
+        (COALESCE(aue.avg_infra_duration, 0) / 10) + 
+        (COALESCE(aue.paid_usage_sessions, 0) * 15)
     )) as infrastructure_engagement_score,
     CASE 
-        WHEN COALESCE(SUM(ase.amount), 0) > 1000 THEN 'Premium Amenity Spender'
-        WHEN COALESCE(SUM(ase.amount), 0) > 200 THEN 'High Amenity Spender'
-        WHEN COALESCE(SUM(ase.amount), 0) > 50 THEN 'Medium Amenity Spender'
-        WHEN COALESCE(SUM(ase.amount), 0) > 0 THEN 'Low Amenity Spender'
+        WHEN COALESCE(ase.total_amenity_spend, 0) > 1000 THEN 'Premium Amenity Spender'
+        WHEN COALESCE(ase.total_amenity_spend, 0) > 200 THEN 'High Amenity Spender'
+        WHEN COALESCE(ase.total_amenity_spend, 0) > 50 THEN 'Medium Amenity Spender'
+        WHEN COALESCE(ase.total_amenity_spend, 0) > 0 THEN 'Low Amenity Spender'
         ELSE 'No Amenity Usage'
     END as amenity_spending_category,
     CURRENT_TIMESTAMP() as processed_at
 FROM SILVER.guests_standardized g
 LEFT JOIN BRONZE.loyalty_program lp ON g.guest_id = lp.guest_id
-LEFT JOIN SILVER.bookings_enriched be ON g.guest_id = be.guest_id
-LEFT JOIN SILVER.amenity_spending_enriched ase ON g.guest_id = ase.guest_id
-LEFT JOIN SILVER.amenity_usage_enriched aue ON g.guest_id = aue.guest_id
-GROUP BY 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16;
+LEFT JOIN temp_booking_agg ba ON g.guest_id = ba.guest_id
+LEFT JOIN temp_amenity_spend_agg ase ON g.guest_id = ase.guest_id
+LEFT JOIN temp_amenity_usage_agg aue ON g.guest_id = aue.guest_id;
 
 -- ----------------------------------------------------------------------------
 -- Personalization Scores Enhanced (ML-powered scoring for personalization)

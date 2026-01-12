@@ -10,10 +10,7 @@ import sys
 import os
 
 sys.path.append(os.path.join(os.path.dirname(__file__), 'shared'))
-from data_loader import (
-    get_guest_360_data, get_bookings_enriched, get_stays_processed,
-    get_amenity_spending
-)
+from data_loader import get_guest_360_data
 from viz_components import (
     create_kpi_card, format_currency, format_number, format_percentage,
     create_bar_chart, create_line_chart, apply_custom_css
@@ -26,18 +23,15 @@ st.title("💰 Revenue Analytics & Optimization")
 st.markdown("**Comprehensive Revenue Performance & Forecasting**")
 st.markdown("---")
 
-# Load data
+# Load data from GOLD layer (single source of truth)
 guests_df = get_guest_360_data()
-bookings_df = get_bookings_enriched()
-stays_df = get_stays_processed()
-amenities_df = get_amenity_spending()
 
-# Calculate key metrics
-total_room_revenue = stays_df['TOTAL_CHARGES'].sum() if not stays_df.empty else 0
-total_amenity_revenue = amenities_df['AMOUNT'].sum() if not amenities_df.empty else 0
-total_revenue = total_room_revenue + total_amenity_revenue
-total_bookings = len(bookings_df) if not bookings_df.empty else 0
-avg_booking_value = bookings_df['TOTAL_AMOUNT'].mean() if not bookings_df.empty and 'TOTAL_AMOUNT' in bookings_df.columns else 0
+# Calculate key metrics from GOLD layer
+total_revenue = guests_df['TOTAL_REVENUE'].sum() if not guests_df.empty else 0
+total_amenity_revenue = guests_df['TOTAL_AMENITY_SPEND'].sum() if not guests_df.empty else 0
+total_room_revenue = total_revenue - total_amenity_revenue  # Room revenue = Total - Amenities
+total_bookings = guests_df['TOTAL_BOOKINGS'].sum() if not guests_df.empty else 0
+avg_booking_value = guests_df['AVG_BOOKING_VALUE'].mean() if not guests_df.empty else 0
 
 # Summary metrics
 col1, col2, col3, col4 = st.columns(4)
@@ -82,13 +76,23 @@ with tab1:
         st.plotly_chart(fig, use_container_width=True)
     
     with col2:
-        # Amenity revenue breakdown
-        if not amenities_df.empty and 'AMENITY_CATEGORY' in amenities_df.columns:
-            amenity_revenue = amenities_df.groupby('AMENITY_CATEGORY')['AMOUNT'].sum().reset_index()
-            amenity_revenue.columns = ['Category', 'Revenue']
-            amenity_revenue = amenity_revenue.sort_values('Revenue', ascending=False)
+        # Amenity revenue breakdown (from GOLD layer aggregated columns)
+        if not guests_df.empty:
+            amenity_breakdown = pd.DataFrame({
+                'Category': ['Spa', 'Restaurant', 'Bar', 'Room Service', 'WiFi', 'Smart TV', 'Pool Services'],
+                'Revenue': [
+                    guests_df['TOTAL_SPA_SPEND'].sum(),
+                    guests_df['TOTAL_RESTAURANT_SPEND'].sum(),
+                    guests_df['TOTAL_BAR_SPEND'].sum(),
+                    guests_df['TOTAL_ROOM_SERVICE_SPEND'].sum(),
+                    guests_df['TOTAL_WIFI_SPEND'].sum(),
+                    guests_df['TOTAL_SMART_TV_SPEND'].sum(),
+                    guests_df['TOTAL_POOL_SERVICES_SPEND'].sum()
+                ]
+            })
+            amenity_breakdown = amenity_breakdown.sort_values('Revenue', ascending=False)
             
-            fig = create_bar_chart(amenity_revenue, 'Category', 'Revenue',
+            fig = create_bar_chart(amenity_breakdown, 'Category', 'Revenue',
                                   'Amenity Revenue by Category')
             st.plotly_chart(fig, use_container_width=True)
     
@@ -112,45 +116,60 @@ with tab1:
 with tab2:
     st.markdown("## 🏨 Booking Analytics")
     
-    if not bookings_df.empty:
+    # Show GOLD layer booking metrics
+    if not guests_df.empty:
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            total_bookings_count = guests_df['TOTAL_BOOKINGS'].sum()
+            create_kpi_card("Total Bookings", format_number(total_bookings_count))
+        
+        with col2:
+            avg_bookings_per_guest = guests_df['TOTAL_BOOKINGS'].mean()
+            create_kpi_card("Avg Bookings/Guest", f"{avg_bookings_per_guest:.1f}")
+        
+        with col3:
+            avg_stay_length = guests_df['AVG_STAY_LENGTH'].mean()
+            create_kpi_card("Avg Stay Length", f"{avg_stay_length:.1f} nights")
+        
+        st.markdown("---")
+        
+        # Booking distribution by segment
+        st.markdown("### Booking Distribution by Customer Segment")
         col1, col2 = st.columns(2)
         
         with col1:
-            # Booking channel analysis
-            if 'BOOKING_CHANNEL' in bookings_df.columns:
-                channel_revenue = bookings_df.groupby('BOOKING_CHANNEL').agg({
-                    'BOOKING_ID': 'count',
-                    'TOTAL_AMOUNT': 'sum'
-                }).reset_index()
-                channel_revenue.columns = ['Channel', 'Bookings', 'Revenue']
+            if 'CUSTOMER_SEGMENT' in guests_df.columns:
+                segment_bookings = guests_df.groupby('CUSTOMER_SEGMENT')['TOTAL_BOOKINGS'].sum().reset_index()
+                segment_bookings.columns = ['Segment', 'Total Bookings']
+                segment_bookings = segment_bookings.sort_values('Total Bookings', ascending=False)
                 
-                fig = create_bar_chart(channel_revenue, 'Channel', 'Revenue',
-                                      'Revenue by Booking Channel')
+                fig = create_bar_chart(segment_bookings, 'Segment', 'Total Bookings',
+                                      'Total Bookings by Customer Segment')
                 st.plotly_chart(fig, use_container_width=True)
         
         with col2:
-            # Lead time analysis
-            if 'BOOKING_LEAD_TIME_CATEGORY' in bookings_df.columns:
-                leadtime_bookings = bookings_df.groupby('BOOKING_LEAD_TIME_CATEGORY').size().reset_index()
-                leadtime_bookings.columns = ['Lead Time', 'Bookings']
+            if 'LOYALTY_TIER' in guests_df.columns:
+                tier_bookings = guests_df.groupby('LOYALTY_TIER')['TOTAL_BOOKINGS'].sum().reset_index()
+                tier_bookings.columns = ['Tier', 'Total Bookings']
+                tier_bookings = tier_bookings.sort_values('Total Bookings', ascending=False)
                 
-                fig = create_bar_chart(leadtime_bookings, 'Lead Time', 'Bookings',
-                                      'Bookings by Lead Time Category')
+                fig = create_bar_chart(tier_bookings, 'Tier', 'Total Bookings',
+                                      'Total Bookings by Loyalty Tier')
                 st.plotly_chart(fig, use_container_width=True)
         
-        # Booking metrics table
-        st.markdown("### Booking Channel Performance")
-        if 'BOOKING_CHANNEL' in bookings_df.columns:
-            channel_metrics = bookings_df.groupby('BOOKING_CHANNEL').agg({
-                'BOOKING_ID': 'count',
-                'TOTAL_AMOUNT': ['sum', 'mean']
-            }).round(2)
-            channel_metrics.columns = ['Total Bookings', 'Total Revenue', 'Avg Booking Value']
-            channel_metrics_display = channel_metrics.copy()
-            channel_metrics_display['Total Bookings'] = channel_metrics_display['Total Bookings'].apply(format_number)
-            channel_metrics_display['Total Revenue'] = channel_metrics_display['Total Revenue'].apply(format_currency)
-            channel_metrics_display['Avg Booking Value'] = channel_metrics_display['Avg Booking Value'].apply(format_currency)
-            st.dataframe(channel_metrics_display, use_container_width=True)
+        # Booking value analysis
+        st.markdown("### Booking Value Distribution")
+        booking_value_segments = pd.DataFrame({
+            'Segment': guests_df['CUSTOMER_SEGMENT'],
+            'Avg Booking Value': guests_df['AVG_BOOKING_VALUE'],
+            'Total Bookings': guests_df['TOTAL_BOOKINGS']
+        })
+        avg_by_segment = booking_value_segments.groupby('Segment')['Avg Booking Value'].mean().reset_index()
+        avg_by_segment = avg_by_segment.sort_values('Avg Booking Value', ascending=False)
+        avg_by_segment_display = avg_by_segment.copy()
+        avg_by_segment_display['Avg Booking Value'] = avg_by_segment_display['Avg Booking Value'].apply(format_currency)
+        st.dataframe(avg_by_segment_display, use_container_width=True)
 
 with tab3:
     st.markdown("## 👥 Customer Segment Performance")
@@ -193,35 +212,75 @@ with tab3:
         st.dataframe(segment_metrics_display, use_container_width=True)
 
 with tab4:
-    st.markdown("## 📈 Revenue Trends")
+    st.markdown("## 📈 Revenue Performance Analysis")
     
-    # Analyze trends if date columns available
-    if not stays_df.empty and 'ACTUAL_CHECK_IN' in stays_df.columns:
-        # Convert to datetime
-        stays_df['CHECK_IN_DATE'] = pd.to_datetime(stays_df['ACTUAL_CHECK_IN'])
-        stays_df['MONTH'] = stays_df['CHECK_IN_DATE'].dt.to_period('M').astype(str)
+    if not guests_df.empty:
+        # Revenue distribution analysis
+        st.markdown("### Revenue Distribution by Customer Value")
         
-        # Monthly revenue trend
-        monthly_revenue = stays_df.groupby('MONTH')['TOTAL_CHARGES'].sum().reset_index()
-        monthly_revenue.columns = ['Month', 'Revenue']
+        col1, col2 = st.columns(2)
         
-        fig = create_line_chart(monthly_revenue, 'Month', 'Revenue',
-                               'Monthly Room Revenue Trend')
+        with col1:
+            # Revenue quartiles
+            quartiles = guests_df['TOTAL_REVENUE'].quantile([0.25, 0.50, 0.75, 0.90, 0.95]).reset_index()
+            quartiles.columns = ['Percentile', 'Revenue']
+            quartiles['Percentile'] = quartiles['Percentile'].apply(lambda x: f"{int(x*100)}th")
+            quartiles['Revenue'] = quartiles['Revenue'].apply(format_currency)
+            
+            st.markdown("#### Revenue Percentiles")
+            st.dataframe(quartiles, use_container_width=True)
+            
+            # High value guests
+            high_value_count = len(guests_df[guests_df['TOTAL_REVENUE'] > guests_df['TOTAL_REVENUE'].quantile(0.90)])
+            high_value_revenue = guests_df[guests_df['TOTAL_REVENUE'] > guests_df['TOTAL_REVENUE'].quantile(0.90)]['TOTAL_REVENUE'].sum()
+            high_value_pct = (high_value_revenue / total_revenue * 100) if total_revenue > 0 else 0
+            
+            st.info(f"💎 **Top 10% of Guests** ({format_number(high_value_count)}): Generate **{format_currency(high_value_revenue)}** ({high_value_pct:.1f}% of total revenue)")
+        
+        with col2:
+            # Revenue concentration by segment
+            st.markdown("#### Revenue Concentration by Segment")
+            segment_contribution = guests_df.groupby('CUSTOMER_SEGMENT').agg({
+                'GUEST_ID': 'count',
+                'TOTAL_REVENUE': 'sum'
+            }).reset_index()
+            segment_contribution.columns = ['Segment', 'Guests', 'Revenue']
+            segment_contribution['% of Total Revenue'] = (segment_contribution['Revenue'] / total_revenue * 100).round(1)
+            segment_contribution = segment_contribution.sort_values('Revenue', ascending=False)
+            
+            segment_contribution_display = segment_contribution.copy()
+            segment_contribution_display['Guests'] = segment_contribution_display['Guests'].apply(format_number)
+            segment_contribution_display['Revenue'] = segment_contribution_display['Revenue'].apply(format_currency)
+            
+            st.dataframe(segment_contribution_display, use_container_width=True)
+        
+        # Booking frequency vs revenue analysis
+        st.markdown("### Booking Frequency vs Average Revenue")
+        frequency_analysis = guests_df.groupby('TOTAL_BOOKINGS').agg({
+            'GUEST_ID': 'count',
+            'TOTAL_REVENUE': 'mean',
+            'AVG_BOOKING_VALUE': 'mean'
+        }).reset_index()
+        frequency_analysis.columns = ['Booking Count', 'Guests', 'Avg Total Revenue', 'Avg Booking Value']
+        frequency_analysis = frequency_analysis[frequency_analysis['Booking Count'] <= 20]  # Limit for clarity
+        
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(
+            x=frequency_analysis['Booking Count'],
+            y=frequency_analysis['Avg Total Revenue'],
+            mode='lines+markers',
+            name='Avg Total Revenue',
+            line=dict(color='blue', width=3)
+        ))
+        fig.update_layout(
+            title='Average Guest Revenue by Booking Frequency',
+            xaxis_title='Number of Bookings',
+            yaxis_title='Average Total Revenue ($)',
+            height=400
+        )
         st.plotly_chart(fig, use_container_width=True)
-        
-        # Monthly bookings trend
-        if not bookings_df.empty and 'CREATED_AT' in bookings_df.columns:
-            bookings_df['BOOKING_DATE'] = pd.to_datetime(bookings_df['CREATED_AT'])
-            bookings_df['MONTH'] = bookings_df['BOOKING_DATE'].dt.to_period('M').astype(str)
-            
-            monthly_bookings = bookings_df.groupby('MONTH').size().reset_index()
-            monthly_bookings.columns = ['Month', 'Bookings']
-            
-            fig = create_line_chart(monthly_bookings, 'Month', 'Bookings',
-                                   'Monthly Booking Volume Trend')
-            st.plotly_chart(fig, use_container_width=True)
     else:
-        st.info("Historical trend data requires time-series information")
+        st.warning("No guest data available for revenue performance analysis")
 
 st.markdown("---")
 st.markdown("*Data refreshed every 5 minutes | Revenue insights for strategic decision-making*")
