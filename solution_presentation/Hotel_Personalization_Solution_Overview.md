@@ -83,6 +83,17 @@ The platform implements a modern **Medallion Architecture** (Bronze â†’ Silver â
 - Snowflake Intelligence Agents for conversational analytics
 - Natural language access to guest intelligence without SQL knowledge
 
+#### Consumption Layer: Business Intelligence & Visualization
+- **Streamlit Dashboard Application** - "Hotel Personalization - Pic'N Stays"
+  - 5 interactive pages: Guest 360, Personalization Hub, Amenity Performance, Revenue Analytics, Executive Overview
+  - Real-time visual analytics with Plotly charts and KPIs
+  - Role-based access for different user personas
+  - Export capabilities for CRM and marketing integration
+- **Snowflake Intelligence UI** - Natural language querying interface
+- **Direct SQL & API Access** - For analysts and data engineers
+- **BI Tool Integration** - Tableau, PowerBI, and other enterprise BI platforms
+- Multi-channel access: Web UI, mobile-responsive dashboards, programmatic APIs
+
 ---
 
 ## 3. Business Value & ROI
