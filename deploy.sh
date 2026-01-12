@@ -267,14 +267,13 @@ if should_run_step "schema_sql"; then
     echo ""
     
     {
-        echo "USE ROLE ${ROLE};"
         echo "USE DATABASE ${DATABASE};"
         echo "USE WAREHOUSE ${WAREHOUSE};"
         echo ""
         echo "SET FULL_PREFIX = '${FULL_PREFIX}';"
         echo "SET PROJECT_ROLE = '${ROLE}';"
         echo ""
-        cat sql/02_schema_setup.sql
+        grep -v "^USE ROLE" sql/02_schema_setup.sql
     } | snow sql $SNOW_CONN -i
     
     if [ $? -eq 0 ]; then
@@ -302,14 +301,13 @@ if should_run_step "data_generation"; then
     echo ""
     
     {
-        echo "USE ROLE ${ROLE};"
         echo "USE DATABASE ${DATABASE};"
         echo "USE WAREHOUSE ${WAREHOUSE};"
         echo ""
         echo "SET FULL_PREFIX = '${FULL_PREFIX}';"
         echo "SET PROJECT_ROLE = '${ROLE}';"
         echo ""
-        cat sql/03_data_generation.sql
+        grep -v "^USE ROLE" sql/03_data_generation.sql
     } | snow sql $SNOW_CONN -i
     
     if [ $? -eq 0 ]; then
@@ -340,14 +338,13 @@ if should_run_step "data_generation"; then
     echo ""
     
     {
-        echo "USE ROLE ${ROLE};"
         echo "USE DATABASE ${DATABASE};"
         echo "USE WAREHOUSE ${WAREHOUSE};"
         echo ""
         echo "SET FULL_PREFIX = '${FULL_PREFIX}';"
         echo "SET PROJECT_ROLE = '${ROLE}';"
         echo ""
-        cat sql/03b_refresh_silver_gold.sql
+        grep -v "^USE ROLE" sql/03b_refresh_silver_gold.sql
     } | snow sql $SNOW_CONN -i
     
     if [ $? -eq 0 ]; then
@@ -374,14 +371,13 @@ if should_run_step "semantic_views"; then
     echo ""
     
     {
-        echo "USE ROLE ${ROLE};"
         echo "USE DATABASE ${DATABASE};"
         echo "USE WAREHOUSE ${WAREHOUSE};"
         echo ""
         echo "SET FULL_PREFIX = '${FULL_PREFIX}';"
         echo "SET PROJECT_ROLE = '${ROLE}';"
         echo ""
-        cat sql/04_semantic_views.sql
+        grep -v "^USE ROLE" sql/04_semantic_views.sql
     } | snow sql $SNOW_CONN -i
     
     if [ $? -eq 0 ]; then
@@ -412,7 +408,8 @@ if should_run_step "agents" && [ "$SKIP_AGENTS" = false ]; then
         echo "SET FULL_PREFIX = '${FULL_PREFIX}';"
         echo "SET PROJECT_ROLE = '${ROLE}';"
         echo ""
-        cat sql/05_intelligence_agents.sql
+        # Filter out USE ROLE statements to avoid session restriction issues
+        grep -v "^USE ROLE" sql/05_intelligence_agents.sql
     } | snow sql $SNOW_CONN -i
     
     if [ $? -eq 0 ]; then

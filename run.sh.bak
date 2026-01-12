@@ -165,7 +165,7 @@ cmd_status() {
     echo ""
     echo "Checking data volumes..."
     snow sql $SNOW_CONN -q "
-        -- USE ROLE ${ROLE}; -- Commented out for restricted sessions
+        USE ROLE ${ROLE};
         USE DATABASE ${DATABASE};
         USE WAREHOUSE ${WAREHOUSE};
         
@@ -247,7 +247,7 @@ cmd_validate() {
     echo ""
     echo "${CYAN}[1/5]${NC} Testing Bronze layer..."
     snow sql $SNOW_CONN -q "
-        -- USE ROLE ${ROLE}; -- Commented out for restricted sessions
+        USE ROLE ${ROLE};
         USE DATABASE ${DATABASE};
         USE WAREHOUSE ${WAREHOUSE};
         
@@ -278,7 +278,7 @@ cmd_validate() {
     echo ""
     echo "${CYAN}[2/5]${NC} Testing Silver layer enrichment..."
     snow sql $SNOW_CONN -q "
-        -- USE ROLE ${ROLE}; -- Commented out for restricted sessions
+        USE ROLE ${ROLE};
         USE DATABASE ${DATABASE};
         USE WAREHOUSE ${WAREHOUSE};
         
@@ -301,7 +301,7 @@ cmd_validate() {
     echo ""
     echo "${CYAN}[3/5]${NC} Testing Gold layer analytics..."
     snow sql $SNOW_CONN -q "
-        -- USE ROLE ${ROLE}; -- Commented out for restricted sessions
+        USE ROLE ${ROLE};
         USE DATABASE ${DATABASE};
         USE WAREHOUSE ${WAREHOUSE};
         
@@ -319,7 +319,7 @@ cmd_validate() {
     echo ""
     echo "${CYAN}[4/5]${NC} Testing ML scoring models..."
     snow sql $SNOW_CONN -q "
-        -- USE ROLE ${ROLE}; -- Commented out for restricted sessions
+        USE ROLE ${ROLE};
         USE DATABASE ${DATABASE};
         USE WAREHOUSE ${WAREHOUSE};
         
@@ -338,7 +338,7 @@ cmd_validate() {
     echo ""
     echo "${CYAN}[5/5]${NC} Testing Amenity Analytics..."
     snow sql $SNOW_CONN -q "
-        -- USE ROLE ${ROLE}; -- Commented out for restricted sessions
+        USE ROLE ${ROLE};
         USE DATABASE ${DATABASE};
         USE WAREHOUSE ${WAREHOUSE};
         
@@ -358,7 +358,7 @@ cmd_validate() {
     echo ""
     echo "${CYAN}[6/6]${NC} Checking Streamlit Dashboards..."
     STREAMLIT_COUNT=$(snow sql $SNOW_CONN -q "
-        -- USE ROLE ${ROLE}; -- Commented out for restricted sessions
+        USE ROLE ${ROLE};
         USE DATABASE ${DATABASE};
         SHOW STREAMLITS IN SCHEMA STREAMLIT;
     " --format CSV 2>/dev/null | tail -n +2 | wc -l | xargs)
@@ -367,7 +367,7 @@ cmd_validate() {
     if [ "$STREAMLIT_COUNT" -gt 0 ] 2>/dev/null; then
         echo -e "  ${GREEN}✓${NC} Found $STREAMLIT_COUNT Streamlit dashboard(s)"
         snow sql $SNOW_CONN -q "
-            -- USE ROLE ${ROLE}; -- Commented out for restricted sessions
+            USE ROLE ${ROLE};
             USE DATABASE ${DATABASE};
             SHOW STREAMLITS IN SCHEMA STREAMLIT;
         " --format TABLE 2>/dev/null || true
@@ -401,7 +401,7 @@ cmd_query() {
     echo "-------------------------------------------------------------------------"
     
     snow sql $SNOW_CONN -q "
-        -- USE ROLE ${ROLE}; -- Commented out for restricted sessions
+        USE ROLE ${ROLE};
         USE DATABASE ${DATABASE};
         USE WAREHOUSE ${WAREHOUSE};
         
@@ -435,7 +435,7 @@ cmd_test_agents() {
     echo "Checking deployed agents in ${DATABASE}.GOLD schema:"
     echo ""
     snow sql $SNOW_CONN -q "
-        -- USE ROLE ${ROLE}; -- Commented out for restricted sessions
+        USE ROLE ${ROLE};
         USE DATABASE ${DATABASE};
         SHOW AGENTS IN SCHEMA GOLD;
     " --format TABLE || echo -e "${YELLOW}Could not list agents - they may not be deployed${NC}"
