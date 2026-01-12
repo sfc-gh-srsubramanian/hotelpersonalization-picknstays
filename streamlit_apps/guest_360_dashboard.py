@@ -231,7 +231,7 @@ with tab3:
     # Guest selector
     if not filtered_df.empty:
         guest_options = filtered_df.apply(
-            lambda row: f"{row['FIRST_NAME']} {row['LAST_NAME']} ({row['LOYALTY_TIER']}) - ${row['TOTAL_REVENUE']:,.0f}",
+            lambda row: f"{row['FIRST_NAME']} {row['LAST_NAME']} ({row['LOYALTY_TIER']}) - {format_currency(row['TOTAL_REVENUE'])}",
             axis=1
         )
         

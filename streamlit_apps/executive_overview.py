@@ -159,7 +159,12 @@ with tab2:
             'LOYALTY_POINTS': 'mean'
         }).round(2)
         segment_matrix.columns = ['Guest Count', 'Total Revenue', 'Avg Revenue', 'Avg Bookings', 'Avg Satisfaction', 'Avg Loyalty Points']
-        st.dataframe(segment_matrix, use_container_width=True)
+        segment_matrix_display = segment_matrix.copy()
+        segment_matrix_display['Guest Count'] = segment_matrix_display['Guest Count'].apply(format_number)
+        segment_matrix_display['Total Revenue'] = segment_matrix_display['Total Revenue'].apply(format_currency)
+        segment_matrix_display['Avg Revenue'] = segment_matrix_display['Avg Revenue'].apply(format_currency)
+        segment_matrix_display['Avg Loyalty Points'] = segment_matrix_display['Avg Loyalty Points'].apply(format_number)
+        st.dataframe(segment_matrix_display, use_container_width=True)
         
         # Loyalty tier distribution
         if 'LOYALTY_TIER' in guests_df.columns:
@@ -258,7 +263,8 @@ with tab4:
             st.markdown("### 🥇 Top 10 Revenue-Generating Guests")
             top_revenue = guests_df.nlargest(10, 'TOTAL_REVENUE')[[
                 'FIRST_NAME', 'LAST_NAME', 'LOYALTY_TIER', 'TOTAL_REVENUE', 'TOTAL_BOOKINGS'
-            ]]
+            ]].copy()
+            top_revenue['TOTAL_REVENUE'] = top_revenue['TOTAL_REVENUE'].apply(format_currency)
             st.dataframe(top_revenue, use_container_width=True)
         
         with col2:
@@ -267,7 +273,8 @@ with tab4:
             if 'TOTAL_BOOKINGS' in guests_df.columns:
                 top_loyal = guests_df.nlargest(10, 'TOTAL_BOOKINGS')[[
                     'FIRST_NAME', 'LAST_NAME', 'LOYALTY_TIER', 'TOTAL_BOOKINGS', 'TOTAL_REVENUE'
-                ]]
+                ]].copy()
+                top_loyal['TOTAL_REVENUE'] = top_loyal['TOTAL_REVENUE'].apply(format_currency)
                 st.dataframe(top_loyal, use_container_width=True)
         
         # VIP guests summary

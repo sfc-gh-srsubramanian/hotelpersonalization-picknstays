@@ -92,8 +92,9 @@ with tab1:
             top_services = spending_df.groupby('AMENITY_TYPE')['AMOUNT'].sum().reset_index()
             top_services.columns = ['Service', 'Revenue']
             top_services = top_services.sort_values('Revenue', ascending=False).head(10)
-            
-            st.dataframe(top_services, use_container_width=True)
+            top_services_display = top_services.copy()
+            top_services_display['Revenue'] = top_services_display['Revenue'].apply(format_currency)
+            st.dataframe(top_services_display, use_container_width=True)
     else:
         st.info("Detailed amenity spending data not available")
 
@@ -181,7 +182,16 @@ with tab4:
         ]]
         
         if display_cols:
-            st.dataframe(amenity_df[display_cols], use_container_width=True)
+            amenity_display = amenity_df[display_cols].copy()
+            if 'TOTAL_REVENUE' in amenity_display.columns:
+                amenity_display['TOTAL_REVENUE'] = amenity_display['TOTAL_REVENUE'].apply(format_currency)
+            if 'AVG_TRANSACTION_VALUE' in amenity_display.columns:
+                amenity_display['AVG_TRANSACTION_VALUE'] = amenity_display['AVG_TRANSACTION_VALUE'].apply(format_currency)
+            if 'TOTAL_TRANSACTIONS' in amenity_display.columns:
+                amenity_display['TOTAL_TRANSACTIONS'] = amenity_display['TOTAL_TRANSACTIONS'].apply(format_number)
+            if 'UNIQUE_GUESTS' in amenity_display.columns:
+                amenity_display['UNIQUE_GUESTS'] = amenity_display['UNIQUE_GUESTS'].apply(format_number)
+            st.dataframe(amenity_display, use_container_width=True)
         else:
             st.dataframe(amenity_df, use_container_width=True)
         

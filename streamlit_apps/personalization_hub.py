@@ -108,7 +108,9 @@ with tab1:
     if not priority_guests.empty:
         display_cols = ['FIRST_NAME', 'LAST_NAME', 'LOYALTY_TIER', 'CUSTOMER_SEGMENT', 
                        'UPSELL_PROPENSITY_SCORE', 'TOTAL_REVENUE']
-        st.dataframe(priority_guests[display_cols].head(20), use_container_width=True)
+        priority_display = priority_guests[display_cols].head(20).copy()
+        priority_display['TOTAL_REVENUE'] = priority_display['TOTAL_REVENUE'].apply(format_currency)
+        st.dataframe(priority_display, use_container_width=True)
         
         # Download button
         csv = priority_guests.to_csv(index=False)
@@ -203,7 +205,10 @@ with tab3:
         'LOYALTY_PROPENSITY_SCORE': 'mean'
     }).round(2)
     segment_metrics.columns = ['Guest Count', 'Total Revenue', 'Avg Upsell Score', 'Avg Personalization', 'Avg Loyalty']
-    st.dataframe(segment_metrics, use_container_width=True)
+    segment_metrics_display = segment_metrics.copy()
+    segment_metrics_display['Total Revenue'] = segment_metrics_display['Total Revenue'].apply(format_currency)
+    segment_metrics_display['Guest Count'] = segment_metrics_display['Guest Count'].apply(format_number)
+    st.dataframe(segment_metrics_display, use_container_width=True)
 
 with tab4:
     st.markdown("## ⚠️ Churn Risk Management")
@@ -235,7 +240,9 @@ with tab4:
     if not high_risk.empty:
         display_cols = ['FIRST_NAME', 'LAST_NAME', 'LOYALTY_TIER', 'TOTAL_REVENUE',
                        'PERSONALIZATION_READINESS_SCORE', 'LOYALTY_PROPENSITY_SCORE']
-        st.dataframe(high_risk[display_cols].head(20), use_container_width=True)
+        high_risk_display = high_risk[display_cols].head(20).copy()
+        high_risk_display['TOTAL_REVENUE'] = high_risk_display['TOTAL_REVENUE'].apply(format_currency)
+        st.dataframe(high_risk_display, use_container_width=True)
         
         # Download
         csv = high_risk.to_csv(index=False)

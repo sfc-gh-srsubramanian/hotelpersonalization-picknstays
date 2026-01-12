@@ -146,7 +146,11 @@ with tab2:
                 'TOTAL_AMOUNT': ['sum', 'mean']
             }).round(2)
             channel_metrics.columns = ['Total Bookings', 'Total Revenue', 'Avg Booking Value']
-            st.dataframe(channel_metrics, use_container_width=True)
+            channel_metrics_display = channel_metrics.copy()
+            channel_metrics_display['Total Bookings'] = channel_metrics_display['Total Bookings'].apply(format_number)
+            channel_metrics_display['Total Revenue'] = channel_metrics_display['Total Revenue'].apply(format_currency)
+            channel_metrics_display['Avg Booking Value'] = channel_metrics_display['Avg Booking Value'].apply(format_currency)
+            st.dataframe(channel_metrics_display, use_container_width=True)
 
 with tab3:
     st.markdown("## 👥 Customer Segment Performance")
@@ -182,7 +186,11 @@ with tab3:
             'AVG_AMENITY_SATISFACTION': 'mean'
         }).round(2)
         segment_metrics.columns = ['Guest Count', 'Total Revenue', 'Avg Revenue/Guest', 'Avg Bookings', 'Avg Satisfaction']
-        st.dataframe(segment_metrics, use_container_width=True)
+        segment_metrics_display = segment_metrics.copy()
+        segment_metrics_display['Guest Count'] = segment_metrics_display['Guest Count'].apply(format_number)
+        segment_metrics_display['Total Revenue'] = segment_metrics_display['Total Revenue'].apply(format_currency)
+        segment_metrics_display['Avg Revenue/Guest'] = segment_metrics_display['Avg Revenue/Guest'].apply(format_currency)
+        st.dataframe(segment_metrics_display, use_container_width=True)
 
 with tab4:
     st.markdown("## 📈 Revenue Trends")
