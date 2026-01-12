@@ -1,56 +1,17 @@
 definition_version: 2
 entities:
-  guest_360_dashboard:
+  hotel_personalization_app:
     type: streamlit
-    title: "Guest 360 Dashboard"
+    title: "Hotel Personalization - PickNStays"
     query_warehouse: HOTEL_PERSONALIZATION_WH
-    main_file: guest_360_dashboard.py
+    main_file: hotel_personalization_app.py
     stage: streamlit
     artifacts:
-      - guest_360_dashboard.py
-      - shared/
-      - environment.yml
-
-  personalization_hub:
-    type: streamlit
-    title: "Personalization Hub"
-    query_warehouse: HOTEL_PERSONALIZATION_WH
-    main_file: personalization_hub.py
-    stage: streamlit
-    artifacts:
-      - personalization_hub.py
-      - shared/
-      - environment.yml
-
-  amenity_performance:
-    type: streamlit
-    title: "Amenity Performance Dashboard"
-    query_warehouse: HOTEL_PERSONALIZATION_WH
-    main_file: amenity_performance.py
-    stage: streamlit
-    artifacts:
-      - amenity_performance.py
-      - shared/
-      - environment.yml
-
-  revenue_analytics:
-    type: streamlit
-    title: "Revenue Analytics Dashboard"
-    query_warehouse: HOTEL_PERSONALIZATION_WH
-    main_file: revenue_analytics.py
-    stage: streamlit
-    artifacts:
-      - revenue_analytics.py
-      - shared/
-      - environment.yml
-
-  executive_overview:
-    type: streamlit
-    title: "Executive Overview Dashboard"
-    query_warehouse: HOTEL_PERSONALIZATION_WH
-    main_file: executive_overview.py
-    stage: streamlit
-    artifacts:
+      - hotel_personalization_app.py
       - executive_overview.py
+      - guest_360_dashboard.py
+      - personalization_hub.py
+      - amenity_performance.py
+      - revenue_analytics.py
       - shared/
       - environment.yml
