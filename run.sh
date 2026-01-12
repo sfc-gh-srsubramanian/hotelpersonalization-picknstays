@@ -389,7 +389,7 @@ cmd_validate() {
             amenity_category,
             COUNT(*) AS record_count,
             SUM(total_revenue) AS revenue,
-            ROUND(AVG(overall_satisfaction), 2) AS satisfaction
+            ROUND(AVG(avg_satisfaction), 2) AS satisfaction
         FROM GOLD.AMENITY_ANALYTICS
         GROUP BY service_group, amenity_category
         ORDER BY revenue DESC NULLS LAST
