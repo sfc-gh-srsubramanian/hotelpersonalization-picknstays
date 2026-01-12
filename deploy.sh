@@ -26,6 +26,7 @@ CONNECTION_NAME="demo"
 ENV_PREFIX=""
 ONLY_COMPONENT=""
 SKIP_AGENTS=false
+SKIP_DASHBOARDS=false
 
 # Project settings
 PROJECT_PREFIX="HOTEL_PERSONALIZATION"
@@ -64,10 +65,12 @@ Options:
   -c, --connection NAME    Snowflake CLI connection name (default: demo)
   -p, --prefix PREFIX      Environment prefix for resources (e.g., DEV, PROD)
   --skip-agents            Skip Intelligence Agents creation
+  --skip-dashboards        Skip Streamlit Dashboard deployment
   --only-sql               Deploy only SQL infrastructure
   --only-data              Deploy only data generation
   --only-semantic          Deploy only semantic views
   --only-agents            Deploy only intelligence agents
+  --only-dashboards        Deploy only Streamlit dashboard
   -h, --help               Show this help message
 
 Examples:
@@ -76,6 +79,7 @@ Examples:
   $0 --prefix DEV          # Deploy with DEV_ prefix
   $0 --skip-agents         # Deploy without agents
   $0 --only-agents         # Redeploy only agents
+  $0 --only-dashboards     # Redeploy only Streamlit dashboard
 EOF
     exit 0
 }
@@ -96,6 +100,11 @@ while [[ $# -gt 0 ]]; do
             ;;
         --skip-agents)
             SKIP_AGENTS=true
+            SKIP_DASHBOARDS=true  # Agents and dashboards are linked
+            shift
+            ;;
+        --skip-dashboards)
+            SKIP_DASHBOARDS=true
             shift
             ;;
         --only-sql)
@@ -112,6 +121,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         --only-agents)
             ONLY_COMPONENT="agents"
+            shift
+            ;;
+        --only-dashboards)
+            ONLY_COMPONENT="dashboards"
             shift
             ;;
         *)
@@ -153,6 +166,9 @@ should_run_step() {
             ;;
         agents)
             [[ "$step_name" == "agents" ]]
+            ;;
+        dashboards)
+            [[ "$step_name" == "dashboards" ]]
             ;;
         *)
             return 1
@@ -438,58 +454,81 @@ else
 fi
 
 ###############################################################################
-# Step 7: Deploy Streamlit Dashboards (Optional)
+# Step 7: Deploy Streamlit Dashboard (Optional)
 ###############################################################################
 if should_run_step "dashboards" && [ "$SKIP_DASHBOARDS" = false ]; then
-    echo "Step 7: Deploying Streamlit Dashboards..."
+    echo "Step 7: Deploying Streamlit Dashboard..."
     echo "-------------------------------------------------------------------------"
-    echo "Creating interactive business intelligence dashboards"
+    echo "Creating consolidated 'Hotel Personalization - Pic'N Stays' dashboard"
     echo ""
     
-    # Upload Streamlit files to stage
-    echo "Uploading dashboard files to stage..."
-    snow sql $SNOW_CONN -q "
-        USE DATABASE ${FULL_PREFIX};
-        USE SCHEMA STREAMLIT;
-        CREATE STAGE IF NOT EXISTS STAGE;
-        
-        -- Upload Python files
-        PUT file://$(pwd)/streamlit_apps/*.py @STAGE AUTO_COMPRESS=FALSE OVERWRITE=TRUE;
-        PUT file://$(pwd)/streamlit_apps/shared/*.py @STAGE/shared/ AUTO_COMPRESS=FALSE OVERWRITE=TRUE;
-        PUT file://$(pwd)/streamlit_apps/environment.yml @STAGE AUTO_COMPRESS=FALSE OVERWRITE=TRUE;
-        
-        LIST @STAGE;
-    " 2>&1 | grep -E "(uploaded|STAGE)" || echo "Files uploaded"
+    # Update snowflake.yml with correct warehouse name
+    echo "Configuring Streamlit app..."
+    cd streamlit_apps
     
+    # Create a temporary snowflake.yml with the correct warehouse
+    cat > snowflake.yml << EOF
+definition_version: 2
+entities:
+  hotel_personalization_app:
+    type: streamlit
+    title: "Hotel Personalization - PickNStays"
+    query_warehouse: ${FULL_PREFIX}_WH
+    main_file: hotel_personalization_app.py
+    stage: streamlit
+    artifacts:
+      - hotel_personalization_app.py
+      - executive_overview.py
+      - guest_360_dashboard.py
+      - personalization_hub.py
+      - amenity_performance.py
+      - revenue_analytics.py
+      - shared/
+      - environment.yml
+EOF
+    
+    echo "Deploying Streamlit app to ${FULL_PREFIX}.GOLD schema..."
     echo ""
-    echo "Creating Streamlit applications..."
     
-    # Run SQL to create Streamlit apps
-    {
-        echo "USE DATABASE ${FULL_PREFIX};"
-        echo "SET FULL_PREFIX = '${FULL_PREFIX}';"
-        echo ""
-        grep -v "^USE ROLE" sql/06_streamlit_dashboards.sql
-    } | snow sql $SNOW_CONN -i
+    # Deploy using snow streamlit deploy
+    snow streamlit deploy $SNOW_CONN \
+        --database "${FULL_PREFIX}" \
+        --schema "GOLD" \
+        --replace 2>&1 | tee /tmp/streamlit_deploy.log
     
-    if [ $? -eq 0 ]; then
+    STREAMLIT_EXIT=$?
+    cd ..
+    
+    if [ $STREAMLIT_EXIT -eq 0 ]; then
         echo ""
-        echo -e "${GREEN}✓${NC} Streamlit Dashboards deployed"
-        echo "  • Guest 360 Dashboard"
-        echo "  • Personalization Hub"
-        echo "  • Amenity Performance"
-        echo "  • Revenue Analytics"
-        echo "  • Executive Overview"
+        echo -e "${GREEN}✓${NC} Streamlit Dashboard deployed successfully"
         echo ""
-        echo "📊 Access dashboards in Snowsight → Streamlit section"
+        echo "  📱 Application: Hotel Personalization - Pic'N Stays"
+        echo "  📍 Location: ${FULL_PREFIX}.GOLD.HOTEL_PERSONALIZATION_APP"
+        echo ""
+        echo "  📊 Dashboard Pages:"
+        echo "     1. Guest 360 Dashboard - Comprehensive guest profiles"
+        echo "     2. Personalization Hub - Upsell & revenue optimization"
+        echo "     3. Amenity Performance - Service analytics"
+        echo "     4. Revenue Analytics - Financial performance"
+        echo "     5. Executive Overview - Strategic KPIs"
+        echo ""
+        echo "  🔗 Access: Snowsight → Projects → Streamlit"
+        echo "     https://app.snowflake.com → ${FULL_PREFIX}.GOLD → 'Hotel Personalization - Pic'N Stays'"
+        echo ""
     else
-        echo -e "${YELLOW}[WARNING]${NC} Streamlit Dashboards deployment had issues"
-        echo "Check the logs above for details"
+        echo ""
+        echo -e "${YELLOW}[WARNING]${NC} Streamlit Dashboard deployment had issues"
+        echo "Check /tmp/streamlit_deploy.log for details"
+        echo ""
+        echo "To deploy manually, run:"
+        echo "  cd streamlit_apps"
+        echo "  snow streamlit deploy $SNOW_CONN --database ${FULL_PREFIX} --schema GOLD --replace"
     fi
     echo ""
 else
-    if [ "$SKIP_AGENTS" = true ]; then
-        echo "Step 7: Skipped (--skip-agents also skips dashboards)"
+    if [ "$SKIP_DASHBOARDS" = true ]; then
+        echo "Step 7: Skipped (--skip-dashboards flag)"
     else
         echo "Step 7: Skipped (--only-$ONLY_COMPONENT)"
     fi
@@ -513,6 +552,17 @@ echo "  1. Explore data: ./run.sh query 'SELECT * FROM GOLD.GUEST_360_VIEW_ENHAN
 echo "  2. Run validation: ./run.sh validate"
 if [ "$SKIP_AGENTS" = false ]; then
     echo "  3. Test agents: ./run.sh test-agents"
+fi
+if [ "$SKIP_DASHBOARDS" = false ]; then
+    echo "  4. Check Streamlit: ./run.sh streamlit"
+fi
+echo ""
+echo "Access the platform:"
+if [ "$SKIP_DASHBOARDS" = false ]; then
+    echo "  • Streamlit Dashboard: Snowsight → Projects → Streamlit → 'Hotel Personalization - Pic'N Stays'"
+fi
+if [ "$SKIP_AGENTS" = false ]; then
+    echo "  • Intelligence Agents: Snowsight → Snowflake Intelligence → Select an agent"
 fi
 echo ""
 echo "Query the platform:"
