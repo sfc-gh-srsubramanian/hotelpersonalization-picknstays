@@ -14,16 +14,32 @@ def create_kpi_card(label, value, delta=None, delta_color="normal"):
         st.metric(label=label, value=value)
 
 def format_currency(value):
-    """Format value as currency"""
-    if pd.isna(value):
+    """Format value as currency with K/M/B suffixes"""
+    if pd.isna(value) or value == 0:
         return "$0"
-    return f"${value:,.2f}"
+    
+    if abs(value) >= 1_000_000_000:
+        return f"${value/1_000_000_000:.2f}B"
+    elif abs(value) >= 1_000_000:
+        return f"${value/1_000_000:.2f}M"
+    elif abs(value) >= 1_000:
+        return f"${value/1_000:.2f}K"
+    else:
+        return f"${value:.2f}"
 
 def format_number(value):
-    """Format value as number"""
-    if pd.isna(value):
+    """Format value as number with K/M/B suffixes"""
+    if pd.isna(value) or value == 0:
         return "0"
-    return f"{value:,.0f}"
+    
+    if abs(value) >= 1_000_000_000:
+        return f"{value/1_000_000_000:.2f}B"
+    elif abs(value) >= 1_000_000:
+        return f"{value/1_000_000:.2f}M"
+    elif abs(value) >= 1_000:
+        return f"{value/1_000:.2f}K"
+    else:
+        return f"{value:,.0f}"
 
 def format_percentage(value):
     """Format value as percentage"""

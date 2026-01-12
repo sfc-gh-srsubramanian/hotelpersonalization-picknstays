@@ -142,17 +142,17 @@ with tab1:
     
     # Format display dataframe
     formatted_df = display_df[display_columns].copy()
-    formatted_df['TOTAL_REVENUE'] = formatted_df['TOTAL_REVENUE'].apply(lambda x: f"${x:,.2f}")
-    formatted_df['AVG_BOOKING_VALUE'] = formatted_df['AVG_BOOKING_VALUE'].apply(lambda x: f"${x:,.2f}")
-    formatted_df['TOTAL_AMENITY_SPEND'] = formatted_df['TOTAL_AMENITY_SPEND'].apply(lambda x: f"${x:,.2f}")
+    formatted_df['TOTAL_REVENUE'] = formatted_df['TOTAL_REVENUE'].apply(format_currency)
+    formatted_df['AVG_BOOKING_VALUE'] = formatted_df['AVG_BOOKING_VALUE'].apply(format_currency)
+    formatted_df['TOTAL_AMENITY_SPEND'] = formatted_df['TOTAL_AMENITY_SPEND'].apply(format_currency)
+    formatted_df['LOYALTY_POINTS'] = formatted_df['LOYALTY_POINTS'].apply(format_number)
     formatted_df['AVG_AMENITY_SATISFACTION'] = formatted_df['AVG_AMENITY_SATISFACTION'].apply(lambda x: f"{x:.1f}/5.0")
     
     # Display as interactive table
     st.dataframe(
-        formatted_df,
+        formatted_df.reset_index(drop=True),
         use_container_width=True,
-        height=600,
-        hide_index=True
+        height=600
     )
     
     # Download button
@@ -221,9 +221,9 @@ with tab2:
         ['FIRST_NAME', 'LAST_NAME', 'LOYALTY_TIER', 'TOTAL_REVENUE', 'TOTAL_BOOKINGS', 'AVG_AMENITY_SATISFACTION']
     ]
     top_guests_display = top_guests.copy()
-    top_guests_display['TOTAL_REVENUE'] = top_guests_display['TOTAL_REVENUE'].apply(lambda x: f"${x:,.2f}")
+    top_guests_display['TOTAL_REVENUE'] = top_guests_display['TOTAL_REVENUE'].apply(format_currency)
     top_guests_display['AVG_AMENITY_SATISFACTION'] = top_guests_display['AVG_AMENITY_SATISFACTION'].apply(lambda x: f"{x:.1f}/5.0")
-    st.dataframe(top_guests_display, use_container_width=True, hide_index=True)
+    st.dataframe(top_guests_display.reset_index(drop=True), use_container_width=True)
 
 with tab3:
     st.markdown("#### Individual Guest Profile")
