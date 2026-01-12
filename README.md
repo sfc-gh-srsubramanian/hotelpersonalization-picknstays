@@ -64,6 +64,7 @@ snow connection add demo
 - ✅ 3,500+ amenity transactions and 8,000+ usage records
 - ✅ 3 semantic views for natural language querying
 - ✅ 5 Snowflake Intelligence Agents with granular RBAC
+- ✅ **1 Streamlit Dashboard Application** with 5 interactive pages
 
 **Step 2: Validate the Deployment**
 ```bash
@@ -423,6 +424,169 @@ All agents are deployed in the **GOLD schema** and use **"auto" orchestration** 
 - **Expertise**: Strategic business analysis, executive insights, comprehensive KPIs
 - **Sample Questions** (15+): Strategic analysis, ROI, portfolio optimization, competitive insights
 
+### **📱 Interactive Streamlit Dashboard Application**
+
+**"Hotel Personalization - Pic'N Stays"** - A consolidated enterprise dashboard deployed to the GOLD schema with 5 interactive pages for comprehensive business intelligence.
+
+#### **Application Details**
+- **Location**: `HOTEL_PERSONALIZATION.GOLD.HOTEL_PERSONALIZATION_APP`
+- **Title**: Hotel Personalization - Pic'N Stays
+- **Technology**: Streamlit in Snowflake (native Snowpark integration)
+- **Data Access**: Real-time queries to GOLD layer tables
+- **Warehouse**: `HOTEL_PERSONALIZATION_WH` (auto-resume/suspend)
+
+#### **📊 Dashboard Pages**
+
+##### **1. Guest 360 Dashboard** 🎯
+**Purpose**: Comprehensive guest profile and journey visualization
+
+**Features**:
+- **Guest Table**: Interactive table with all guests, filterable by loyalty tier, customer segment, churn risk, revenue range
+- **Analytics View**: 
+  - Loyalty tier distribution (pie chart)
+  - Customer segment analysis (bar chart)
+  - Churn risk distribution (pie chart)
+  - Revenue by segment breakdown
+- **Individual Profile**: Deep-dive into any guest with:
+  - Complete demographics and contact information
+  - Loyalty status and points balance
+  - Booking history and spending patterns
+  - Amenity usage across all categories
+  - Infrastructure engagement (WiFi, Smart TV, Pool)
+  - Tech adoption profile and engagement scores
+
+**Access**: Guest Analysts, Experience Analysts, Admins
+
+##### **2. Personalization Hub** 🚀
+**Purpose**: AI-powered upsell and revenue optimization
+
+**Features**:
+- **Opportunity Matrix**: Scatter plot of guest value vs upsell propensity
+  - Size = Personalization readiness score
+  - Color = Customer segment
+  - Interactive selection of high-priority targets
+- **Propensity Analysis**:
+  - Average propensity scores by category (Spa, Dining, Tech, Pool)
+  - Distribution histograms for each upsell category
+  - High-propensity guest counts by threshold
+- **Segmentation**: 
+  - Guest distribution by segment and loyalty tier
+  - Segment performance metrics (revenue, upsell scores, loyalty)
+- **Churn Management**:
+  - Churn risk distribution and revenue at risk
+  - High-risk guest list for immediate action
+  - Downloadable CSV export for CRM integration
+
+**Access**: Revenue Analysts, Admins
+
+##### **3. Amenity Performance** 🏊
+**Purpose**: Service and infrastructure performance analytics
+
+**Features**:
+- **Revenue Analysis**:
+  - Revenue by amenity category (bar chart)
+  - Top 10 revenue-generating services
+  - Category-level performance comparison
+- **Satisfaction Metrics**:
+  - Average satisfaction by category (5-point scale)
+  - Satisfaction rate by category (percentage)
+  - Service quality benchmarking
+- **Infrastructure Usage**:
+  - Total sessions by usage group (WiFi, Smart TV, Pool)
+  - Average session duration analysis
+  - Usage trends and engagement patterns
+- **Performance Scorecards**:
+  - Overall amenity performance table
+  - Top performers with revenue and satisfaction
+  - Areas for improvement with action recommendations
+
+**Access**: Experience Analysts, Admins
+
+##### **4. Revenue Analytics** 💰
+**Purpose**: Financial performance and optimization
+
+**Features**:
+- **Revenue Mix**:
+  - Rooms vs Amenities breakdown (pie chart)
+  - Amenity revenue by category (bar chart)
+  - Revenue per guest metrics (LTV, booking value, amenity spend)
+- **Booking Analytics**:
+  - Revenue by booking channel (bar chart)
+  - Bookings by lead time category
+  - Channel performance metrics table
+- **Segment Performance**:
+  - Revenue by customer segment (bar chart)
+  - Guest count by segment distribution
+  - Segment profitability analysis with key metrics
+- **Revenue Trends**: Time-series analysis for strategic planning
+
+**Access**: Revenue Analysts, Admins
+
+##### **5. Executive Overview** 📊
+**Purpose**: Strategic KPIs and business health scorecard
+
+**Features**:
+- **Business Health Scorecard**: 6 key metrics
+  - Total Guests
+  - Total Revenue
+  - Average Satisfaction
+  - Loyalty Rate
+  - Repeat Rate
+  - High Churn Risk %
+- **Strategic Metrics**:
+  - Customer Lifetime Value distribution
+  - High-value guest identification
+  - Revenue concentration analysis
+- **Segment Performance**: Strategic segment analysis
+- **AI Insights**: ML-powered recommendations and alerts
+- **Top Performers**: Revenue and satisfaction leaders
+
+**Access**: Admins, Revenue Analysts
+
+#### **🎨 Dashboard Features**
+
+**User Experience**:
+- ✅ **Modern UI** with Plotly visualizations
+- ✅ **Interactive Filtering** across all pages
+- ✅ **Real-time Data** from Snowflake GOLD layer
+- ✅ **Responsive Design** for desktop and tablet
+- ✅ **Export Capabilities** (CSV download for lists)
+- ✅ **Smart Formatting** (K/M/B suffixes for large numbers)
+- ✅ **Color-coded KPIs** for quick insights
+
+**Performance**:
+- ✅ **Cached Queries** (5-minute TTL for optimal performance)
+- ✅ **Efficient Data Loading** via Snowpark sessions
+- ✅ **Modular Architecture** with shared components
+- ✅ **Optimized Aggregations** from pre-computed GOLD tables
+
+**Access & Security**:
+- ✅ **Snowsight Integration** - Access via Projects → Streamlit
+- ✅ **Role-Based Access** - Leverages Snowflake RBAC
+- ✅ **Session Management** - Automatic authentication via active session
+- ✅ **Audit Logging** - All queries tracked in Snowflake query history
+
+#### **📍 How to Access the Dashboard**
+
+**Via Snowsight UI**:
+1. Log in to Snowsight: `https://app.snowflake.com`
+2. Navigate to: **Projects** → **Streamlit**
+3. Select: `HOTEL_PERSONALIZATION.GOLD` → **"Hotel Personalization - Pic'N Stays"**
+
+**Direct URL Pattern**:
+```
+https://app.snowflake.com/[your-account-locator]/#/streamlit-apps/HOTEL_PERSONALIZATION.GOLD.HOTEL_PERSONALIZATION_APP
+```
+
+**Via CLI**:
+```bash
+# Check dashboard status and get access info
+./run.sh streamlit
+
+# Redeploy dashboard
+./deploy.sh --only-dashboards
+```
+
 ### **🔐 Security & Governance**
 
 #### **Role-Based Access Control**
@@ -465,11 +629,18 @@ All agents are deployed in the **GOLD schema** and use **"auto" orchestration** 
 - **Loyalty Program Optimization** for retention with amenity engagement scoring
 - **Service Quality Monitoring** across spa, dining, bar, and room service operations
 
-### **4. 📊 Business Intelligence**
-- **Real-time Dashboards** for operational insights
-- **Executive Reporting** with strategic KPIs
-- **Performance Benchmarking** across properties
-- **Predictive Analytics** for demand forecasting
+### **4. 📊 Business Intelligence & Visualization**
+- **Interactive Streamlit Dashboard** - "Hotel Personalization - Pic'N Stays" with 5 pages:
+  - Guest 360 Dashboard (comprehensive profiles & analytics)
+  - Personalization Hub (upsell opportunities & AI insights)
+  - Amenity Performance (service analytics & infrastructure)
+  - Revenue Analytics (financial performance & optimization)
+  - Executive Overview (strategic KPIs & business health)
+- **Real-time Data Visualization** with Plotly charts and KPIs
+- **Role-Based Dashboard Access** for different user personas
+- **Executive Reporting** with strategic KPIs and exportable insights
+- **Performance Benchmarking** across properties and segments
+- **Predictive Analytics** integrated with ML scoring models
 
 ### **5. 🎪 NEW: Amenity Intelligence**
 - **Service Performance Analytics** across spa, dining, bar, and room service
