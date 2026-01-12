@@ -259,52 +259,70 @@ with tab4:
         
         if not guests_df.empty and 'TOTAL_BOOKINGS' in guests_df.columns and 'TOTAL_REVENUE' in guests_df.columns:
             # Filter out guests with 0 bookings and aggregate
-            frequency_analysis = guests_df[guests_df['TOTAL_BOOKINGS'] > 0].groupby('TOTAL_BOOKINGS').agg({
-                'GUEST_ID': 'count',
-                'TOTAL_REVENUE': 'mean',
-                'AVG_BOOKING_VALUE': 'mean'
-            }).reset_index()
-            frequency_analysis.columns = ['Booking Count', 'Guests', 'Avg Total Revenue', 'Avg Booking Value']
+            frequency_data = guests_df[guests_df['TOTAL_BOOKINGS'] > 0].copy()
             
-            # Limit to reasonable range for visualization
-            frequency_analysis = frequency_analysis[frequency_analysis['Booking Count'] <= 20]
-            
-            if not frequency_analysis.empty:
-                # Create bar chart instead of scatter for better visualization
-                fig = go.Figure()
-                fig.add_trace(go.Bar(
-                    x=frequency_analysis['Booking Count'],
-                    y=frequency_analysis['Avg Total Revenue'],
-                    name='Avg Total Revenue',
-                    marker_color='royalblue',
-                    text=frequency_analysis['Avg Total Revenue'].apply(lambda x: format_currency(x)),
-                    textposition='outside',
-                    hovertemplate='<b>Bookings:</b> %{x}<br>' +
-                                  '<b>Avg Revenue:</b> %{text}<br>' +
-                                  '<b>Guests:</b> %{customdata}<extra></extra>',
-                    customdata=frequency_analysis['Guests']
-                ))
-                fig.update_layout(
-                    title='Average Guest Revenue by Booking Frequency',
-                    xaxis_title='Number of Bookings',
-                    yaxis_title='Average Total Revenue ($)',
-                    height=400,
-                    showlegend=False,
-                    xaxis=dict(type='category')  # Treat as categories for cleaner display
-                )
-                st.plotly_chart(fig, use_container_width=True)
+            if not frequency_data.empty:
+                frequency_analysis = frequency_data.groupby('TOTAL_BOOKINGS').agg({
+                    'GUEST_ID': 'count',
+                    'TOTAL_REVENUE': 'mean',
+                    'AVG_BOOKING_VALUE': 'mean'
+                }).reset_index()
+                frequency_analysis.columns = ['Booking Count', 'Guests', 'Avg Total Revenue', 'Avg Booking Value']
                 
-                # Show summary table
-                with st.expander("📊 View Detailed Frequency Data"):
-                    freq_display = frequency_analysis.copy()
-                    freq_display['Guests'] = freq_display['Guests'].apply(format_number)
-                    freq_display['Avg Total Revenue'] = freq_display['Avg Total Revenue'].apply(format_currency)
-                    freq_display['Avg Booking Value'] = freq_display['Avg Booking Value'].apply(format_currency)
-                    st.dataframe(freq_display, use_container_width=True)
+                # Limit to reasonable range for visualization (but keep at least some data)
+                max_bookings = min(20, frequency_analysis['Booking Count'].max())
+                frequency_analysis = frequency_analysis[frequency_analysis['Booking Count'] <= max_bookings]
+                
+                if not frequency_analysis.empty and len(frequency_analysis) > 0:
+                    # Create bar chart instead of scatter for better visualization
+                    fig = go.Figure()
+                    fig.add_trace(go.Bar(
+                        x=frequency_analysis['Booking Count'],
+                        y=frequency_analysis['Avg Total Revenue'],
+                        name='Avg Total Revenue',
+                        marker_color='royalblue',
+                        text=frequency_analysis['Avg Total Revenue'].apply(lambda x: format_currency(x)),
+                        textposition='outside',
+                        hovertemplate='<b>Bookings:</b> %{x}<br>' +
+                                      '<b>Avg Revenue:</b> %{text}<br>' +
+                                      '<b>Guests:</b> %{customdata}<extra></extra>',
+                        customdata=frequency_analysis['Guests']
+                    ))
+                    fig.update_layout(
+                        title='Average Guest Revenue by Booking Frequency',
+                        xaxis_title='Number of Bookings',
+                        yaxis_title='Average Total Revenue ($)',
+                        height=400,
+                        showlegend=False,
+                        xaxis=dict(
+                            type='linear',
+                            dtick=1,  # Show every booking count
+                            range=[0.5, max_bookings + 0.5]  # Add padding
+                        ),
+                        yaxis=dict(
+                            rangemode='tozero'  # Start y-axis at 0
+                        )
+                    )
+                    st.plotly_chart(fig, use_container_width=True)
+                    
+                    # Show summary table
+                    with st.expander("📊 View Detailed Frequency Data"):
+                        freq_display = frequency_analysis.copy()
+                        freq_display['Guests'] = freq_display['Guests'].apply(format_number)
+                        freq_display['Avg Total Revenue'] = freq_display['Avg Total Revenue'].apply(format_currency)
+                        freq_display['Avg Booking Value'] = freq_display['Avg Booking Value'].apply(format_currency)
+                        st.dataframe(freq_display, use_container_width=True)
+                else:
+                    st.warning("No booking frequency data to display after aggregation.")
             else:
-                st.info("No booking frequency data available for visualization.")
+                st.warning("No guests found with bookings > 0. All guests may have 0 bookings.")
         else:
-            st.info("Booking frequency analysis requires guest booking data.")
+            missing_cols = []
+            if 'TOTAL_BOOKINGS' not in guests_df.columns:
+                missing_cols.append('TOTAL_BOOKINGS')
+            if 'TOTAL_REVENUE' not in guests_df.columns:
+                missing_cols.append('TOTAL_REVENUE')
+            st.error(f"Missing required columns: {', '.join(missing_cols)}. Available columns: {', '.join(guests_df.columns.tolist())}")
     else:
         st.warning("No guest data available for revenue performance analysis")
 

@@ -200,11 +200,6 @@ with tab2:
     # Distribution histograms
     st.markdown("### Score Distributions")
     
-    # DEBUG INFO
-    st.write(f"**DEBUG:** Total filtered records: {len(filtered_df)}")
-    if not filtered_df.empty:
-        st.write(f"**DEBUG:** SPA scores - Min: {filtered_df['SPA_UPSELL_PROPENSITY'].min()}, Max: {filtered_df['SPA_UPSELL_PROPENSITY'].max()}, Count: {filtered_df['SPA_UPSELL_PROPENSITY'].notna().sum()}")
-    
     if not filtered_df.empty:
         # Check if we have actual data in the columns
         has_spa_data = filtered_df['SPA_UPSELL_PROPENSITY'].notna().sum() > 0
