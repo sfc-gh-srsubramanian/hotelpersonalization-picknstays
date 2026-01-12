@@ -1,5 +1,5 @@
 """
-Guest 360 Dashboard - Comprehensive Guest Profile and Journey Visualization
+Guest 360 Dashboard - Comprehensive Guest Analytics & Profile Viewer
 Target Users: Guest Service Managers, Concierge Teams, Front Desk Staff
 """
 import streamlit as st
@@ -27,345 +27,305 @@ from viz_components import (
 apply_custom_css()
 
 # Header
-st.title("🎯 Guest 360 Dashboard")
-st.markdown("**Comprehensive Guest Profile & Journey Visualization**")
+st.title("🎯 Guest 360 Analytics")
+st.markdown("**Comprehensive Guest Analytics & Profile Viewer**")
 st.markdown("---")
 
-# Sidebar - Guest Search
-with st.sidebar:
-    st.header("🔍 Guest Search")
-    search_term = st.text_input("Search by name or email", "")
-    
-    if search_term:
-        search_results = search_guests(search_term)
-        if not search_results.empty:
-            st.write(f"Found {len(search_results)} guests")
-            selected_guest = st.selectbox(
-                "Select Guest",
-                options=search_results['GUEST_ID'].tolist(),
-                format_func=lambda x: f"{search_results[search_results['GUEST_ID']==x]['FIRST_NAME'].iloc[0]} {search_results[search_results['GUEST_ID']==x]['LAST_NAME'].iloc[0]} ({search_results[search_results['GUEST_ID']==x]['LOYALTY_TIER'].iloc[0]})"
-            )
-        else:
-            st.warning("No guests found")
-            selected_guest = None
-    else:
-        # Default: show first guest or let user select from all
-        all_guests = get_guest_360_data(limit=100)
-        if not all_guests.empty:
-            selected_guest = st.selectbox(
-                "Select Guest (Top 100)",
-                options=all_guests['GUEST_ID'].tolist(),
-                format_func=lambda x: f"{all_guests[all_guests['GUEST_ID']==x]['FIRST_NAME'].iloc[0]} {all_guests[all_guests['GUEST_ID']==x]['LAST_NAME'].iloc[0]}"
-            )
-        else:
-            st.error("No guest data available")
-            selected_guest = None
+# Load all guest data
+guests_df = get_guest_360_data()
 
-# Main Dashboard
-if selected_guest:
-    # Load guest data
-    guest_data = get_guest_by_id(selected_guest)
+if guests_df.empty:
+    st.error("No guest data available")
+    st.stop()
+
+# Summary KPIs
+col1, col2, col3, col4, col5 = st.columns(5)
+
+with col1:
+    create_kpi_card("Total Guests", format_number(len(guests_df)))
+
+with col2:
+    create_kpi_card("Total Revenue", format_currency(guests_df['TOTAL_REVENUE'].sum()))
+
+with col3:
+    create_kpi_card("Avg Booking Value", format_currency(guests_df['AVG_BOOKING_VALUE'].mean()))
+
+with col4:
+    platinum_count = len(guests_df[guests_df['LOYALTY_TIER'] == 'Platinum'])
+    create_kpi_card("Platinum Members", format_number(platinum_count))
+
+with col5:
+    high_risk = len(guests_df[guests_df['CHURN_RISK'] == 'High'])
+    create_kpi_card("High Churn Risk", format_number(high_risk))
+
+st.markdown("---")
+
+# Filters in sidebar
+with st.sidebar:
+    st.header("🔍 Filters")
     
-    if not guest_data.empty:
-        guest = guest_data.iloc[0]
+    # Loyalty Tier filter
+    loyalty_tiers = ['All'] + sorted(guests_df['LOYALTY_TIER'].dropna().unique().tolist())
+    selected_tier = st.selectbox("Loyalty Tier", loyalty_tiers)
+    
+    # Customer Segment filter
+    segments = ['All'] + sorted(guests_df['CUSTOMER_SEGMENT'].dropna().unique().tolist())
+    selected_segment = st.selectbox("Customer Segment", segments)
+    
+    # Churn Risk filter
+    churn_risks = ['All'] + sorted(guests_df['CHURN_RISK'].dropna().unique().tolist())
+    selected_risk = st.selectbox("Churn Risk", churn_risks)
+    
+    # Revenue range filter
+    st.subheader("Revenue Range")
+    min_revenue = st.number_input("Min Revenue ($)", value=0, step=1000)
+    max_revenue = st.number_input("Max Revenue ($)", value=int(guests_df['TOTAL_REVENUE'].max()), step=1000)
+    
+    # Search
+    st.subheader("Search")
+    search_term = st.text_input("Name or Email", "")
+
+# Apply filters
+filtered_df = guests_df.copy()
+
+if selected_tier != 'All':
+    filtered_df = filtered_df[filtered_df['LOYALTY_TIER'] == selected_tier]
+
+if selected_segment != 'All':
+    filtered_df = filtered_df[filtered_df['CUSTOMER_SEGMENT'] == selected_segment]
+
+if selected_risk != 'All':
+    filtered_df = filtered_df[filtered_df['CHURN_RISK'] == selected_risk]
+
+filtered_df = filtered_df[
+    (filtered_df['TOTAL_REVENUE'] >= min_revenue) &
+    (filtered_df['TOTAL_REVENUE'] <= max_revenue)
+]
+
+if search_term:
+    mask = (
+        filtered_df['FIRST_NAME'].str.contains(search_term, case=False, na=False) |
+        filtered_df['LAST_NAME'].str.contains(search_term, case=False, na=False) |
+        filtered_df['EMAIL'].str.contains(search_term, case=False, na=False)
+    )
+    filtered_df = filtered_df[mask]
+
+st.markdown(f"### 📋 Guest List ({len(filtered_df)} guests)")
+
+# Tabs for different views
+tab1, tab2, tab3 = st.tabs(["📊 Guest Table", "📈 Analytics", "👤 Guest Profile"])
+
+with tab1:
+    st.markdown("#### All Guests Overview")
+    
+    # Sort options
+    sort_col1, sort_col2 = st.columns(2)
+    with sort_col1:
+        sort_by = st.selectbox("Sort by", [
+            'TOTAL_REVENUE', 'TOTAL_BOOKINGS', 'LOYALTY_POINTS', 
+            'AVG_AMENITY_SATISFACTION', 'TOTAL_AMENITY_SPEND'
+        ])
+    with sort_col2:
+        sort_order = st.radio("Order", ['Descending', 'Ascending'], horizontal=True)
+    
+    # Sort dataframe
+    ascending = (sort_order == 'Ascending')
+    display_df = filtered_df.sort_values(by=sort_by, ascending=ascending)
+    
+    # Select columns to display
+    display_columns = [
+        'GUEST_ID', 'FIRST_NAME', 'LAST_NAME', 'EMAIL', 
+        'LOYALTY_TIER', 'CUSTOMER_SEGMENT', 'CHURN_RISK',
+        'TOTAL_BOOKINGS', 'TOTAL_REVENUE', 'AVG_BOOKING_VALUE',
+        'LOYALTY_POINTS', 'TOTAL_AMENITY_SPEND', 'AVG_AMENITY_SATISFACTION'
+    ]
+    
+    # Format display dataframe
+    formatted_df = display_df[display_columns].copy()
+    formatted_df['TOTAL_REVENUE'] = formatted_df['TOTAL_REVENUE'].apply(lambda x: f"${x:,.2f}")
+    formatted_df['AVG_BOOKING_VALUE'] = formatted_df['AVG_BOOKING_VALUE'].apply(lambda x: f"${x:,.2f}")
+    formatted_df['TOTAL_AMENITY_SPEND'] = formatted_df['TOTAL_AMENITY_SPEND'].apply(lambda x: f"${x:,.2f}")
+    formatted_df['AVG_AMENITY_SATISFACTION'] = formatted_df['AVG_AMENITY_SATISFACTION'].apply(lambda x: f"{x:.1f}/5.0")
+    
+    # Display as interactive table
+    st.dataframe(
+        formatted_df,
+        use_container_width=True,
+        height=600,
+        hide_index=True
+    )
+    
+    # Download button
+    csv = display_df[display_columns].to_csv(index=False)
+    st.download_button(
+        label="📥 Download Guest Data (CSV)",
+        data=csv,
+        file_name=f"guest_360_data_{datetime.now().strftime('%Y%m%d')}.csv",
+        mime="text/csv"
+    )
+
+with tab2:
+    st.markdown("#### Guest Analytics")
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        # Loyalty tier distribution
+        st.markdown("##### Loyalty Tier Distribution")
+        tier_counts = filtered_df['LOYALTY_TIER'].value_counts()
+        fig = px.pie(
+            values=tier_counts.values,
+            names=tier_counts.index,
+            title="Guests by Loyalty Tier"
+        )
+        st.plotly_chart(fig, use_container_width=True)
+        
+        # Customer segment distribution
+        st.markdown("##### Customer Segment Distribution")
+        segment_counts = filtered_df['CUSTOMER_SEGMENT'].value_counts()
+        fig = px.bar(
+            x=segment_counts.index,
+            y=segment_counts.values,
+            labels={'x': 'Segment', 'y': 'Count'},
+            title="Guests by Segment"
+        )
+        st.plotly_chart(fig, use_container_width=True)
+    
+    with col2:
+        # Churn risk distribution
+        st.markdown("##### Churn Risk Distribution")
+        risk_counts = filtered_df['CHURN_RISK'].value_counts()
+        fig = px.pie(
+            values=risk_counts.values,
+            names=risk_counts.index,
+            title="Guests by Churn Risk",
+            color=risk_counts.index,
+            color_discrete_map={'High': 'red', 'Medium': 'orange', 'Low': 'green'}
+        )
+        st.plotly_chart(fig, use_container_width=True)
+        
+        # Revenue by segment
+        st.markdown("##### Revenue by Segment")
+        segment_revenue = filtered_df.groupby('CUSTOMER_SEGMENT')['TOTAL_REVENUE'].sum().sort_values(ascending=False)
+        fig = px.bar(
+            x=segment_revenue.index,
+            y=segment_revenue.values,
+            labels={'x': 'Segment', 'y': 'Total Revenue ($)'},
+            title="Revenue by Customer Segment"
+        )
+        st.plotly_chart(fig, use_container_width=True)
+    
+    # Top spending guests
+    st.markdown("##### 🏆 Top 10 Guests by Revenue")
+    top_guests = filtered_df.nlargest(10, 'TOTAL_REVENUE')[
+        ['FIRST_NAME', 'LAST_NAME', 'LOYALTY_TIER', 'TOTAL_REVENUE', 'TOTAL_BOOKINGS', 'AVG_AMENITY_SATISFACTION']
+    ]
+    top_guests_display = top_guests.copy()
+    top_guests_display['TOTAL_REVENUE'] = top_guests_display['TOTAL_REVENUE'].apply(lambda x: f"${x:,.2f}")
+    top_guests_display['AVG_AMENITY_SATISFACTION'] = top_guests_display['AVG_AMENITY_SATISFACTION'].apply(lambda x: f"{x:.1f}/5.0")
+    st.dataframe(top_guests_display, use_container_width=True, hide_index=True)
+
+with tab3:
+    st.markdown("#### Individual Guest Profile")
+    
+    # Guest selector
+    if not filtered_df.empty:
+        guest_options = filtered_df.apply(
+            lambda row: f"{row['FIRST_NAME']} {row['LAST_NAME']} ({row['LOYALTY_TIER']}) - ${row['TOTAL_REVENUE']:,.0f}",
+            axis=1
+        )
+        
+        selected_idx = st.selectbox(
+            "Select a guest to view detailed profile:",
+            range(len(filtered_df)),
+            format_func=lambda i: guest_options.iloc[i]
+        )
+        
+        guest = filtered_df.iloc[selected_idx]
+        
+        st.markdown("---")
         
         # Guest Profile Header
-        col1, col2, col3, col4 = st.columns([2, 2, 2, 2])
+        col1, col2, col3, col4 = st.columns(4)
         
         with col1:
             st.markdown(f"### {guest['FIRST_NAME']} {guest['LAST_NAME']}")
-            display_loyalty_badge(guest['LOYALTY_TIER'])
+            st.markdown(f"**Tier:** {guest['LOYALTY_TIER']}")
             st.markdown(f"**Segment:** {guest['CUSTOMER_SEGMENT']}")
             st.markdown(f"**Email:** {guest['EMAIL']}")
         
         with col2:
-            create_kpi_card("Lifetime Value", format_currency(guest['TOTAL_REVENUE']))
-            create_kpi_card("Total Bookings", format_number(guest['TOTAL_BOOKINGS']))
+            create_kpi_card("Lifetime Revenue", format_currency(guest['TOTAL_REVENUE']))
+            create_kpi_card("Avg Booking Value", format_currency(guest['AVG_BOOKING_VALUE']))
         
         with col3:
+            create_kpi_card("Total Bookings", format_number(guest['TOTAL_BOOKINGS']))
             create_kpi_card("Loyalty Points", format_number(guest['LOYALTY_POINTS']))
-            create_kpi_card("Avg Satisfaction", f"{guest['AVG_AMENITY_SATISFACTION']:.1f}/5.0")
         
         with col4:
-            st.markdown("**Churn Risk**")
-            display_risk_badge(guest['CHURN_RISK'])
-            st.markdown(f"**Tech Profile:** {guest['TECH_ADOPTION_PROFILE']}")
+            create_kpi_card("Amenity Spend", format_currency(guest['TOTAL_AMENITY_SPEND']))
+            create_kpi_card("Satisfaction", f"{guest['AVG_AMENITY_SATISFACTION']:.1f}/5.0")
         
         st.markdown("---")
         
-        # Tabs for detailed information
-        tab1, tab2, tab3, tab4, tab5 = st.tabs([
-            "📊 Spending Analysis", 
-            "🏨 Stay History", 
-            "🎯 Amenity Usage",
-            "💡 Preferences",
-            "📈 Insights & Recommendations"
-        ])
+        # Guest details in columns
+        col1, col2 = st.columns(2)
         
-        with tab1:
-            st.markdown("## 💰 Spending Analysis")
-            
-            col1, col2 = st.columns(2)
-            
-            with col1:
-                # Spending breakdown pie chart
-                spending_data = pd.DataFrame({
-                    'Category': [
-                        'Spa', 'Restaurant', 'Bar', 'Room Service', 
-                        'WiFi', 'Smart TV', 'Pool Services'
-                    ],
-                    'Amount': [
-                        guest['TOTAL_SPA_SPEND'],
-                        guest['TOTAL_RESTAURANT_SPEND'],
-                        guest['TOTAL_BAR_SPEND'],
-                        guest['TOTAL_ROOM_SERVICE_SPEND'],
-                        guest['TOTAL_WIFI_SPEND'],
-                        guest['TOTAL_SMART_TV_SPEND'],
-                        guest['TOTAL_POOL_SERVICES_SPEND']
-                    ]
-                })
-                spending_data = spending_data[spending_data['Amount'] > 0]
-                
-                if not spending_data.empty:
-                    fig = create_pie_chart(spending_data, 'Amount', 'Category', 
-                                         'Spending Breakdown by Amenity Category')
-                    st.plotly_chart(fig, use_container_width=True)
-                else:
-                    st.info("No amenity spending data available")
-            
-            with col2:
-                # Spending KPIs
-                st.markdown("### Spending Metrics")
-                create_kpi_card("Total Amenity Spend", 
-                              format_currency(guest['TOTAL_AMENITY_SPEND']))
-                create_kpi_card("Avg Per Booking", 
-                              format_currency(guest['AVG_BOOKING_VALUE']))
-                create_kpi_card("Spending Category", 
-                              guest['AMENITY_SPENDING_CATEGORY'])
-                
-                # Top transactions
-                st.markdown("### 🎯 Transaction Summary")
-                col_a, col_b = st.columns(2)
-                with col_a:
-                    st.metric("Spa Visits", format_number(guest['SPA_VISITS']))
-                    st.metric("Restaurant Visits", format_number(guest['RESTAURANT_VISITS']))
-                with col_b:
-                    st.metric("Bar Visits", format_number(guest['BAR_VISITS']))
-                    st.metric("Room Service Orders", format_number(guest['ROOM_SERVICE_ORDERS']))
+        with col1:
+            st.markdown("##### 🎯 Guest Profile")
+            st.markdown(f"**Churn Risk:** {guest['CHURN_RISK']}")
+            st.markdown(f"**Tech Profile:** {guest['TECH_ADOPTION_PROFILE']}")
+            st.markdown(f"**Nationality:** {guest['NATIONALITY']}")
+            st.markdown(f"**Language:** {guest['LANGUAGE_PREFERENCE']}")
+            st.markdown(f"**Location:** {guest['CITY']}, {guest['STATE_PROVINCE']}, {guest['COUNTRY']}")
         
-        with tab2:
-            st.markdown("## 🏨 Stay History")
+        with col2:
+            st.markdown("##### 💰 Spending Breakdown")
+            spending_data = {
+                'Category': ['Spa', 'Restaurant', 'Bar', 'Room Service', 'WiFi', 'Smart TV', 'Pool Services'],
+                'Amount': [
+                    guest['TOTAL_SPA_SPEND'],
+                    guest['TOTAL_RESTAURANT_SPEND'],
+                    guest['TOTAL_BAR_SPEND'],
+                    guest['TOTAL_ROOM_SERVICE_SPEND'],
+                    guest['TOTAL_WIFI_SPEND'],
+                    guest['TOTAL_SMART_TV_SPEND'],
+                    guest['TOTAL_POOL_SERVICES_SPEND']
+                ]
+            }
+            spending_df = pd.DataFrame(spending_data)
+            spending_df = spending_df[spending_df['Amount'] > 0].sort_values('Amount', ascending=False)
             
-            # Get stay history for this guest
-            stays = get_stays_processed()
-            guest_stays = stays[stays['GUEST_ID'] == selected_guest]
-            
-            if not guest_stays.empty:
-                # Display stay timeline
-                st.markdown(f"### Total Stays: {len(guest_stays)}")
-                
-                # Metrics
-                col1, col2, col3, col4 = st.columns(4)
-                with col1:
-                    st.metric("Avg Stay Length", 
-                             f"{guest['AVG_STAY_LENGTH']:.1f} nights")
-                with col2:
-                    avg_satisfaction = guest_stays['GUEST_SATISFACTION_SCORE'].mean()
-                    st.metric("Avg Satisfaction", f"{avg_satisfaction:.1f}/5.0")
-                with col3:
-                    total_spend = guest_stays['TOTAL_CHARGES'].sum()
-                    st.metric("Total Stay Revenue", format_currency(total_spend))
-                with col4:
-                    issues = guest_stays['HAD_SERVICE_ISSUES'].sum()
-                    st.metric("Service Issues", format_number(issues))
-                
-                # Stay details table
-                st.markdown("### Recent Stays")
-                display_stays = guest_stays[[
-                    'ACTUAL_CHECK_IN', 'ACTUAL_CHECK_OUT', 'ROOM_TYPE', 
-                    'TOTAL_CHARGES', 'GUEST_SATISFACTION_SCORE', 
-                    'SATISFACTION_CATEGORY'
-                ]].sort_values('ACTUAL_CHECK_IN', ascending=False).head(10)
-                
-                st.dataframe(display_stays, use_container_width=True)
-                
-                # Satisfaction trend
-                if len(guest_stays) > 1:
-                    fig = create_line_chart(
-                        guest_stays.sort_values('ACTUAL_CHECK_IN'),
-                        'ACTUAL_CHECK_IN',
-                        'GUEST_SATISFACTION_SCORE',
-                        'Satisfaction Score Trend Over Time'
-                    )
-                    st.plotly_chart(fig, use_container_width=True)
-            else:
-                st.info("No stay history available for this guest")
-        
-        with tab3:
-            st.markdown("## 🎯 Amenity & Infrastructure Usage")
-            
-            col1, col2 = st.columns(2)
-            
-            with col1:
-                st.markdown("### Infrastructure Usage")
-                
-                # Usage metrics
-                usage_data = pd.DataFrame({
-                    'Service': ['WiFi', 'Smart TV', 'Pool'],
-                    'Sessions': [
-                        guest['TOTAL_WIFI_SESSIONS'],
-                        guest['TOTAL_SMART_TV_SESSIONS'],
-                        guest['TOTAL_POOL_SESSIONS']
-                    ],
-                    'Avg Duration (min)': [
-                        guest['AVG_WIFI_DURATION'],
-                        guest['AVG_SMART_TV_DURATION'],
-                        guest['AVG_POOL_DURATION']
-                    ]
-                })
-                
-                fig = create_bar_chart(usage_data, 'Service', 'Sessions', 
-                                     'Infrastructure Usage Sessions')
+            if not spending_df.empty:
+                fig = px.bar(
+                    spending_df,
+                    x='Amount',
+                    y='Category',
+                    orientation='h',
+                    title="Amenity Spending by Category"
+                )
                 st.plotly_chart(fig, use_container_width=True)
-                
-                # Engagement scores
-                st.markdown("### Engagement Scores")
-                create_kpi_card("Infrastructure Engagement", 
-                              f"{guest['INFRASTRUCTURE_ENGAGEMENT_SCORE']:.0f}/100")
-                create_kpi_card("Amenity Diversity", 
-                              f"{guest['AMENITY_DIVERSITY_SCORE']:.0f}/100")
-            
-            with col2:
-                st.markdown("### Usage Insights")
-                
-                # WiFi data consumption
-                if guest['TOTAL_WIFI_DATA_MB'] > 0:
-                    st.metric("WiFi Data Consumed", 
-                             f"{guest['TOTAL_WIFI_DATA_MB']:,.0f} MB")
-                
-                # Satisfaction by category
-                st.markdown("### Satisfaction by Service")
-                satisfaction_data = pd.DataFrame({
-                    'Service': ['Amenities', 'Infrastructure'],
-                    'Score': [
-                        guest['AVG_AMENITY_SATISFACTION'],
-                        guest['AVG_INFRASTRUCTURE_SATISFACTION']
-                    ]
-                })
-                
-                fig = create_bar_chart(satisfaction_data, 'Service', 'Score',
-                                     'Average Satisfaction Scores')
-                fig.update_yaxes(range=[0, 5])
-                st.plotly_chart(fig, use_container_width=True)
-        
-        with tab4:
-            st.markdown("## 💡 Guest Preferences & Profile")
-            
-            col1, col2 = st.columns(2)
-            
-            with col1:
-                st.markdown("### Demographics")
-                st.markdown(f"**Gender:** {guest['GENDER']}")
-                st.markdown(f"**Nationality:** {guest['NATIONALITY']}")
-                st.markdown(f"**Language:** {guest['LANGUAGE_PREFERENCE']}")
-                st.markdown(f"**Generation:** {guest['GENERATION']}")
-                
-                st.markdown("### Contact Preferences")
-                st.markdown(f"**Marketing Opt-in:** {'Yes' if guest['MARKETING_OPT_IN'] else 'No'}")
-            
-            with col2:
-                st.markdown("### Technology Profile")
-                st.markdown(f"**Adoption Level:** {guest['TECH_ADOPTION_PROFILE']}")
-                
-                if guest['TOTAL_WIFI_SESSIONS'] > 10:
-                    st.success("🌐 High WiFi User")
-                if guest['TOTAL_SMART_TV_SESSIONS'] > 5:
-                    st.success("📺 Smart TV Enthusiast")
-                if guest['TOTAL_POOL_SESSIONS'] > 3:
-                    st.success("🏊 Pool Services User")
-        
-        with tab5:
-            st.markdown("## 📈 AI-Powered Insights & Recommendations")
-            
-            # Get personalization scores for this guest
-            from data_loader import get_personalization_scores
-            scores_df = get_personalization_scores()
-            guest_scores = scores_df[scores_df['GUEST_ID'] == selected_guest]
-            
-            if not guest_scores.empty:
-                scores = guest_scores.iloc[0]
-                
-                col1, col2 = st.columns(2)
-                
-                with col1:
-                    st.markdown("### Propensity Scores")
-                    
-                    # Display gauge for personalization readiness
-                    fig = create_gauge_chart(
-                        scores['PERSONALIZATION_READINESS_SCORE'],
-                        'Personalization Readiness',
-                        100
-                    )
-                    st.plotly_chart(fig, use_container_width=True)
-                    
-                    # Upsell scores
-                    upsell_data = pd.DataFrame({
-                        'Category': ['Spa', 'Dining', 'Tech Services', 'Pool'],
-                        'Score': [
-                            scores['SPA_UPSELL_PROPENSITY'],
-                            scores['DINING_UPSELL_PROPENSITY'],
-                            scores['TECH_UPSELL_PROPENSITY'],
-                            scores['POOL_SERVICES_UPSELL_PROPENSITY']
-                        ]
-                    }).sort_values('Score', ascending=False)
-                    
-                    fig = create_bar_chart(upsell_data, 'Category', 'Score',
-                                         'Upsell Propensity by Category')
-                    fig.update_yaxes(range=[0, 100])
-                    st.plotly_chart(fig, use_container_width=True)
-                
-                with col2:
-                    st.markdown("### Recommendations")
-                    
-                    # Generate recommendations based on scores
-                    recommendations = []
-                    
-                    if scores['SPA_UPSELL_PROPENSITY'] > 70:
-                        recommendations.append("🧖 **High Spa Interest**: Offer premium spa package")
-                    if scores['DINING_UPSELL_PROPENSITY'] > 70:
-                        recommendations.append("🍽️ **Dining Opportunity**: Promote signature restaurant")
-                    if scores['TECH_UPSELL_PROPENSITY'] > 70:
-                        recommendations.append("📱 **Tech Savvy**: Offer premium WiFi or smart room upgrades")
-                    if scores['POOL_SERVICES_UPSELL_PROPENSITY'] > 70:
-                        recommendations.append("🏊 **Pool Services**: Promote poolside cabana rentals")
-                    
-                    if guest['CHURN_RISK'] == 'High':
-                        recommendations.append("⚠️ **CHURN ALERT**: Proactive retention outreach needed")
-                    
-                    if scores['LOYALTY_PROPENSITY_SCORE'] > 70:
-                        recommendations.append("⭐ **Loyalty Opportunity**: Strong candidate for tier upgrade")
-                    
-                    if recommendations:
-                        for rec in recommendations:
-                            st.success(rec)
-                    else:
-                        st.info("Continue providing excellent service to maintain satisfaction")
-                    
-                    # Engagement score
-                    st.markdown("### Engagement Metrics")
-                    create_kpi_card("Amenity Engagement", 
-                                  f"{scores['AMENITY_ENGAGEMENT_SCORE']:.0f}/100")
-                    create_kpi_card("Infrastructure Engagement", 
-                                  f"{scores['INFRASTRUCTURE_ENGAGEMENT_SCORE']:.0f}/100")
-                    create_kpi_card("Loyalty Propensity", 
-                                  f"{scores['LOYALTY_PROPENSITY_SCORE']:.0f}/100")
             else:
-                st.info("Personalization scores not available for this guest")
+                st.info("No amenity spending data")
+        
+        # Usage metrics
+        st.markdown("##### 📊 Amenity Usage")
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            st.metric("WiFi Sessions", format_number(guest['TOTAL_WIFI_SESSIONS']))
+            st.metric("Avg WiFi Duration", f"{guest['AVG_WIFI_DURATION']:.0f} min")
+            st.metric("WiFi Data", f"{guest['TOTAL_WIFI_DATA_MB']:,.0f} MB")
+        
+        with col2:
+            st.metric("Smart TV Sessions", format_number(guest['TOTAL_SMART_TV_SESSIONS']))
+            st.metric("Avg TV Duration", f"{guest['AVG_SMART_TV_DURATION']:.0f} min")
+            st.metric("Infrastructure Satisfaction", f"{guest['AVG_INFRASTRUCTURE_SATISFACTION']:.1f}/5.0")
+        
+        with col3:
+            st.metric("Pool Sessions", format_number(guest['TOTAL_POOL_SESSIONS']))
+            st.metric("Avg Pool Duration", f"{guest['AVG_POOL_DURATION']:.0f} min")
+            st.metric("Amenity Diversity", f"{guest['AMENITY_DIVERSITY_SCORE']:.0f}/100")
+    
     else:
-        st.error("Guest data not found")
-else:
-    st.info("👈 Please select a guest from the sidebar to view their 360 profile")
-
-# Footer
-st.markdown("---")
-st.markdown("*Data refreshed every 5 minutes | Powered by Snowflake Cortex Intelligence*")
+        st.warning("No guests match the current filters")
