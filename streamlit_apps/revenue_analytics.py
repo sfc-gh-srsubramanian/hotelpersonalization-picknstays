@@ -19,7 +19,7 @@ from viz_components import (
     create_bar_chart, create_line_chart, apply_custom_css
 )
 
-st.set_page_config(page_title="Revenue Analytics", page_icon="💰", layout="wide")
+# Note: set_page_config() is handled by main app
 apply_custom_css()
 
 st.title("💰 Revenue Analytics & Optimization")

@@ -22,13 +22,7 @@ from viz_components import (
     display_risk_badge, display_loyalty_badge, apply_custom_css
 )
 
-# Page config
-st.set_page_config(
-    page_title="Guest 360 Dashboard",
-    page_icon="🎯",
-    layout="wide"
-)
-
+# Note: set_page_config() is handled by main app
 # Apply custom styling
 apply_custom_css()
 

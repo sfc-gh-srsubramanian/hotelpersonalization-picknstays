@@ -16,7 +16,7 @@ from viz_components import (
     apply_custom_css
 )
 
-st.set_page_config(page_title="Amenity Performance", page_icon="🏊", layout="wide")
+# Note: set_page_config() is handled by main app
 apply_custom_css()
 
 st.title("🏊 Amenity Performance Analytics")

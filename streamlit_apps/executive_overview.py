@@ -20,7 +20,7 @@ from viz_components import (
     apply_custom_css
 )
 
-st.set_page_config(page_title="Executive Overview", page_icon="📊", layout="wide")
+# Note: set_page_config() is handled by main app
 apply_custom_css()
 
 st.title("📊 Executive Overview Dashboard")
