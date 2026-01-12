@@ -52,7 +52,7 @@ The Hotel Personalization Platform transforms raw operational data into actionab
 
 ### Medallion Architecture
 
-![Architecture Diagram](images/architecture_overview.png)
+![Architecture Diagram](images/architecture_overview.png?v=2)
 
 The platform implements a modern **Medallion Architecture** (Bronze → Silver → Gold → Semantic → Consumption) across Snowflake, providing a complete data pipeline from raw ingestion to business intelligence consumption:
 
