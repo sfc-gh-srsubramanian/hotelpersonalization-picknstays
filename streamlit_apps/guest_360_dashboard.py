@@ -55,7 +55,7 @@ with col4:
     create_kpi_card("Platinum Members", format_number(platinum_count))
 
 with col5:
-    high_risk = len(guests_df[guests_df['CHURN_RISK'] == 'High'])
+    high_risk = len(guests_df[guests_df['CHURN_RISK'] == 'High Risk'])
     create_kpi_card("High Churn Risk", format_number(high_risk))
 
 st.markdown("---")

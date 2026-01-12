@@ -99,7 +99,7 @@ with col3:
     high_spa = len(filtered_df[filtered_df['SPA_UPSELL_PROPENSITY'] > score_threshold])
     create_kpi_card("High Spa Propensity", format_number(high_spa))
 with col4:
-    high_churn = len(filtered_df[filtered_df['CHURN_RISK'] == 'High'])
+    high_churn = len(filtered_df[filtered_df['CHURN_RISK'] == 'High Risk'])
     create_kpi_card("High Churn Risk", format_number(high_churn))
 
 st.markdown("---")
@@ -386,7 +386,7 @@ with tab4:
     
     # High risk guests
     st.markdown("### 🚨 High Risk Guests - Immediate Action Required")
-    high_risk = filtered_df[filtered_df['CHURN_RISK'] == 'High'].sort_values('TOTAL_REVENUE', ascending=False)
+    high_risk = filtered_df[filtered_df['CHURN_RISK'] == 'High Risk'].sort_values('TOTAL_REVENUE', ascending=False)
     
     if not high_risk.empty:
         display_cols = ['FIRST_NAME', 'LAST_NAME', 'LOYALTY_TIER', 'TOTAL_REVENUE',

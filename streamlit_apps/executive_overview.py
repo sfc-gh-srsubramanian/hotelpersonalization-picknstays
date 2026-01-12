@@ -67,7 +67,7 @@ with col5:
 
 with col6:
     if not guests_df.empty and 'CHURN_RISK' in guests_df.columns:
-        high_churn = len(guests_df[guests_df['CHURN_RISK'] == 'High'])
+        high_churn = len(guests_df[guests_df['CHURN_RISK'] == 'High Risk'])
         churn_rate = (high_churn / total_guests * 100) if total_guests > 0 else 0
         create_kpi_card("High Churn Risk", format_percentage(churn_rate))
     else:
@@ -268,7 +268,7 @@ with tab3:
         recommendations = []
         
         if not guests_df.empty:
-            high_churn_pct = (len(guests_df[guests_df['CHURN_RISK'] == 'High']) / len(guests_df) * 100)
+            high_churn_pct = (len(guests_df[guests_df['CHURN_RISK'] == 'High Risk']) / len(guests_df) * 100)
             if high_churn_pct > 20:
                 recommendations.append(f"⚠️ **ALERT**: {high_churn_pct:.1f}% of guests at high churn risk - implement retention program")
         
