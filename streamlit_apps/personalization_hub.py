@@ -204,7 +204,6 @@ with tab2:
     st.write(f"**DEBUG:** Total filtered records: {len(filtered_df)}")
     if not filtered_df.empty:
         st.write(f"**DEBUG:** SPA scores - Min: {filtered_df['SPA_UPSELL_PROPENSITY'].min()}, Max: {filtered_df['SPA_UPSELL_PROPENSITY'].max()}, Count: {filtered_df['SPA_UPSELL_PROPENSITY'].notna().sum()}")
-        st.write(f"**DEBUG:** Sample SPA values: {filtered_df['SPA_UPSELL_PROPENSITY'].head(10).tolist()}")
     
     if not filtered_df.empty:
         # Check if we have actual data in the columns
@@ -214,50 +213,61 @@ with tab2:
         has_pool_data = filtered_df['POOL_SERVICES_UPSELL_PROPENSITY'].notna().sum() > 0
         
         if not (has_spa_data or has_dining_data or has_tech_data or has_pool_data):
-            st.error("⚠️ No propensity score data available. The scores may not have been calculated yet.")
+            st.error("⚠️ No propensity score data available.")
         else:
             col1, col2 = st.columns(2)
             
             with col1:
                 if has_spa_data:
+                    st.write("**Spa Upsell Propensity Distribution**")
+                    # Convert to list and create histogram using Streamlit's native chart
                     spa_data = filtered_df['SPA_UPSELL_PROPENSITY'].dropna()
-                    st.write(f"Creating histogram with {len(spa_data)} data points")
-                    fig = go.Figure(data=[go.Histogram(
-                        x=spa_data, 
-                        nbinsx=20,
+                    
+                    # Create bins manually for better control
+                    import numpy as np
+                    hist_data, bin_edges = np.histogram(spa_data, bins=20, range=(0, 100))
+                    
+                    # Create a dataframe for plotting
+                    hist_df = pd.DataFrame({
+                        'Score Range': [f'{int(bin_edges[i])}-{int(bin_edges[i+1])}' for i in range(len(hist_data))],
+                        'Count': hist_data
+                    })
+                    
+                    # Use Plotly bar chart instead of histogram
+                    fig = go.Figure(data=[go.Bar(
+                        x=[f'{int(bin_edges[i])}-{int(bin_edges[i+1])}' for i in range(len(hist_data))],
+                        y=hist_data,
                         marker_color='blue'
                     )])
                     fig.update_layout(
-                        title='Spa Upsell Propensity Distribution',
                         xaxis_title='Spa Upsell Propensity Score',
                         yaxis_title='Number of Guests',
                         showlegend=False,
-                        bargap=0.1,
                         height=400
                     )
-                    fig.update_xaxes(range=[0, 100])
                     st.plotly_chart(fig, use_container_width=True)
                 else:
                     st.error("No Spa propensity data")
             
             with col2:
                 if has_dining_data:
+                    st.write("**Dining Upsell Propensity Distribution**")
                     dining_data = filtered_df['DINING_UPSELL_PROPENSITY'].dropna()
-                    st.write(f"Creating histogram with {len(dining_data)} data points")
-                    fig = go.Figure(data=[go.Histogram(
-                        x=dining_data, 
-                        nbinsx=20,
+                    
+                    import numpy as np
+                    hist_data, bin_edges = np.histogram(dining_data, bins=20, range=(0, 100))
+                    
+                    fig = go.Figure(data=[go.Bar(
+                        x=[f'{int(bin_edges[i])}-{int(bin_edges[i+1])}' for i in range(len(hist_data))],
+                        y=hist_data,
                         marker_color='green'
                     )])
                     fig.update_layout(
-                        title='Dining Upsell Propensity Distribution',
                         xaxis_title='Dining Upsell Propensity Score',
                         yaxis_title='Number of Guests',
                         showlegend=False,
-                        bargap=0.1,
                         height=400
                     )
-                    fig.update_xaxes(range=[0, 100])
                     st.plotly_chart(fig, use_container_width=True)
                 else:
                     st.error("No Dining propensity data")
@@ -267,42 +277,46 @@ with tab2:
             
             with col3:
                 if has_tech_data:
+                    st.write("**Tech Upsell Propensity Distribution**")
                     tech_data = filtered_df['TECH_UPSELL_PROPENSITY'].dropna()
-                    fig = go.Figure(data=[go.Histogram(
-                        x=tech_data, 
-                        nbinsx=20,
+                    
+                    import numpy as np
+                    hist_data, bin_edges = np.histogram(tech_data, bins=20, range=(0, 100))
+                    
+                    fig = go.Figure(data=[go.Bar(
+                        x=[f'{int(bin_edges[i])}-{int(bin_edges[i+1])}' for i in range(len(hist_data))],
+                        y=hist_data,
                         marker_color='purple'
                     )])
                     fig.update_layout(
-                        title='Tech Upsell Propensity Distribution',
                         xaxis_title='Tech Upsell Propensity Score',
                         yaxis_title='Number of Guests',
                         showlegend=False,
-                        bargap=0.1,
                         height=400
                     )
-                    fig.update_xaxes(range=[0, 100])
                     st.plotly_chart(fig, use_container_width=True)
                 else:
                     st.error("No Tech propensity data")
             
             with col4:
                 if has_pool_data:
+                    st.write("**Pool Services Upsell Propensity Distribution**")
                     pool_data = filtered_df['POOL_SERVICES_UPSELL_PROPENSITY'].dropna()
-                    fig = go.Figure(data=[go.Histogram(
-                        x=pool_data, 
-                        nbinsx=20,
+                    
+                    import numpy as np
+                    hist_data, bin_edges = np.histogram(pool_data, bins=20, range=(0, 100))
+                    
+                    fig = go.Figure(data=[go.Bar(
+                        x=[f'{int(bin_edges[i])}-{int(bin_edges[i+1])}' for i in range(len(hist_data))],
+                        y=hist_data,
                         marker_color='orange'
                     )])
                     fig.update_layout(
-                        title='Pool Services Upsell Propensity Distribution',
                         xaxis_title='Pool Services Upsell Propensity Score',
                         yaxis_title='Number of Guests',
                         showlegend=False,
-                        bargap=0.1,
                         height=400
                     )
-                    fig.update_xaxes(range=[0, 100])
                     st.plotly_chart(fig, use_container_width=True)
                 else:
                     st.error("No Pool Services propensity data")

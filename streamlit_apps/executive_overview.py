@@ -102,17 +102,50 @@ with tab1:
             create_kpi_card("Highest Lifetime Value", format_currency(max_ltv))
             
             # LTV distribution
+            st.markdown("#### Customer Lifetime Value Distribution")
             revenue_data = guests_df['TOTAL_REVENUE'].dropna()
-            fig = go.Figure(data=[go.Histogram(x=revenue_data, nbinsx=30)])
-            fig.update_layout(
-                title='Customer Lifetime Value Distribution',
-                xaxis_title='Total Revenue ($)',
-                yaxis_title='Number of Guests',
-                showlegend=False,
-                bargap=0.1
-            )
-            # Don't set fixed range - let it auto-scale to actual data
-            st.plotly_chart(fig, use_container_width=True)
+            
+            if len(revenue_data) > 0:
+                # Manually compute histogram bins for better control
+                import numpy as np
+                
+                # Calculate bin edges dynamically based on data range
+                min_rev = revenue_data.min()
+                max_rev = revenue_data.max()
+                
+                # Create 30 bins spanning the data range
+                hist_data, bin_edges = np.histogram(revenue_data, bins=30)
+                
+                # Create labels for bins (show in K/M format)
+                bin_labels = []
+                for i in range(len(bin_edges) - 1):
+                    start = bin_edges[i]
+                    end = bin_edges[i + 1]
+                    if start >= 1_000_000:
+                        label = f"${start/1_000_000:.1f}M"
+                    elif start >= 1_000:
+                        label = f"${start/1_000:.0f}K"
+                    else:
+                        label = f"${start:.0f}"
+                    bin_labels.append(label)
+                
+                # Plot as bar chart with computed bins
+                fig = go.Figure(data=[go.Bar(
+                    x=bin_labels,
+                    y=hist_data,
+                    marker_color='teal'
+                )])
+                fig.update_layout(
+                    xaxis_title='Total Revenue',
+                    yaxis_title='Number of Guests',
+                    showlegend=False,
+                    height=400
+                )
+                # Rotate x-axis labels for readability
+                fig.update_xaxes(tickangle=-45)
+                st.plotly_chart(fig, use_container_width=True)
+            else:
+                st.warning("No revenue data available for LTV distribution.")
     
     with col2:
         # Booking and revenue metrics
