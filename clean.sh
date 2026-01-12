@@ -152,6 +152,29 @@ echo "Starting cleanup..."
 echo ""
 
 ###############################################################################
+# Step 0: De-register Agents from Snowflake Intelligence
+###############################################################################
+if [ "$KEEP_AGENTS" = false ]; then
+    echo "Step 0: De-registering agents from Snowflake Intelligence..."
+    echo "-------------------------------------------------------------------------"
+    
+    for agent in "Hotel Guest Analytics Agent" "Hotel Personalization Specialist" "Hotel Amenities Intelligence Agent" "Guest Experience Optimizer" "Hotel Intelligence Master Agent"; do
+        echo "  De-registering: $agent"
+        snow sql $SNOW_CONN -q "
+            USE ROLE ACCOUNTADMIN;
+            ALTER SNOWFLAKE INTELLIGENCE IF EXISTS SNOWFLAKE_INTELLIGENCE_OBJECT_DEFAULT 
+              DROP AGENT IF EXISTS IDENTIFIER('${DATABASE}.GOLD.\"${agent}\"');
+        " 2>/dev/null || echo "    (Not registered or already removed)"
+    done
+    
+    echo -e "${GREEN}✓${NC} Agents de-registered from Snowflake Intelligence"
+    echo ""
+else
+    echo "Step 0: Skipping agent de-registration (--keep-agents)"
+    echo ""
+fi
+
+###############################################################################
 # Step 1: Drop Intelligence Agents (if not keeping)
 ###############################################################################
 if [ "$KEEP_AGENTS" = false ]; then
@@ -162,7 +185,7 @@ if [ "$KEEP_AGENTS" = false ]; then
         echo "  Dropping: $agent"
         snow sql $SNOW_CONN -q "
             USE ROLE ACCOUNTADMIN;
-            DROP AGENT IF EXISTS SNOWFLAKE_INTELLIGENCE.AGENTS.\"${agent}\";
+            DROP AGENT IF EXISTS ${DATABASE}.GOLD.\"${agent}\";
         " 2>/dev/null || echo "    (Not found or already dropped)"
     done
     

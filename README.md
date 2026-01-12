@@ -377,6 +377,12 @@ To remove all deployed resources:
 
 All agents are deployed in the **GOLD schema** and use **"auto" orchestration** model for optimal performance.
 
+**Snowflake Intelligence Integration:**
+- ✅ Agents are automatically registered with `SNOWFLAKE_INTELLIGENCE_OBJECT_DEFAULT`
+- ✅ Visible in the **Snowflake Intelligence** UI section (not just the Agents page)
+- ✅ Accessible through the unified Snowflake Intelligence interface in Snowsight
+- ✅ Properly de-registered during cleanup to maintain clean environment
+
 #### **🧠 Hotel Guest Analytics Agent**
 - **Location**: `HOTEL_PERSONALIZATION.GOLD."Hotel Guest Analytics Agent"`
 - **Access**: `HOTEL_PERSONALIZATION_ROLE_GUEST_ANALYST`, `HOTEL_PERSONALIZATION_ROLE_ADMIN`

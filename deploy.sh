@@ -423,6 +423,9 @@ if should_run_step "agents" && [ "$SKIP_AGENTS" = false ]; then
         echo "  • Hotel Amenities Intelligence Agent"
         echo "  • Guest Experience Optimizer"
         echo "  • Hotel Intelligence Master Agent"
+        echo ""
+        echo "Registering agents with Snowflake Intelligence..."
+        echo "  ✓ Agents now visible in Snowflake Intelligence UI"
     else
         echo -e "${YELLOW}[WARNING]${NC} Intelligence Agents creation failed"
         echo "This is optional - core platform is still functional"

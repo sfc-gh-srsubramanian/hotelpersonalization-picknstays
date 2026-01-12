@@ -447,3 +447,29 @@ SELECT
     '5 specialized agents created with access to semantic views' AS RESULT,
     'Agents ready for natural language querying' AS NEXT_STEP;
 
+-- ============================================================================
+-- REGISTER AGENTS WITH SNOWFLAKE INTELLIGENCE
+-- ============================================================================
+-- This makes agents appear in the Snowflake Intelligence UI section
+-- Users can interact with agents through the unified intelligence interface
+
+USE ROLE ACCOUNTADMIN;
+
+-- Create Snowflake Intelligence object (if not exists)
+CREATE SNOWFLAKE INTELLIGENCE IF NOT EXISTS SNOWFLAKE_INTELLIGENCE_OBJECT_DEFAULT;
+
+-- Register all 5 Hotel Personalization agents
+ALTER SNOWFLAKE INTELLIGENCE IF EXISTS SNOWFLAKE_INTELLIGENCE_OBJECT_DEFAULT 
+  ADD AGENT IDENTIFIER($FULL_PREFIX || '.GOLD."Hotel Guest Analytics Agent"');
+
+ALTER SNOWFLAKE INTELLIGENCE IF EXISTS SNOWFLAKE_INTELLIGENCE_OBJECT_DEFAULT 
+  ADD AGENT IDENTIFIER($FULL_PREFIX || '.GOLD."Hotel Personalization Specialist"');
+
+ALTER SNOWFLAKE INTELLIGENCE IF EXISTS SNOWFLAKE_INTELLIGENCE_OBJECT_DEFAULT 
+  ADD AGENT IDENTIFIER($FULL_PREFIX || '.GOLD."Hotel Amenities Intelligence Agent"');
+
+ALTER SNOWFLAKE INTELLIGENCE IF EXISTS SNOWFLAKE_INTELLIGENCE_OBJECT_DEFAULT 
+  ADD AGENT IDENTIFIER($FULL_PREFIX || '.GOLD."Guest Experience Optimizer"');
+
+ALTER SNOWFLAKE INTELLIGENCE IF EXISTS SNOWFLAKE_INTELLIGENCE_OBJECT_DEFAULT 
+  ADD AGENT IDENTIFIER($FULL_PREFIX || '.GOLD."Hotel Intelligence Master Agent"');

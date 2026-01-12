@@ -60,8 +60,9 @@ cd "/path/to/Hotel-Personalization-System"
 3. ✅ Deploys all tables across Bronze, Silver, Gold layers
 4. ✅ Generates 10,000+ synthetic data records
 5. ✅ Creates semantic views for natural language querying
-6. ✅ Deploys 6 Snowflake Intelligence Agents (optional)
-7. ✅ Runs validation queries to confirm success
+6. ✅ Deploys 5 Snowflake Intelligence Agents (optional)
+7. ✅ Registers agents with Snowflake Intelligence for UI visibility
+8. ✅ Runs validation queries to confirm success
 
 **After deployment, use run.sh for operations:**
 ```bash
@@ -205,6 +206,7 @@ Try these sample questions with your agents:
    - Verify your Snowflake edition supports Snowflake Intelligence (Business Critical or higher)
    - Check that semantic views were created successfully before agents
    - Use `--skip-agents` flag to deploy without agents if needed
+   - Note: Agents are automatically registered with `SNOWFLAKE_INTELLIGENCE_OBJECT_DEFAULT` for UI visibility
 
 5. **Data Generation Takes Too Long:**
    - Increase warehouse size in `sql/01_account_setup.sql` (default: MEDIUM)
@@ -252,9 +254,10 @@ To remove all deployed resources, use the `clean.sh` script:
 ```
 
 **What gets removed:**
-- ❌ All tables and data (Bronze, Silver, Gold layers)
-- ❌ Semantic views
+- ❌ Agent registrations from Snowflake Intelligence (Step 0)
 - ❌ Intelligence Agents (unless --keep-agents specified)
+- ❌ Semantic views
+- ❌ All tables and data (Bronze, Silver, Gold layers)
 - ❌ Project-specific roles
 - ❌ Warehouse (if created by deployment)
 - ❌ Database (HOTEL_PERSONALIZATION)
@@ -270,6 +273,7 @@ Your deployment is successful when:
 ✅ **All data layers populated** (Bronze → Silver → Gold)  
 ✅ **3 semantic views created** without errors  
 ✅ **5 AI agents deployed** and accessible  
+✅ **Agents registered** with Snowflake Intelligence and visible in UI  
 ✅ **Security roles configured** with proper permissions  
 
 **Ready to revolutionize hotel personalization!** 🌟
