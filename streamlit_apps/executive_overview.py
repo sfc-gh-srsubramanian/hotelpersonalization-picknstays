@@ -106,44 +106,61 @@ with tab1:
             revenue_data = guests_df['TOTAL_REVENUE'].dropna()
             
             if len(revenue_data) > 0:
-                # Manually compute histogram bins for better control
                 import numpy as np
                 
-                # Calculate bin edges dynamically based on data range
-                min_rev = revenue_data.min()
-                max_rev = revenue_data.max()
+                # Separate zero revenue guests for clearer visualization
+                zero_rev = len(revenue_data[revenue_data == 0])
+                non_zero_data = revenue_data[revenue_data > 0]
                 
-                # Create 30 bins spanning the data range
-                hist_data, bin_edges = np.histogram(revenue_data, bins=30)
-                
-                # Create labels for bins (show in K/M format)
-                bin_labels = []
-                for i in range(len(bin_edges) - 1):
-                    start = bin_edges[i]
-                    end = bin_edges[i + 1]
-                    if start >= 1_000_000:
-                        label = f"${start/1_000_000:.1f}M"
-                    elif start >= 1_000:
-                        label = f"${start/1_000:.0f}K"
-                    else:
-                        label = f"${start:.0f}"
-                    bin_labels.append(label)
-                
-                # Plot as bar chart with computed bins
-                fig = go.Figure(data=[go.Bar(
-                    x=bin_labels,
-                    y=hist_data,
-                    marker_color='teal'
-                )])
-                fig.update_layout(
-                    xaxis_title='Total Revenue',
-                    yaxis_title='Number of Guests',
-                    showlegend=False,
-                    height=400
-                )
-                # Rotate x-axis labels for readability
-                fig.update_xaxes(tickangle=-45)
-                st.plotly_chart(fig, use_container_width=True)
+                if len(non_zero_data) > 0:
+                    # Create meaningful bins for non-zero revenue
+                    # Use fixed bins that make business sense
+                    bins = [0, 500, 1000, 1500, 2000, 2500, 3000, 3500, 4000, 4500, 5000, non_zero_data.max() + 1]
+                    hist_data, bin_edges = np.histogram(non_zero_data, bins=bins)
+                    
+                    # Create readable labels
+                    bin_labels = []
+                    for i in range(len(bin_edges) - 1):
+                        start = int(bin_edges[i])
+                        end = int(bin_edges[i + 1])
+                        if end > 5000:
+                            label = f"${start:,}+"
+                        else:
+                            label = f"${start:,}-${end:,}"
+                        bin_labels.append(label)
+                    
+                    # Add zero revenue as first bar
+                    if zero_rev > 0:
+                        bin_labels = ['$0'] + bin_labels
+                        hist_data = np.insert(hist_data, 0, zero_rev)
+                    
+                    # Plot as bar chart
+                    fig = go.Figure(data=[go.Bar(
+                        x=bin_labels,
+                        y=hist_data,
+                        marker_color='teal',
+                        text=hist_data,
+                        textposition='outside'
+                    )])
+                    fig.update_layout(
+                        xaxis_title='Customer Lifetime Value',
+                        yaxis_title='Number of Guests',
+                        showlegend=False,
+                        height=450
+                    )
+                    fig.update_xaxes(tickangle=-45)
+                    st.plotly_chart(fig, use_container_width=True)
+                    
+                    # Show summary stats below chart
+                    col1, col2, col3 = st.columns(3)
+                    with col1:
+                        st.metric("Zero Revenue Guests", format_number(zero_rev))
+                    with col2:
+                        st.metric("Active Revenue Guests", format_number(len(non_zero_data)))
+                    with col3:
+                        st.metric("Avg Active Guest Value", format_currency(non_zero_data.mean()))
+                else:
+                    st.warning("All guests have zero revenue.")
             else:
                 st.warning("No revenue data available for LTV distribution.")
     
