@@ -222,6 +222,7 @@ with tab2:
                         labels={'SPA_UPSELL_PROPENSITY': 'Spa Upsell Propensity Score', 'count': 'Number of Guests'}
                     )
                     fig.update_layout(showlegend=False, bargap=0.1)
+                    fig.update_xaxes(range=[0, 100])
                     st.plotly_chart(fig, use_container_width=True)
                 else:
                     st.warning("No Spa propensity data")
@@ -236,6 +237,7 @@ with tab2:
                         labels={'DINING_UPSELL_PROPENSITY': 'Dining Upsell Propensity Score', 'count': 'Number of Guests'}
                     )
                     fig.update_layout(showlegend=False, bargap=0.1)
+                    fig.update_xaxes(range=[0, 100])
                     st.plotly_chart(fig, use_container_width=True)
                 else:
                     st.warning("No Dining propensity data")
@@ -253,6 +255,7 @@ with tab2:
                         labels={'TECH_UPSELL_PROPENSITY': 'Tech Upsell Propensity Score', 'count': 'Number of Guests'}
                     )
                     fig.update_layout(showlegend=False, bargap=0.1)
+                    fig.update_xaxes(range=[0, 100])
                     st.plotly_chart(fig, use_container_width=True)
                 else:
                     st.warning("No Tech propensity data")
@@ -267,6 +270,7 @@ with tab2:
                         labels={'POOL_SERVICES_UPSELL_PROPENSITY': 'Pool Services Upsell Propensity Score', 'count': 'Number of Guests'}
                     )
                     fig.update_layout(showlegend=False, bargap=0.1)
+                    fig.update_xaxes(range=[0, 100])
                     st.plotly_chart(fig, use_container_width=True)
                 else:
                     st.warning("No Pool Services propensity data")
