@@ -35,6 +35,7 @@ SET FQ_SILVER = $FULL_PREFIX || '.SILVER';
 SET FQ_GOLD = $FULL_PREFIX || '.GOLD';
 SET FQ_BUSINESS_VIEWS = $FULL_PREFIX || '.BUSINESS_VIEWS';
 SET FQ_SEMANTIC_VIEWS = $FULL_PREFIX || '.SEMANTIC_VIEWS';
+SET FQ_STREAMLIT = $FULL_PREFIX || '.STREAMLIT';
 
 CREATE SCHEMA IF NOT EXISTS IDENTIFIER($FQ_BRONZE)
     COMMENT = 'Bronze layer - Raw data ingestion (PMS, bookings, amenities, usage)';
@@ -51,7 +52,7 @@ CREATE SCHEMA IF NOT EXISTS IDENTIFIER($FQ_BUSINESS_VIEWS)
 CREATE SCHEMA IF NOT EXISTS IDENTIFIER($FQ_SEMANTIC_VIEWS)
     COMMENT = 'Semantic views for natural language queries via Snowflake Intelligence';
 
-CREATE SCHEMA IF NOT EXISTS IDENTIFIER($FULL_PREFIX || '.STREAMLIT')
+CREATE SCHEMA IF NOT EXISTS IDENTIFIER($FQ_STREAMLIT)
     COMMENT = 'Streamlit applications for interactive dashboards';
 
 -- ============================================================================

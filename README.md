@@ -72,6 +72,9 @@ snow connection add demo
 
 # Check resource status
 ./run.sh status
+
+# Check Streamlit dashboard status and access info
+./run.sh streamlit
 ```
 
 **Step 3: Query and Explore**
@@ -94,10 +97,12 @@ snow connection add demo
   - Deploys database, schemas, tables, data, semantic views, and agents
   - Uses Snowflake CLI for streamlined deployment
   
-- **`./run.sh`** - Runtime operations (if available)
+- **`./run.sh`** - Runtime operations and testing
   - `status` - Check resource and data status
-  - `validate` - Run validation queries
-  - `query "SQL"` - Execute custom SQL
+  - `validate` - Run validation queries across all layers
+  - `query "SQL"` - Execute custom SQL queries
+  - `test-agents` - Test Intelligence Agents
+  - `streamlit` - Check Streamlit app status and get access info
 
 - **`./clean.sh`** - Remove all resources (use with caution)
 

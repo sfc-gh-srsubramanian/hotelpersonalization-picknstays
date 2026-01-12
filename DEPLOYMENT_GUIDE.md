@@ -70,6 +70,7 @@ cd "/path/to/Hotel-Personalization-System"
 ./run.sh validate                     # Run validation queries
 ./run.sh query "SELECT * FROM..."     # Execute custom SQL
 ./run.sh test-agents                  # Test Intelligence Agents
+./run.sh streamlit                    # Check Streamlit app and get access info
 ```
 
 ### **Option 2: Manual SQL Deployment**
@@ -225,6 +226,7 @@ Try these sample questions with your agents:
 ./run.sh status                       # Check deployment status
 ./run.sh validate                     # Run validation queries
 ./run.sh test-agents                  # Test AI agents
+./run.sh streamlit                    # Check Streamlit dashboards
 ```
 
 **Support:**
