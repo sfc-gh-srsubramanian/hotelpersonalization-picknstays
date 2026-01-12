@@ -440,7 +440,7 @@ fi
 ###############################################################################
 # Step 7: Deploy Streamlit Dashboards (Optional)
 ###############################################################################
-if should_run_step "dashboards" && [ "$SKIP_AGENTS" = false ]; then
+if should_run_step "dashboards" && [ "$SKIP_DASHBOARDS" = false ]; then
     echo "Step 7: Deploying Streamlit Dashboards..."
     echo "-------------------------------------------------------------------------"
     echo "Creating interactive business intelligence dashboards"

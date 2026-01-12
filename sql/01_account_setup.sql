@@ -51,6 +51,9 @@ CREATE SCHEMA IF NOT EXISTS IDENTIFIER($FQ_BUSINESS_VIEWS)
 CREATE SCHEMA IF NOT EXISTS IDENTIFIER($FQ_SEMANTIC_VIEWS)
     COMMENT = 'Semantic views for natural language queries via Snowflake Intelligence';
 
+CREATE SCHEMA IF NOT EXISTS IDENTIFIER($FULL_PREFIX || '.STREAMLIT')
+    COMMENT = 'Streamlit applications for interactive dashboards';
+
 -- ============================================================================
 -- 4. Create Warehouse
 -- ============================================================================

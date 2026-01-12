@@ -1,0 +1,56 @@
+definition_version: 2
+entities:
+  guest_360_dashboard:
+    type: streamlit
+    title: "Guest 360 Dashboard"
+    query_warehouse: HOTEL_PERSONALIZATION_WH
+    main_file: guest_360_dashboard.py
+    pages_dir: null
+    stage: streamlit
+    artifacts:
+      - guest_360_dashboard.py
+      - shared/
+
+  personalization_hub:
+    type: streamlit
+    title: "Personalization Hub"
+    query_warehouse: HOTEL_PERSONALIZATION_WH
+    main_file: personalization_hub.py
+    pages_dir: null
+    stage: streamlit
+    artifacts:
+      - personalization_hub.py
+      - shared/
+
+  amenity_performance:
+    type: streamlit
+    title: "Amenity Performance Dashboard"
+    query_warehouse: HOTEL_PERSONALIZATION_WH
+    main_file: amenity_performance.py
+    pages_dir: null
+    stage: streamlit
+    artifacts:
+      - amenity_performance.py
+      - shared/
+
+  revenue_analytics:
+    type: streamlit
+    title: "Revenue Analytics Dashboard"
+    query_warehouse: HOTEL_PERSONALIZATION_WH
+    main_file: revenue_analytics.py
+    pages_dir: null
+    stage: streamlit
+    artifacts:
+      - revenue_analytics.py
+      - shared/
+
+  executive_overview:
+    type: streamlit
+    title: "Executive Overview Dashboard"
+    query_warehouse: HOTEL_PERSONALIZATION_WH
+    main_file: executive_overview.py
+    pages_dir: null
+    stage: streamlit
+    artifacts:
+      - executive_overview.py
+      - shared/
