@@ -54,6 +54,27 @@ The Hotel Personalization Platform transforms raw operational data into actionab
 
 ![Architecture Diagram](images/architecture_overview.png)
 
+> **Architecture Note**: The diagram above shows the core data layers. The complete architecture also includes a **Consumption Layer** with the Streamlit Dashboard application ("Hotel Personalization - Pic'N Stays") that provides visual analytics and business intelligence interfaces for end users.
+
+**Complete Data Flow:**
+```
+Data Sources (PMS, Booking, Amenity, WiFi/TV, Social Media)
+           ↓
+    BRONZE LAYER (13 Raw Tables)
+           ↓
+    SILVER LAYER (7 Enriched Tables)
+           ↓
+    GOLD LAYER (3 Analytics Tables)
+           ↓
+    SEMANTIC LAYER (3 Views + 5 AI Agents)
+           ↓
+    CONSUMPTION LAYER
+    • Streamlit Dashboard (5 Pages)
+    • Snowflake Intelligence UI
+    • Direct SQL Access
+    • BI Tool Integration
+```
+
 The platform implements a modern **Medallion Architecture** (Bronze → Silver → Gold) across Snowflake:
 
 #### Bronze Layer: Raw Data Capture
@@ -284,7 +305,7 @@ Five specialized AI agents enable business users to query guest data in natural 
 
 A comprehensive, multi-page Streamlit dashboard deployed natively in Snowflake, providing real-time visual analytics and business intelligence for all user personas.
 
-![Streamlit Dashboard](images/streamlit_dashboard.png)
+> **Note**: The Streamlit dashboard provides an interactive web interface for all personas to access guest intelligence, revenue analytics, and operational insights in real-time. Screenshots of individual dashboard pages are available upon request, or you can deploy the application to experience it live.
 
 #### Application Architecture
 
