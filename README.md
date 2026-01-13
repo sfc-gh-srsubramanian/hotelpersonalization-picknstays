@@ -59,9 +59,10 @@ snow connection add demo
 **What Gets Deployed:**
 - ✅ Database with 5 schemas (Bronze, Silver, Gold, Business Views, Semantic Views)
 - ✅ 23 tables across medallion architecture (13 Bronze, 7 Silver, 3 Gold)
-- ✅ 1,000 synthetic guest profiles with realistic data
-- ✅ 2,000+ bookings and 1,395+ completed stays
-- ✅ 3,500+ amenity transactions and 8,000+ usage records
+- ✅ **50 Summit Hospitality Group properties** across 4 brands (Luxury, Select Service, Extended Stay, Urban/Modern)
+- ✅ 10,000 synthetic guest profiles with realistic data
+- ✅ 25,000+ bookings and 20,000+ completed stays
+- ✅ 30,000+ amenity transactions and 15,000+ usage records
 - ✅ 3 semantic views for natural language querying
 - ✅ 5 Snowflake Intelligence Agents with granular RBAC
 - ✅ **1 Streamlit Dashboard Application** with 5 interactive pages
@@ -216,12 +217,12 @@ To remove all deployed resources:
 │  │ 📊 Booking APIs │               │     (Raw Data Ingestion)            │ │             │ │
 │  │ 💳 Payment Data │               │                                     │ │ Guest       │ │
 │  │ 📱 Social Media │               │ • guest_profiles (1000 records)     │ │ Analytics   │ │
-│  │ 📝 Reviews/CRM  │               │ • booking_history (2000 records)    │ │             │ │
-│  │ 🎯 Loyalty APIs │               │ • room_preferences (716 records)    │ │ Personaliz- │ │
-│  │ 🌐 WiFi Systems │               │ • loyalty_program (1000 records)    │ │ ation       │ │
-│  │ 📺 Smart TV API │               │ • hotel_properties (5 records)      │ │ Specialist  │ │
-│  │ 🏊 Pool Systems │               │ • amenity_transactions (3500+ recs) │ │             │ │
-│  └─────────────────┘               │ • amenity_usage (8000+ sessions)    │ │ Revenue     │ │
+│  │ 📝 Reviews/CRM  │               │ • booking_history (25000 records)   │ │             │ │
+│  │ 🎯 Loyalty APIs │               │ • room_preferences (10000 records)  │ │ Personaliz- │ │
+│  │ 🌐 WiFi Systems │               │ • loyalty_program (10000 records)   │ │ ation       │ │
+│  │ 📺 Smart TV API │               │ • hotel_properties (50 records)     │ │ Specialist  │ │
+│  │ 🏊 Pool Systems │               │ • amenity_transactions (30000+ recs)│ │             │ │
+│  └─────────────────┘               │ • amenity_usage (15000+ sessions)   │ │ Revenue     │ │
 │           │                        │                                     │ │             │ │
 │           ▼                        └─────────────┬───────────────────────┘ │ Revenue     │ │
 │                                                  │                         │ Optimizer   │ │
@@ -230,7 +231,7 @@ To remove all deployed resources:
 │  │ • Streaming ETL │               │        🥈 SILVER LAYER              │ │ Optimizer   │ │
 │  │ • Data Validation│               │    (Cleaned & Standardized)        │ │             │ │
 │  │ • Schema Evolution│              │                                     │ │ Master      │ │
-│  │ • Error Handling │               │ • guests_standardized (1000)        │ │ Intelligence│ │
+│  │ • Error Handling │               │ • guests_standardized (10000)       │ │ Intelligence│ │
 │  └─────────────────┘               │   - Age, generation, segments       │ │             │ │
 │                                    │   - Booking patterns & metrics      │ │ Amenity     │ │
 │           │                        │   - Loyalty tier analysis          │ │ Intelligence│ │
@@ -245,7 +246,7 @@ To remove all deployed resources:
 │  │ • Business Rules│               │        🏆 GOLD LAYER               │ │ • Analysts  │ │
 │  │ • ML Feature Eng│               │     (Analytics Ready)               │ │ • Operations│ │
 │  │ • Aggregations  │               │                                     │ └─────────────┘ │
-│  └─────────────────┘               │ • guest_360_view_enhanced (1000)    │                 │
+│  └─────────────────┘               │ • guest_360_view_enhanced (10000)   │                 │
 │                                    │   - Complete guest profiles        │ ┌─────────────┐ │
 │           │                        │   - Infrastructure usage metrics  │ │ 📱 APPS &   │ │
 │           ▼                        │   - Tech adoption profiles        │ │   SYSTEMS   │ │
@@ -331,45 +332,57 @@ To remove all deployed resources:
 
 ### **🗄️ Database Architecture**
 - **Database**: `HOTEL_PERSONALIZATION` with 5 specialized schemas
-- **Production Scale**: 1000+ guests, 2000+ bookings, $1.26M+ revenue tracked
+- **Production Scale**: 10,000 guests, 25,000+ bookings, 50 properties across 4 brands
 - **Security Model**: Role-based access control with 6 project-specific roles
 - **Data Governance**: Comprehensive audit trails and compliance framework
+
+### **🏨 Summit Hospitality Group - Brand Portfolio**
+This platform showcases a **multi-brand hotel portfolio** managed under the Summit Hospitality Group parent brand:
+
+| Brand | Category | Properties | Star Rating | Room Count | Target Market |
+|-------|----------|------------|-------------|------------|---------------|
+| **Summit Peak Reserve** | Luxury | 10 | 5⭐ | 250-475 | Full-service luxury travelers, high-value guests |
+| **Summit Ice** | Select Service | 20 | 3-4⭐ | 120-170 | Business/leisure travelers seeking value |
+| **Summit Permafrost** | Extended Stay | 10 | 3⭐ | 100-150 | Corporate relocations, long-term stays |
+| **The Snowline by Summit** | Urban/Modern | 10 | 4⭐ | 80-120 | Millennial travelers, urban explorers |
+
+**Geographic Distribution**: 50 properties across 25+ major US markets including NYC, LA, Chicago, San Francisco, Miami, Boston, Seattle, and more.
 
 ### **📊 Data Layers Implemented**
 
 #### **🥉 Bronze Layer (13 Tables)**
 | Table | Records | Purpose |
 |-------|---------|---------|
-| `guest_profiles` | 1,000 | Guest demographics, contact info, preferences |
-| `booking_history` | 2,000 | Complete booking transactions and patterns |
-| `stay_history` | 1,395 | Complete stay records with incidental charges |
-| `room_preferences` | ~716 | Room-specific preferences (bed type, floor, view) |
-| `service_preferences` | ~600 | Service preferences (dining, spa, amenities) |
-| `social_media_activity` | ~500 | Social media engagement and sentiment |
-| `loyalty_program` | 1,000 | Loyalty tiers, points, and program status |
-| `feedback_reviews` | ~800 | Guest reviews and satisfaction scores |
-| `payment_methods` | ~1,000 | Payment methods and billing preferences |
-| `special_requests` | ~700 | Special requests and accommodations |
-| `hotel_properties` | 5 | Hotel information across major brands |
-| `amenity_transactions` | 3,500+ | Detailed amenity spending (spa, bar, restaurant, room service) |
-| `amenity_usage` | 8,000+ | Infrastructure usage (WiFi, Smart TV, Pool) |
+| `guest_profiles` | 10,000 | Guest demographics, contact info, preferences |
+| `booking_history` | 25,000+ | Complete booking transactions and patterns |
+| `stay_history` | 20,000+ | Complete stay records with incidental charges |
+| `room_preferences` | 10,000 | Room-specific preferences (bed type, floor, view) |
+| `service_preferences` | 10,000 | Service preferences (dining, spa, amenities) |
+| `social_media_activity` | 10,000+ | Social media engagement and sentiment |
+| `loyalty_program` | 10,000 | Loyalty tiers, points, and program status |
+| `feedback_reviews` | 10,000+ | Guest reviews and satisfaction scores |
+| `payment_methods` | 10,000+ | Payment methods and billing preferences |
+| `special_requests` | 10,000+ | Special requests and accommodations |
+| `hotel_properties` | 50 | Summit Hospitality Group properties across 4 brands (10 Luxury, 20 Select Service, 10 Extended Stay, 10 Urban/Modern) |
+| `amenity_transactions` | 30,000+ | Detailed amenity spending (spa, bar, restaurant, room service) |
+| `amenity_usage` | 15,000+ | Infrastructure usage (WiFi, Smart TV, Pool) |
 
 #### **🥈 Silver Layer (7 Tables)**
 | Table | Records | Purpose |
 |-------|---------|---------|
-| `guests_standardized` | 1,000 | Cleaned guest data with business logic and demographics |
-| `bookings_enriched` | 2,000+ | Enriched booking data with derived metrics |
-| `stays_processed` | 1,395+ | Processed stay data with spending categories |
-| `preferences_consolidated` | ~1,000 | Consolidated room and service preferences |
-| `engagement_metrics` | ~500 | Social media and digital engagement analysis |
-| `amenity_spending_enriched` | 3,500+ | Enriched amenity transactions with categories |
-| `amenity_usage_enriched` | 8,000+ | Infrastructure usage analytics with engagement scores |
+| `guests_standardized` | 10,000 | Cleaned guest data with business logic and demographics |
+| `bookings_enriched` | 25,000+ | Enriched booking data with derived metrics |
+| `stays_processed` | 20,000+ | Processed stay data with spending categories |
+| `preferences_consolidated` | 10,000 | Consolidated room and service preferences |
+| `engagement_metrics` | 10,000+ | Social media and digital engagement analysis |
+| `amenity_spending_enriched` | 30,000+ | Enriched amenity transactions with categories |
+| `amenity_usage_enriched` | 15,000+ | Infrastructure usage analytics with engagement scores |
 
 #### **🏆 Gold Layer (3 Tables)**
 | Table | Records | Purpose |
 |-------|---------|---------|
-| `guest_360_view_enhanced` | 1,000 | Complete guest profiles with all enriched metrics |
-| `personalization_scores_enhanced` | 1,000 | AI-powered propensity scores (upsell, churn, loyalty) |
+| `guest_360_view_enhanced` | 10,000 | Complete guest profiles with all enriched metrics |
+| `personalization_scores_enhanced` | 10,000 | AI-powered propensity scores (upsell, churn, loyalty) |
 | `amenity_analytics` | Aggregated | Business intelligence for all amenity services |
 
 #### **🔍 Semantic Views Layer (3 Views)**

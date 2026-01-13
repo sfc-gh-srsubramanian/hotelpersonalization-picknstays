@@ -31,37 +31,342 @@ WITH seq_generator AS (
 hotel_data AS (
     SELECT 
         'HOTEL_' || LPAD(seq::VARCHAR, 3, '0') as hotel_id,
+        -- Hotel name with city
         CASE 
-            WHEN seq <= 10 THEN 'Hilton ' || ['Downtown', 'Garden Inn', 'Embassy Suites', 'DoubleTree', 'Hampton Inn'][seq % 5]
-            WHEN seq <= 20 THEN 'Marriott ' || ['Courtyard', 'Residence Inn', 'SpringHill Suites', 'Fairfield Inn', 'TownePlace Suites'][seq % 5]
-            WHEN seq <= 30 THEN 'Hyatt ' || ['Place', 'House', 'Centric', 'Regency', 'Grand'][seq % 5]
-            WHEN seq <= 40 THEN 'IHG ' || ['Holiday Inn', 'Crowne Plaza', 'InterContinental', 'Staybridge Suites', 'Candlewood Suites'][seq % 5]
-            ELSE 'Independent ' || ['Boutique', 'Luxury', 'Business', 'Resort', 'Extended Stay'][seq % 5]
+            WHEN seq = 0 THEN 'Summit Peak Reserve New York'
+            WHEN seq = 1 THEN 'Summit Peak Reserve Los Angeles'
+            WHEN seq = 2 THEN 'Summit Peak Reserve Chicago'
+            WHEN seq = 3 THEN 'Summit Peak Reserve San Francisco'
+            WHEN seq = 4 THEN 'Summit Peak Reserve Miami'
+            WHEN seq = 5 THEN 'Summit Peak Reserve Boston'
+            WHEN seq = 6 THEN 'Summit Peak Reserve Seattle'
+            WHEN seq = 7 THEN 'Summit Peak Reserve Las Vegas'
+            WHEN seq = 8 THEN 'Summit Peak Reserve Honolulu'
+            WHEN seq = 9 THEN 'Summit Peak Reserve Aspen'
+            WHEN seq = 10 THEN 'Summit Ice Times Square'
+            WHEN seq = 11 THEN 'Summit Ice Midtown Manhattan'
+            WHEN seq = 12 THEN 'Summit Ice Santa Monica'
+            WHEN seq = 13 THEN 'Summit Ice Beverly Hills'
+            WHEN seq = 14 THEN 'Summit Ice Downtown Chicago'
+            WHEN seq = 15 THEN 'Summit Ice O''Hare'
+            WHEN seq = 16 THEN 'Summit Ice Dallas'
+            WHEN seq = 17 THEN 'Summit Ice Houston'
+            WHEN seq = 18 THEN 'Summit Ice Phoenix'
+            WHEN seq = 19 THEN 'Summit Ice Atlanta'
+            WHEN seq = 20 THEN 'Summit Ice Denver'
+            WHEN seq = 21 THEN 'Summit Ice Orlando'
+            WHEN seq = 22 THEN 'Summit Ice Nashville'
+            WHEN seq = 23 THEN 'Summit Ice Austin'
+            WHEN seq = 24 THEN 'Summit Ice Portland'
+            WHEN seq = 25 THEN 'Summit Ice Charlotte'
+            WHEN seq = 26 THEN 'Summit Ice San Diego'
+            WHEN seq = 27 THEN 'Summit Ice Minneapolis'
+            WHEN seq = 28 THEN 'Summit Ice Tampa'
+            WHEN seq = 29 THEN 'Summit Ice Philadelphia'
+            WHEN seq = 30 THEN 'Summit Permafrost Manhattan'
+            WHEN seq = 31 THEN 'Summit Permafrost Silicon Valley'
+            WHEN seq = 32 THEN 'Summit Permafrost Boston'
+            WHEN seq = 33 THEN 'Summit Permafrost San Diego'
+            WHEN seq = 34 THEN 'Summit Permafrost Washington DC'
+            WHEN seq = 35 THEN 'Summit Permafrost Atlanta'
+            WHEN seq = 36 THEN 'Summit Permafrost Dallas'
+            WHEN seq = 37 THEN 'Summit Permafrost Seattle'
+            WHEN seq = 38 THEN 'Summit Permafrost Denver'
+            WHEN seq = 39 THEN 'Summit Permafrost Austin'
+            WHEN seq = 40 THEN 'The Snowline Brooklyn'
+            WHEN seq = 41 THEN 'The Snowline Williamsburg'
+            WHEN seq = 42 THEN 'The Snowline West Hollywood'
+            WHEN seq = 43 THEN 'The Snowline Wicker Park'
+            WHEN seq = 44 THEN 'The Snowline Wynwood'
+            WHEN seq = 45 THEN 'The Snowline Mission District'
+            WHEN seq = 46 THEN 'The Snowline Capitol Hill Seattle'
+            WHEN seq = 47 THEN 'The Snowline Pearl District'
+            WHEN seq = 48 THEN 'The Snowline Arts District Nashville'
+            WHEN seq = 49 THEN 'The Snowline South Congress Austin'
         END as hotel_name,
+        -- Brand assignment by category
         CASE 
-            WHEN seq <= 10 THEN 'Hilton'
-            WHEN seq <= 20 THEN 'Marriott'
-            WHEN seq <= 30 THEN 'Hyatt'
-            WHEN seq <= 40 THEN 'IHG'
-            ELSE 'Independent'
+            WHEN seq BETWEEN 0 AND 9 THEN 'Summit Peak Reserve'
+            WHEN seq BETWEEN 10 AND 29 THEN 'Summit Ice'
+            WHEN seq BETWEEN 30 AND 39 THEN 'Summit Permafrost'
+            ELSE 'The Snowline by Summit'
         END as brand,
-        ((seq % 1000) * 123)::VARCHAR || ' ' || ['Main St', 'Broadway', 'Park Ave', 'First St', 'Oak Blvd'][seq % 5] as address_line1,
+        -- Category assignment
+        CASE 
+            WHEN seq BETWEEN 0 AND 9 THEN 'Luxury'
+            WHEN seq BETWEEN 10 AND 29 THEN 'Select Service'
+            WHEN seq BETWEEN 30 AND 39 THEN 'Extended Stay'
+            ELSE 'Urban/Modern'
+        END as category,
+        -- Address (realistic streets)
+        CASE 
+            WHEN seq = 0 THEN '350 Fifth Avenue'
+            WHEN seq = 1 THEN '9920 Wilshire Boulevard'
+            WHEN seq = 2 THEN '151 West Adams Street'
+            WHEN seq = 3 THEN '50 Third Street'
+            WHEN seq = 4 THEN '1395 Brickell Avenue'
+            WHEN seq = 5 THEN '138 St James Avenue'
+            WHEN seq = 6 THEN '1301 Sixth Avenue'
+            WHEN seq = 7 THEN '3570 Las Vegas Boulevard'
+            WHEN seq = 8 THEN '2259 Kalakaua Avenue'
+            WHEN seq = 9 THEN '315 East Dean Street'
+            WHEN seq = 10 THEN '226 West 52nd Street'
+            WHEN seq = 11 THEN '700 Eighth Avenue'
+            WHEN seq = 12 THEN '1700 Ocean Avenue'
+            WHEN seq = 13 THEN '465 South Beverly Drive'
+            WHEN seq = 14 THEN '172 West Adams Street'
+            WHEN seq = 15 THEN '6810 North Mannheim Road'
+            WHEN seq = 16 THEN '2914 Swiss Avenue'
+            WHEN seq = 17 THEN '1919 Smith Street'
+            WHEN seq = 18 THEN '50 East Adams Street'
+            WHEN seq = 19 THEN '265 Peachtree Center Avenue'
+            WHEN seq = 20 THEN '1450 Larimer Street'
+            WHEN seq = 21 THEN '5905 International Drive'
+            WHEN seq = 22 THEN '623 Union Street'
+            WHEN seq = 23 THEN '500 East 4th Street'
+            WHEN seq = 24 THEN '1510 SW Harbor Way'
+            WHEN seq = 25 THEN '237 South Tryon Street'
+            WHEN seq = 26 THEN '1047 Fifth Avenue'
+            WHEN seq = 27 THEN '1330 Industrial Boulevard'
+            WHEN seq = 28 THEN '4860 West Kennedy Boulevard'
+            WHEN seq = 29 THEN '1234 Market Street'
+            WHEN seq = 30 THEN '138 Lafayette Street'
+            WHEN seq = 31 THEN '5155 Old Ironsides Drive'
+            WHEN seq = 32 THEN '40 Berkeley Street'
+            WHEN seq = 33 THEN '1433 Camino Del Rio South'
+            WHEN seq = 34 THEN '1199 Vermont Avenue NW'
+            WHEN seq = 35 THEN '3399 Peachtree Road NE'
+            WHEN seq = 36 THEN '4440 North Central Expressway'
+            WHEN seq = 37 THEN '1011 Pike Street'
+            WHEN seq = 38 THEN '4950 South Syracuse Street'
+            WHEN seq = 39 THEN '1603 South Congress Avenue'
+            WHEN seq = 40 THEN '123 Kent Avenue'
+            WHEN seq = 41 THEN '85 North 3rd Street'
+            WHEN seq = 42 THEN '8490 Sunset Boulevard'
+            WHEN seq = 43 THEN '1622 North Milwaukee Avenue'
+            WHEN seq = 44 THEN '2913 North Miami Avenue'
+            WHEN seq = 45 THEN '2655 Mission Street'
+            WHEN seq = 46 THEN '1620 Belmont Avenue'
+            WHEN seq = 47 THEN '411 NW Flanders Street'
+            WHEN seq = 48 THEN '2115 Division Street'
+            WHEN seq = 49 THEN '1603 South Congress Avenue'
+        END as address_line1,
         NULL as address_line2,
-        ['New York', 'Los Angeles', 'Chicago', 'Houston', 'Phoenix', 'Philadelphia', 'San Antonio', 'San Diego', 'Dallas', 'San Jose'][seq % 10] as city,
-        ['NY', 'CA', 'IL', 'TX', 'AZ', 'PA', 'TX', 'CA', 'TX', 'CA'][seq % 10] as state_province,
-        LPAD((10000 + (seq % 5000) * 17 % 90000)::VARCHAR, 5, '0') as postal_code,
+        -- City
+        CASE 
+            WHEN seq IN (0, 10, 11, 30, 40, 41) THEN 'New York'
+            WHEN seq IN (1, 12, 13, 42) THEN 'Los Angeles'
+            WHEN seq IN (2, 14, 15, 43) THEN 'Chicago'
+            WHEN seq IN (3, 31, 45) THEN 'San Francisco'
+            WHEN seq IN (4, 44) THEN 'Miami'
+            WHEN seq IN (5, 32) THEN 'Boston'
+            WHEN seq IN (6, 37, 46) THEN 'Seattle'
+            WHEN seq = 7 THEN 'Las Vegas'
+            WHEN seq = 8 THEN 'Honolulu'
+            WHEN seq = 9 THEN 'Aspen'
+            WHEN seq IN (16, 36) THEN 'Dallas'
+            WHEN seq = 17 THEN 'Houston'
+            WHEN seq = 18 THEN 'Phoenix'
+            WHEN seq IN (19, 35) THEN 'Atlanta'
+            WHEN seq IN (20, 38) THEN 'Denver'
+            WHEN seq = 21 THEN 'Orlando'
+            WHEN seq IN (22, 48) THEN 'Nashville'
+            WHEN seq IN (23, 39, 49) THEN 'Austin'
+            WHEN seq IN (24, 47) THEN 'Portland'
+            WHEN seq = 25 THEN 'Charlotte'
+            WHEN seq IN (26, 33) THEN 'San Diego'
+            WHEN seq = 27 THEN 'Minneapolis'
+            WHEN seq = 28 THEN 'Tampa'
+            WHEN seq = 29 THEN 'Philadelphia'
+            WHEN seq = 34 THEN 'Washington'
+        END as city,
+        -- State
+        CASE 
+            WHEN seq IN (0, 10, 11, 30, 40, 41) THEN 'NY'
+            WHEN seq IN (1, 12, 13, 42) THEN 'CA'
+            WHEN seq IN (2, 14, 15, 43) THEN 'IL'
+            WHEN seq IN (3, 31, 45) THEN 'CA'
+            WHEN seq IN (4, 44) THEN 'FL'
+            WHEN seq IN (5, 32) THEN 'MA'
+            WHEN seq IN (6, 37, 46) THEN 'WA'
+            WHEN seq = 7 THEN 'NV'
+            WHEN seq = 8 THEN 'HI'
+            WHEN seq = 9 THEN 'CO'
+            WHEN seq IN (16, 36) THEN 'TX'
+            WHEN seq = 17 THEN 'TX'
+            WHEN seq = 18 THEN 'AZ'
+            WHEN seq IN (19, 35) THEN 'GA'
+            WHEN seq IN (20, 38) THEN 'CO'
+            WHEN seq = 21 THEN 'FL'
+            WHEN seq IN (22, 48) THEN 'TN'
+            WHEN seq IN (23, 39, 49) THEN 'TX'
+            WHEN seq IN (24, 47) THEN 'OR'
+            WHEN seq = 25 THEN 'NC'
+            WHEN seq IN (26, 33) THEN 'CA'
+            WHEN seq = 27 THEN 'MN'
+            WHEN seq = 28 THEN 'FL'
+            WHEN seq = 29 THEN 'PA'
+            WHEN seq = 34 THEN 'DC'
+        END as state_province,
+        -- Postal codes
+        CASE 
+            WHEN seq = 0 THEN '10118'
+            WHEN seq = 1 THEN '90212'
+            WHEN seq = 2 THEN '60603'
+            WHEN seq = 3 THEN '94103'
+            WHEN seq = 4 THEN '33131'
+            WHEN seq = 5 THEN '02116'
+            WHEN seq = 6 THEN '98101'
+            WHEN seq = 7 THEN '89109'
+            WHEN seq = 8 THEN '96815'
+            WHEN seq = 9 THEN '81611'
+            WHEN seq = 10 THEN '10019'
+            WHEN seq = 11 THEN '10019'
+            WHEN seq = 12 THEN '90401'
+            WHEN seq = 13 THEN '90212'
+            WHEN seq = 14 THEN '60603'
+            WHEN seq = 15 THEN '60666'
+            WHEN seq = 16 THEN '75204'
+            WHEN seq = 17 THEN '77002'
+            WHEN seq = 18 THEN '85003'
+            WHEN seq = 19 THEN '30303'
+            WHEN seq = 20 THEN '80202'
+            WHEN seq = 21 THEN '32819'
+            WHEN seq = 22 THEN '37219'
+            WHEN seq = 23 THEN '78701'
+            WHEN seq = 24 THEN '97201'
+            WHEN seq = 25 THEN '28202'
+            WHEN seq = 26 THEN '92101'
+            WHEN seq = 27 THEN '55413'
+            WHEN seq = 28 THEN '33609'
+            WHEN seq = 29 THEN '19107'
+            WHEN seq = 30 THEN '10013'
+            WHEN seq = 31 THEN '95054'
+            WHEN seq = 32 THEN '02116'
+            WHEN seq = 33 THEN '92108'
+            WHEN seq = 34 THEN '20005'
+            WHEN seq = 35 THEN '30326'
+            WHEN seq = 36 THEN '75206'
+            WHEN seq = 37 THEN '98101'
+            WHEN seq = 38 THEN '80237'
+            WHEN seq = 39 THEN '78704'
+            WHEN seq = 40 THEN '11249'
+            WHEN seq = 41 THEN '11249'
+            WHEN seq = 42 THEN '90069'
+            WHEN seq = 43 THEN '60622'
+            WHEN seq = 44 THEN '33127'
+            WHEN seq = 45 THEN '94110'
+            WHEN seq = 46 THEN '98102'
+            WHEN seq = 47 THEN '97209'
+            WHEN seq = 48 THEN '37203'
+            WHEN seq = 49 THEN '78704'
+        END as postal_code,
         'USA' as country,
-        CAST(25.0 + ((seq % 25) * 7 % 25) + UNIFORM(0.0, 0.001, RANDOM()) AS DECIMAL(10,8)) as latitude,
-        CAST(-125.0 + ((seq % 50) * 11 % 50) + UNIFORM(0.0, 0.001, RANDOM()) AS DECIMAL(11,8)) as longitude,
+        -- Latitude (realistic for each city)
+        CASE 
+            WHEN seq IN (0, 10, 11, 30, 40, 41) THEN CAST(40.748817 + UNIFORM(-0.02, 0.02, RANDOM()) AS DECIMAL(10,8))
+            WHEN seq IN (1, 12, 13, 42) THEN CAST(34.052235 + UNIFORM(-0.02, 0.02, RANDOM()) AS DECIMAL(10,8))
+            WHEN seq IN (2, 14, 15, 43) THEN CAST(41.878113 + UNIFORM(-0.02, 0.02, RANDOM()) AS DECIMAL(10,8))
+            WHEN seq IN (3, 31, 45) THEN CAST(37.774929 + UNIFORM(-0.02, 0.02, RANDOM()) AS DECIMAL(10,8))
+            WHEN seq IN (4, 44) THEN CAST(25.761681 + UNIFORM(-0.02, 0.02, RANDOM()) AS DECIMAL(10,8))
+            WHEN seq IN (5, 32) THEN CAST(42.360081 + UNIFORM(-0.02, 0.02, RANDOM()) AS DECIMAL(10,8))
+            WHEN seq IN (6, 37, 46) THEN CAST(47.606209 + UNIFORM(-0.02, 0.02, RANDOM()) AS DECIMAL(10,8))
+            WHEN seq = 7 THEN CAST(36.169941 + UNIFORM(-0.02, 0.02, RANDOM()) AS DECIMAL(10,8))
+            WHEN seq = 8 THEN CAST(21.306944 + UNIFORM(-0.02, 0.02, RANDOM()) AS DECIMAL(10,8))
+            WHEN seq = 9 THEN CAST(39.191097 + UNIFORM(-0.02, 0.02, RANDOM()) AS DECIMAL(10,8))
+            WHEN seq IN (16, 36) THEN CAST(32.776665 + UNIFORM(-0.02, 0.02, RANDOM()) AS DECIMAL(10,8))
+            WHEN seq = 17 THEN CAST(29.760427 + UNIFORM(-0.02, 0.02, RANDOM()) AS DECIMAL(10,8))
+            WHEN seq = 18 THEN CAST(33.448376 + UNIFORM(-0.02, 0.02, RANDOM()) AS DECIMAL(10,8))
+            WHEN seq IN (19, 35) THEN CAST(33.748997 + UNIFORM(-0.02, 0.02, RANDOM()) AS DECIMAL(10,8))
+            WHEN seq IN (20, 38) THEN CAST(39.739236 + UNIFORM(-0.02, 0.02, RANDOM()) AS DECIMAL(10,8))
+            WHEN seq = 21 THEN CAST(28.538336 + UNIFORM(-0.02, 0.02, RANDOM()) AS DECIMAL(10,8))
+            WHEN seq IN (22, 48) THEN CAST(36.162664 + UNIFORM(-0.02, 0.02, RANDOM()) AS DECIMAL(10,8))
+            WHEN seq IN (23, 39, 49) THEN CAST(30.267153 + UNIFORM(-0.02, 0.02, RANDOM()) AS DECIMAL(10,8))
+            WHEN seq IN (24, 47) THEN CAST(45.523064 + UNIFORM(-0.02, 0.02, RANDOM()) AS DECIMAL(10,8))
+            WHEN seq = 25 THEN CAST(35.227085 + UNIFORM(-0.02, 0.02, RANDOM()) AS DECIMAL(10,8))
+            WHEN seq IN (26, 33) THEN CAST(32.715736 + UNIFORM(-0.02, 0.02, RANDOM()) AS DECIMAL(10,8))
+            WHEN seq = 27 THEN CAST(44.977753 + UNIFORM(-0.02, 0.02, RANDOM()) AS DECIMAL(10,8))
+            WHEN seq = 28 THEN CAST(27.950575 + UNIFORM(-0.02, 0.02, RANDOM()) AS DECIMAL(10,8))
+            WHEN seq = 29 THEN CAST(39.952583 + UNIFORM(-0.02, 0.02, RANDOM()) AS DECIMAL(10,8))
+            WHEN seq = 34 THEN CAST(38.907192 + UNIFORM(-0.02, 0.02, RANDOM()) AS DECIMAL(10,8))
+        END as latitude,
+        -- Longitude (realistic for each city)
+        CASE 
+            WHEN seq IN (0, 10, 11, 30, 40, 41) THEN CAST(-73.985428 + UNIFORM(-0.02, 0.02, RANDOM()) AS DECIMAL(11,8))
+            WHEN seq IN (1, 12, 13, 42) THEN CAST(-118.243683 + UNIFORM(-0.02, 0.02, RANDOM()) AS DECIMAL(11,8))
+            WHEN seq IN (2, 14, 15, 43) THEN CAST(-87.629799 + UNIFORM(-0.02, 0.02, RANDOM()) AS DECIMAL(11,8))
+            WHEN seq IN (3, 31, 45) THEN CAST(-122.419418 + UNIFORM(-0.02, 0.02, RANDOM()) AS DECIMAL(11,8))
+            WHEN seq IN (4, 44) THEN CAST(-80.191788 + UNIFORM(-0.02, 0.02, RANDOM()) AS DECIMAL(11,8))
+            WHEN seq IN (5, 32) THEN CAST(-71.058884 + UNIFORM(-0.02, 0.02, RANDOM()) AS DECIMAL(11,8))
+            WHEN seq IN (6, 37, 46) THEN CAST(-122.332069 + UNIFORM(-0.02, 0.02, RANDOM()) AS DECIMAL(11,8))
+            WHEN seq = 7 THEN CAST(-115.139832 + UNIFORM(-0.02, 0.02, RANDOM()) AS DECIMAL(11,8))
+            WHEN seq = 8 THEN CAST(-157.858337 + UNIFORM(-0.02, 0.02, RANDOM()) AS DECIMAL(11,8))
+            WHEN seq = 9 THEN CAST(-106.817535 + UNIFORM(-0.02, 0.02, RANDOM()) AS DECIMAL(11,8))
+            WHEN seq IN (16, 36) THEN CAST(-96.796989 + UNIFORM(-0.02, 0.02, RANDOM()) AS DECIMAL(11,8))
+            WHEN seq = 17 THEN CAST(-95.369804 + UNIFORM(-0.02, 0.02, RANDOM()) AS DECIMAL(11,8))
+            WHEN seq = 18 THEN CAST(-112.074036 + UNIFORM(-0.02, 0.02, RANDOM()) AS DECIMAL(11,8))
+            WHEN seq IN (19, 35) THEN CAST(-84.387985 + UNIFORM(-0.02, 0.02, RANDOM()) AS DECIMAL(11,8))
+            WHEN seq IN (20, 38) THEN CAST(-104.990251 + UNIFORM(-0.02, 0.02, RANDOM()) AS DECIMAL(11,8))
+            WHEN seq = 21 THEN CAST(-81.379234 + UNIFORM(-0.02, 0.02, RANDOM()) AS DECIMAL(11,8))
+            WHEN seq IN (22, 48) THEN CAST(-86.781602 + UNIFORM(-0.02, 0.02, RANDOM()) AS DECIMAL(11,8))
+            WHEN seq IN (23, 39, 49) THEN CAST(-97.743057 + UNIFORM(-0.02, 0.02, RANDOM()) AS DECIMAL(11,8))
+            WHEN seq IN (24, 47) THEN CAST(-122.676483 + UNIFORM(-0.02, 0.02, RANDOM()) AS DECIMAL(11,8))
+            WHEN seq = 25 THEN CAST(-80.843124 + UNIFORM(-0.02, 0.02, RANDOM()) AS DECIMAL(11,8))
+            WHEN seq IN (26, 33) THEN CAST(-117.161087 + UNIFORM(-0.02, 0.02, RANDOM()) AS DECIMAL(11,8))
+            WHEN seq = 27 THEN CAST(-93.265015 + UNIFORM(-0.02, 0.02, RANDOM()) AS DECIMAL(11,8))
+            WHEN seq = 28 THEN CAST(-82.457176 + UNIFORM(-0.02, 0.02, RANDOM()) AS DECIMAL(11,8))
+            WHEN seq = 29 THEN CAST(-75.165222 + UNIFORM(-0.02, 0.02, RANDOM()) AS DECIMAL(11,8))
+            WHEN seq = 34 THEN CAST(-77.036873 + UNIFORM(-0.02, 0.02, RANDOM()) AS DECIMAL(11,8))
+        END as longitude,
         '+1' || LPAD(((seq % 900) * 31 % 900 + 100)::VARCHAR, 3, '0') || LPAD(((seq % 9000) * 47 % 9000 + 1000)::VARCHAR, 4, '0') as phone,
-        LOWER(REPLACE(hotel_name, ' ', '.')) || '@hotel.com' as email,
-        3 + (seq % 3) as star_rating,
-        100 + ((seq % 400) * 23 % 400) as total_rooms,
-        PARSE_JSON('["WiFi", "Parking", "Pool", "Fitness Center", "Restaurant", "Room Service", "Concierge", "Business Center"]') as amenities,
-        PARSE_JSON('["Standard King", "Standard Queen", "Deluxe King", "Suite", "Executive", "Family Room"]') as room_types,
-        TIME('15:00:00') as check_in_time,
-        TIME('11:00:00') as check_out_time,
-        ['America/New_York', 'America/Los_Angeles', 'America/Chicago', 'America/Denver'][seq % 4] as timezone,
+        LOWER(REPLACE(REPLACE(hotel_name, ' ', '.'), '''', '')) || '@summithospitality.com' as email,
+        -- Star rating by category
+        CASE 
+            WHEN seq BETWEEN 0 AND 9 THEN 5
+            WHEN seq BETWEEN 10 AND 29 THEN 3 + (seq % 2)
+            WHEN seq BETWEEN 30 AND 39 THEN 3
+            ELSE 4
+        END as star_rating,
+        -- Total rooms by category
+        CASE 
+            WHEN seq BETWEEN 0 AND 9 THEN 250 + (seq * 25)
+            WHEN seq BETWEEN 10 AND 29 THEN 120 + (seq % 6) * 10
+            WHEN seq BETWEEN 30 AND 39 THEN 100 + (seq % 5) * 10
+            ELSE 80 + (seq % 4) * 10
+        END as total_rooms,
+        -- Amenities by category
+        CASE 
+            WHEN seq BETWEEN 0 AND 9 THEN PARSE_JSON('["WiFi", "Valet Parking", "Infinity Pool", "Spa", "Fine Dining Restaurant", "Rooftop Bar", "24/7 Room Service", "Concierge", "Business Center", "Fitness Center", "Sauna"]')
+            WHEN seq BETWEEN 10 AND 29 THEN PARSE_JSON('["WiFi", "Parking", "Pool", "Fitness Center", "Breakfast", "Business Center"]')
+            WHEN seq BETWEEN 30 AND 39 THEN PARSE_JSON('["WiFi", "Parking", "Full Kitchen", "Laundry Facilities", "Fitness Center", "Pet Friendly", "Weekly Housekeeping"]')
+            ELSE PARSE_JSON('["WiFi", "Rooftop Bar", "Co-Working Space", "Boutique Fitness", "Smart Room Tech", "Bike Rentals", "Local Art Gallery"]')
+        END as amenities,
+        -- Room types by category
+        CASE 
+            WHEN seq BETWEEN 0 AND 9 THEN PARSE_JSON('["Deluxe King", "Deluxe Queen", "Executive Suite", "Presidential Suite", "Penthouse Suite"]')
+            WHEN seq BETWEEN 10 AND 29 THEN PARSE_JSON('["Standard King", "Standard Queen", "Deluxe King", "Junior Suite"]')
+            WHEN seq BETWEEN 30 AND 39 THEN PARSE_JSON('["Studio Suite", "One Bedroom Suite", "Two Bedroom Suite"]')
+            ELSE PARSE_JSON('["Modern King", "Modern Queen", "Urban Loft", "Skyline Suite"]')
+        END as room_types,
+        -- Check-in time by category
+        CASE 
+            WHEN seq BETWEEN 0 AND 9 THEN TIME('16:00:00')
+            ELSE TIME('15:00:00')
+        END as check_in_time,
+        -- Check-out time by category
+        CASE 
+            WHEN seq BETWEEN 0 AND 9 THEN TIME('12:00:00')
+            ELSE TIME('11:00:00')
+        END as check_out_time,
+        -- Timezone by city
+        CASE 
+            WHEN seq IN (0, 10, 11, 30, 40, 41, 5, 32, 29, 34) THEN 'America/New_York'
+            WHEN seq IN (1, 12, 13, 42, 3, 31, 45, 26, 33, 7, 18) THEN 'America/Los_Angeles'
+            WHEN seq IN (2, 14, 15, 43, 27) THEN 'America/Chicago'
+            WHEN seq IN (6, 37, 46, 24, 47, 9, 20, 38) THEN 'America/Denver'
+            WHEN seq = 8 THEN 'Pacific/Honolulu'
+            ELSE 'America/Chicago'
+        END as timezone,
         DATEADD(day, -1 * ((seq % 100) * 100 + 365), CURRENT_DATE()) as opened_date,
         DATEADD(day, -1 * ((seq % 365) * 30 + 100), CURRENT_DATE()) as last_renovation_date,
         CURRENT_TIMESTAMP() as created_at,

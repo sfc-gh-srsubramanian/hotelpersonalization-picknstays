@@ -260,6 +260,7 @@ CREATE OR REPLACE TABLE hotel_properties (
     hotel_id STRING PRIMARY KEY,
     hotel_name STRING,
     brand STRING,
+    category STRING,
     address_line1 STRING,
     address_line2 STRING,
     city STRING,
