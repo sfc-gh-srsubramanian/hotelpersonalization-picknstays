@@ -138,7 +138,7 @@ def load_future_arrivals(days_ahead=7):
         FROM HOTEL_PERSONALIZATION.BRONZE.BOOKING_HISTORY bh
         JOIN HOTEL_PERSONALIZATION.BRONZE.HOTEL_PROPERTIES hp ON bh.hotel_id = hp.hotel_id
         WHERE bh.check_in_date BETWEEN CURRENT_DATE() AND DATEADD(day, {days_ahead}, CURRENT_DATE())
-          AND bh.booking_status = 'Confirmed'
+          AND LOWER(bh.booking_status) = 'confirmed'
     ),
     guest_metrics AS (
         SELECT 

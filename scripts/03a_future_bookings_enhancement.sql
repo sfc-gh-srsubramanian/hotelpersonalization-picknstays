@@ -108,8 +108,8 @@ booking_base AS (
                 END
         END as rate_per_night,
         
-        -- Status: confirmed (ready for arrival)
-        'confirmed' as status,
+        -- Status: Confirmed (ready for arrival) - MUST be 'Confirmed' with capital C!
+        'Confirmed' as status,
         
         -- Booking source distribution
         ['Website', 'Mobile App', 'Phone', 'Travel Agency', 'Corporate'][fd.seq % 5] as booking_source,
