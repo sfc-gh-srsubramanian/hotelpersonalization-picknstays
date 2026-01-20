@@ -971,23 +971,38 @@ daily_performance AS (
     LEFT JOIN daily_occupancy do ON hd.performance_date = do.performance_date AND hd.hotel_id = do.hotel_id
 ),
 overall_repeat_rate AS (
-    -- Calculate overall repeat rate (% of unique guests with 2+ stays)
-    -- This gives us the true repeat guest percentage, not inflated by multiple check-ins
-    WITH guest_totals AS (
+    -- Calculate overall repeat rate using SAME METHOD as Loyalty Intelligence
+    -- Start from ALL GUESTS (not just those with stays), then LEFT JOIN stays
+    -- This correctly includes one-time guests AND guests with no stays in the denominator
+    WITH all_guests AS (
+        SELECT guest_id FROM BRONZE.guest_profiles
+    ),
+    guest_stay_counts AS (
         SELECT 
             guest_id,
             COUNT(DISTINCT stay_id) as total_stays
         FROM BRONZE.stay_history
         WHERE actual_check_in >= DATEADD(month, -12, CURRENT_DATE())
         GROUP BY guest_id
+    ),
+    guest_with_stays AS (
+        SELECT 
+            ag.guest_id,
+            COALESCE(gsc.total_stays, 0) as total_stays,
+            CASE 
+                WHEN COALESCE(gsc.total_stays, 0) >= 2 THEN 1 
+                ELSE 0 
+            END as is_repeat_guest
+        FROM all_guests ag
+        LEFT JOIN guest_stay_counts gsc ON ag.guest_id = gsc.guest_id
     )
     SELECT 
         ROUND(
-            COUNT(DISTINCT CASE WHEN total_stays > 1 THEN guest_id END) * 100.0 / 
+            SUM(is_repeat_guest) * 100.0 / 
             NULLIF(COUNT(DISTINCT guest_id), 0), 
             2
         ) as repeat_stay_rate_pct
-    FROM guest_totals
+    FROM guest_with_stays
 ),
 repeat_stays_by_date AS (
     -- Use overall repeat rate for all dates (consistent metric)
