@@ -373,8 +373,6 @@ DIMENSIONS (
 )
 METRICS (
     PUBLIC PREFS.temperature_preference AS AVG(prefs.temperature_preference),
-    PUBLIC PREFS.temperature_preference AS MIN(prefs.temperature_preference),
-    PUBLIC PREFS.temperature_preference AS MAX(prefs.temperature_preference),
     PUBLIC PREFS.preference_completeness_score AS AVG(prefs.preference_completeness_score),
     PUBLIC PREFS.guest_id AS COUNT(DISTINCT prefs.guest_id)
 )
