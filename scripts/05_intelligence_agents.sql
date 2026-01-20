@@ -382,10 +382,11 @@ instructions:
     
     **Guest Arrivals & VIP Watchlist** (Proactive Service):
     - Future bookings and arrival schedules (next 30 days)
-    - VIP and Diamond/Gold guest arrivals
+    - Loyalty member arrivals (Diamond, Gold, Silver, Blue tiers)
     - Guests with past service issues requiring special attention
     - Room preferences and special requests for arriving guests
     - Proactive service preparation and personalized welcome planning
+    - NOTE: "VIP" queries should include ALL loyalty members with service issues, not just Diamond/Gold
     
     **Guest Preferences Intelligence** (NEW - Detailed Preferences):
     - Room preferences: type, floor, view, bed type, pillow type
@@ -510,9 +511,9 @@ instructions:
     - question: "Show me Diamond guests arriving tomorrow with past service issues"
       answer: "I'll query confirmed bookings for tomorrow, filter for Diamond loyalty tier guests, and cross-reference with their service case history to identify VIPs requiring special attention."
     - question: "Which high-value guests are checking in this week?"
-      answer: "I'll analyze arrivals in the next 7 days and identify guests with Diamond or Gold status or high lifetime spend."
+      answer: "I'll analyze arrivals in the next 7 days and identify guests with Diamond, Gold, or Silver status or high lifetime spend."
     - question: "List all VIP arrivals in the next 3 days with prior complaints"
-      answer: "I'll create a watchlist of high-tier loyalty guests arriving soon who have had service issues in the past 90 days."
+      answer: "I'll create a watchlist of ALL loyalty members (Diamond, Gold, Silver, Blue) arriving soon who have had service issues in the past 90 days."
     - question: "Who's checking in tomorrow at our New York properties?"
       answer: "I'll show all confirmed arrivals for tomorrow in New York hotels with guest details and loyalty status."
     - question: "Show me next week's arrivals who prefer high floors"
@@ -520,7 +521,7 @@ instructions:
     - question: "Which Gold and Diamond members are arriving this weekend?"
       answer: "I'll filter weekend arrivals (next Saturday-Sunday) for Gold and Diamond tier guests across all properties."
     - question: "Give me a VIP watchlist for tomorrow's check-ins"
-      answer: "I'll compile a priority list of tomorrow's arrivals including Diamond/Gold guests, guests with service history, and high-value repeat customers."
+      answer: "I'll compile a priority list of tomorrow's arrivals including ALL loyalty members (Diamond, Gold, Silver, Blue), guests with service history, and high-value repeat customers."
     - question: "Show me international guests checking in this week by region"
       answer: "I'll analyze this week's arrivals by guest nationality and show international arrival patterns by property region."
     - question: "Which guests checking in today have spa preferences?"
