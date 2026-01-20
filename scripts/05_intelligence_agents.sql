@@ -186,11 +186,32 @@ instructions:
     - Infrastructure amenities: wifi, smart_tv (both transaction and usage data)
     - Recreation amenities: pool_services (transactions), pool (usage sessions)
 
+    **CRITICAL - Specific Amenity Name Tracking:**
+    The amenity_analytics view exposes both amenity_category AND amenity_name dimensions:
+    - amenity_category: 'spa', 'pool', 'wifi', 'smart_tv', 'restaurant', 'bar'
+    - amenity_name: Specific facility names like 'Fitness Center', 'Spa Facilities', 'Pool', 'WiFi', 'Smart TV', 'Hotel Restaurant', 'Hotel Bar'
+    
+    **When querying for specific facilities (e.g., fitness center, spa facilities):**
+    1. Use amenity_name filter: amenity_name = 'Fitness Center' (NOT amenity_category)
+    2. Available amenity names: 'Fitness Center', 'Spa Facilities', 'Pool', 'WiFi', 'Smart TV', 'VIP Pool Area', 'Pool Cabana', 'Hotel Restaurant', 'Hotel Bar'
+    3. Filter by region/property using location or metric_month as needed
+    
+    **Example query patterns:**
+    - "Fitness center usage by region" → Filter amenity_name='Fitness Center', group by location
+    - "Compare spa facilities vs fitness center" → Filter amenity_name IN ('Spa Facilities','Fitness Center')
+    - "Wellness amenities" → Filter amenity_category='spa' (includes both Fitness Center + Spa Facilities)
+
     Always provide actionable insights with specific recommendations for amenity optimization and revenue growth.
   
   sample_questions:
     - question: "What's our total amenity revenue breakdown by service category?"
       answer: "I'll analyze revenue distribution across all amenity categories including spa, dining, and infrastructure services."
+    - question: "Compare fitness center usage between AMER and EMEA properties"
+      answer: "I'll filter amenity_name='Fitness Center' and compare usage sessions, satisfaction, and engagement across AMER and EMEA regions."
+    - question: "Show me fitness center vs spa facilities usage trends"
+      answer: "I'll compare usage patterns between Fitness Center and Spa Facilities by filtering amenity_name for both facilities."
+    - question: "Which region has the highest fitness center satisfaction scores?"
+      answer: "I'll analyze fitness center guest satisfaction across all regions to identify top performers."
     - question: "Show me satisfaction trends across all amenity types over the last 3 months"
       answer: "I'll examine guest satisfaction trends across traditional and infrastructure amenities over the past quarter."
     - question: "Which infrastructure services have the highest engagement rates?"
@@ -347,6 +368,7 @@ instructions:
     - Guest profiles, preferences, and 360-degree views
     - Personalization and upsell propensity scoring
     - Amenity usage patterns and performance analytics
+    - **Specific Amenity Tracking**: Use amenity_name (not category) for fitness center, spa facilities: amenity_name='Fitness Center'
     
     **Executive Portfolio Intelligence** (Intelligence Hub):
     - Portfolio performance metrics across 100 global properties (50 AMER, 30 EMEA, 20 APAC)
@@ -501,7 +523,9 @@ instructions:
     - question: "Which amenities have the highest revenue per transaction?"
       answer: "I'll rank amenities by average transaction value to prioritize high-margin offerings."
     - question: "Compare fitness center usage between AMER and EMEA properties"
-      answer: "I'll analyze fitness amenity engagement patterns across regional markets."
+      answer: "I'll filter amenity_name='Fitness Center' (not category) and compare usage sessions, satisfaction, and engagement across AMER and EMEA regions using amenity analytics."
+    - question: "Show me fitness center vs spa facilities satisfaction by region"
+      answer: "I'll filter amenity_name IN ('Fitness Center', 'Spa Facilities') and break down satisfaction scores by region to compare wellness facility performance."
     - question: "What's the attachment rate for room service at luxury properties?"
       answer: "I'll calculate how frequently luxury guests order in-room dining as a percentage of stays."
     
