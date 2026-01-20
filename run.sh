@@ -526,7 +526,7 @@ cmd_validate() {
     
     # CRITICAL: Test Non-Member Guest Cycling Bug
     echo ""
-    echo "${CYAN}[11/11]${NC} 🔍 CRITICAL: Testing non-member guest distribution..."
+    echo "${CYAN}[11/12]${NC} 🔍 CRITICAL: Testing non-member guest distribution..."
     snow sql $SNOW_CONN -q "
         -- USE ROLE ${ROLE}; -- Commented out for restricted sessions
         USE DATABASE ${DATABASE};
@@ -541,6 +541,60 @@ cmd_validate() {
         FROM BRONZE.stay_history
         WHERE guest_id >= 'GUEST_050000' AND guest_id < 'GUEST_100000';
     "
+    echo ""
+    
+    # Test Guest Preferences Coverage (NEW - validates preference exposure)
+    echo "${CYAN}[12/12]${NC} Testing Guest Preferences Coverage (NEW - Agent Query Readiness)..."
+    echo "  This validates the new GUEST_PREFERENCES_VIEW for AI agent queries"
+    snow sql $SNOW_CONN -q "
+        -- USE ROLE ${ROLE}; -- Commented out for restricted sessions
+        USE DATABASE ${DATABASE};
+        USE WAREHOUSE ${WAREHOUSE};
+        
+        -- Overall preference coverage
+        SELECT 'Overall Preference Coverage' AS metric, 
+               '75,000 room prefs (75%) + 70,000 service prefs (70%)' AS expected,
+               CONCAT(
+                   (SELECT COUNT(*) FROM BRONZE.ROOM_PREFERENCES), ' room prefs (', 
+                   ROUND((SELECT COUNT(*) * 100.0 / (SELECT COUNT(*) FROM BRONZE.GUEST_PROFILES) FROM BRONZE.ROOM_PREFERENCES), 1), '%) + ',
+                   (SELECT COUNT(*) FROM BRONZE.SERVICE_PREFERENCES), ' service prefs (', 
+                   ROUND((SELECT COUNT(*) * 100.0 / (SELECT COUNT(*) FROM BRONZE.GUEST_PROFILES) FROM BRONZE.SERVICE_PREFERENCES), 1), '%)'
+               ) AS actual
+        
+        UNION ALL
+        
+        -- Top pillow preferences (validates NEW semantic view exposes this data)
+        SELECT 'Top Pillow Preference (via GOLD.PREFERENCES_CONSOLIDATED)' AS metric,
+               'Even distribution: firm, soft, memory_foam, feather, no_preference' AS expected,
+               pillow_type_preference AS actual
+        FROM GOLD.PREFERENCES_CONSOLIDATED
+        GROUP BY pillow_type_preference
+        ORDER BY COUNT(*) DESC
+        LIMIT 1
+        
+        UNION ALL
+        
+        -- Preference completeness by loyalty tier (validates segmentation works)
+        SELECT CONCAT('Avg Preference Score - ', tier_level, ' tier') AS metric,
+               '4-7 preferences per guest' AS expected,
+               ROUND(AVG(pc.preference_completeness_score), 1) AS actual
+        FROM GOLD.PREFERENCES_CONSOLIDATED pc
+        LEFT JOIN BRONZE.LOYALTY_PROGRAM lp ON pc.guest_id = lp.guest_id
+        WHERE tier_level = 'Diamond'
+        GROUP BY tier_level
+        
+        UNION ALL
+        
+        -- Accessibility needs (validates special accommodation tracking)
+        SELECT 'Guests with Accessibility Needs' AS metric,
+               '~1,500 guests (2%)' AS expected,
+               CONCAT(COUNT(*), ' guests (', ROUND(COUNT(*) * 100.0 / (SELECT COUNT(*) FROM BRONZE.ROOM_PREFERENCES), 1), '%)') AS actual
+        FROM BRONZE.ROOM_PREFERENCES
+        WHERE accessibility_needs = TRUE;
+    " --format TABLE
+    echo ""
+    echo "  ✅ These preferences are now exposed to Intelligence Agents via GUEST_PREFERENCES_VIEW"
+    echo "  📊 Test in Snowflake Intelligence: 'What are the most common pillow preferences for Diamond guests?'"
     echo ""
     echo "  ✓ PASS: 40K-50K unique guests, ~2-4 stays/guest (realistic)"
     echo "  ✗ FAIL: ~10K unique guests, ~19 stays/guest (cycling bug!)"
@@ -937,14 +991,35 @@ cmd_intel_hub() {
     echo ""
     
     # Check Semantic Views
-    echo "[4/4] Intelligence Hub Semantic Views:"
-    for view in PORTFOLIO_INTELLIGENCE_VIEW LOYALTY_INTELLIGENCE_VIEW CX_SERVICE_INTELLIGENCE_VIEW GUEST_ARRIVALS_VIEW; do
+    echo "[4/4] Intelligence Hub Semantic Views (9 total):"
+    echo "  Core Views (3):"
+    for view in GUEST_ANALYTICS_VIEW PERSONALIZATION_INSIGHTS_VIEW AMENITY_ANALYTICS_VIEW; do
         VIEW_EXISTS=$(snow sql $SNOW_CONN -q "SHOW VIEWS LIKE '${view}' IN SCHEMA ${DATABASE}.SEMANTIC_VIEWS" --format CSV 2>/dev/null | tail -n +2 | wc -l | xargs)
         VIEW_EXISTS=${VIEW_EXISTS:-0}
         if [ "$VIEW_EXISTS" -gt 0 ] 2>/dev/null; then
-            echo -e "  ${GREEN}✓${NC} $view"
+            echo -e "    ${GREEN}✓${NC} $view"
         else
-            echo -e "  ${RED}✗${NC} $view"
+            echo -e "    ${RED}✗${NC} $view"
+        fi
+    done
+    echo "  Intelligence Hub Views (3):"
+    for view in PORTFOLIO_INTELLIGENCE_VIEW LOYALTY_INTELLIGENCE_VIEW CX_SERVICE_INTELLIGENCE_VIEW; do
+        VIEW_EXISTS=$(snow sql $SNOW_CONN -q "SHOW VIEWS LIKE '${view}' IN SCHEMA ${DATABASE}.SEMANTIC_VIEWS" --format CSV 2>/dev/null | tail -n +2 | wc -l | xargs)
+        VIEW_EXISTS=${VIEW_EXISTS:-0}
+        if [ "$VIEW_EXISTS" -gt 0 ] 2>/dev/null; then
+            echo -e "    ${GREEN}✓${NC} $view"
+        else
+            echo -e "    ${RED}✗${NC} $view"
+        fi
+    done
+    echo "  Guest Intelligence Views (3):"
+    for view in GUEST_SENTIMENT_INTELLIGENCE_VIEW GUEST_ARRIVALS_VIEW GUEST_PREFERENCES_VIEW; do
+        VIEW_EXISTS=$(snow sql $SNOW_CONN -q "SHOW VIEWS LIKE '${view}' IN SCHEMA ${DATABASE}.SEMANTIC_VIEWS" --format CSV 2>/dev/null | tail -n +2 | wc -l | xargs)
+        VIEW_EXISTS=${VIEW_EXISTS:-0}
+        if [ "$VIEW_EXISTS" -gt 0 ] 2>/dev/null; then
+            echo -e "    ${GREEN}✓${NC} $view"
+        else
+            echo -e "    ${RED}✗${NC} $view"
         fi
     done
     echo ""

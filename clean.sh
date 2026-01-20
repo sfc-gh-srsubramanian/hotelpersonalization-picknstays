@@ -121,7 +121,7 @@ echo "Resources to be deleted:"
 echo "  - Database: $DATABASE"
 echo "    • All schemas: BRONZE, SILVER, GOLD, BUSINESS_VIEWS, SEMANTIC_VIEWS"
 echo "    • All tables: ~23 Bronze tables (15 core + 4 Intelligence Hub + 4 other)"
-echo "    • All views: 6 semantic views (3 core + 3 Intelligence Hub)"
+echo "    • All views: 9 semantic views (3 core + 3 Intelligence Hub + 3 guest intelligence)"
 echo "  - Warehouse: $WAREHOUSE"
 echo "  - Role: $ROLE"
 if [ "$KEEP_AGENTS" = false ]; then
@@ -238,7 +238,7 @@ echo "-------------------------------------------------------------------------"
 snow sql $SNOW_CONN -q "
     USE ROLE ACCOUNTADMIN;
     
-    -- Original semantic views
+    -- Original semantic views (Core guest & personalization)
     DROP VIEW IF EXISTS ${DATABASE}.SEMANTIC_VIEWS.GUEST_ANALYTICS_VIEW;
     DROP VIEW IF EXISTS ${DATABASE}.SEMANTIC_VIEWS.PERSONALIZATION_INSIGHTS_VIEW;
     DROP VIEW IF EXISTS ${DATABASE}.SEMANTIC_VIEWS.AMENITY_ANALYTICS_VIEW;
@@ -248,11 +248,13 @@ snow sql $SNOW_CONN -q "
     DROP VIEW IF EXISTS ${DATABASE}.SEMANTIC_VIEWS.LOYALTY_INTELLIGENCE_VIEW;
     DROP VIEW IF EXISTS ${DATABASE}.SEMANTIC_VIEWS.CX_SERVICE_INTELLIGENCE_VIEW;
     
-    -- Guest Arrivals semantic view
+    -- Guest-level intelligence semantic views
+    DROP VIEW IF EXISTS ${DATABASE}.SEMANTIC_VIEWS.GUEST_SENTIMENT_INTELLIGENCE_VIEW;
     DROP VIEW IF EXISTS ${DATABASE}.SEMANTIC_VIEWS.GUEST_ARRIVALS_VIEW;
+    DROP VIEW IF EXISTS ${DATABASE}.SEMANTIC_VIEWS.GUEST_PREFERENCES_VIEW;
 " 2>/dev/null || true
 
-echo -e "${GREEN}✓${NC} Semantic Views dropped (7 views)"
+echo -e "${GREEN}✓${NC} Semantic Views dropped (9 views)"
 echo ""
 
 ###############################################################################
