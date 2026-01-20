@@ -279,7 +279,6 @@ DIMENSIONS (
 )
 METRICS (
     PUBLIC SENTIMENT.sentiment_score AS AVG(SENTIMENT.sentiment_score),
-    PUBLIC SENTIMENT.sentiment_id AS COUNT(SENTIMENT.sentiment_id),
     PUBLIC STAYS.total_charges AS SUM(STAYS.total_charges),
     PUBLIC STAYS.stay_id AS COUNT(DISTINCT STAYS.stay_id)
 )
@@ -367,8 +366,7 @@ DIMENSIONS (
 )
 METRICS (
     PUBLIC PREFS.temperature_preference AS AVG(PREFS.temperature_preference),
-    PUBLIC PREFS.preference_completeness_score AS AVG(PREFS.preference_completeness_score),
-    PUBLIC PREFS.guest_id AS COUNT(DISTINCT PREFS.guest_id)
+    PUBLIC PREFS.preference_completeness_score AS AVG(PREFS.preference_completeness_score)
 )
 COMMENT='Guest room and service preferences for personalized experiences. Track preferences by loyalty tier, nationality, and demographics. Query pillow types, room preferences, temperature settings, and communication methods for targeted service delivery.';
 
