@@ -275,7 +275,7 @@ DIMENSIONS (
     PUBLIC SENTIMENT.posted_at AS posted_at,
     PUBLIC GUESTS.nationality AS nationality,
     PUBLIC GUESTS.language_preference AS language_preference,
-    PUBLIC STAYS.actual_check_in AS check_in_date
+    PUBLIC STAYS.actual_check_in AS actual_check_in
 )
 METRICS (
     PUBLIC SENTIMENT.sentiment_score AS AVG(SENTIMENT.sentiment_score),
