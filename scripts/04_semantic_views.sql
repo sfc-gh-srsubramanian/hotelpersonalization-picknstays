@@ -251,7 +251,45 @@ METRICS (
 COMMENT='Customer experience and service operational intelligence. Tracks service quality, sentiment, recovery effectiveness, and at-risk guest identification by city, country, brand, and region for last 30 days.';
 
 -- =====================================================================
--- 7. GUEST_ARRIVALS_VIEW (Future bookings with service history)
+-- 7. GUEST_SENTIMENT_INTELLIGENCE_VIEW (Guest-level sentiment trends)
+-- Purpose: Individual guest sentiment tracking for churn risk and VIP monitoring
+-- Enables queries like "high-value guests with declining sentiment"
+-- =====================================================================
+
+CREATE OR REPLACE SEMANTIC VIEW GUEST_SENTIMENT_INTELLIGENCE_VIEW
+TABLES (
+    SENTIMENT AS BRONZE.SENTIMENT_DATA PRIMARY KEY (sentiment_id),
+    STAYS AS BRONZE.STAY_HISTORY PRIMARY KEY (stay_id),
+    GUESTS AS BRONZE.GUEST_PROFILES PRIMARY KEY (guest_id),
+    LOYALTY AS BRONZE.LOYALTY_PROGRAM PRIMARY KEY (guest_id)
+)
+RELATIONSHIPS (
+    SENTIMENT_TO_GUEST AS SENTIMENT(guest_id) REFERENCES GUESTS(guest_id),
+    SENTIMENT_TO_STAY AS SENTIMENT(stay_id) REFERENCES STAYS(stay_id),
+    GUEST_TO_LOYALTY AS GUESTS(guest_id) REFERENCES LOYALTY(guest_id)
+)
+DIMENSIONS (
+    PUBLIC SENTIMENT.guest_id AS guest_id,
+    PUBLIC SENTIMENT.hotel_id AS hotel_id,
+    PUBLIC SENTIMENT.source AS sentiment_source,
+    PUBLIC SENTIMENT.sentiment_label AS sentiment_label,
+    PUBLIC SENTIMENT.platform AS feedback_platform,
+    PUBLIC SENTIMENT.posted_at AS feedback_date,
+    PUBLIC LOYALTY.tier_level AS loyalty_tier,
+    PUBLIC STAYS.actual_check_in AS stay_date
+)
+METRICS (
+    PUBLIC SENTIMENT.sentiment_score AS AVG(sentiment.sentiment_score),
+    PUBLIC SENTIMENT.sentiment_score AS MIN(sentiment.sentiment_score),
+    PUBLIC SENTIMENT.sentiment_score AS MAX(sentiment.sentiment_score),
+    PUBLIC SENTIMENT.sentiment_id AS COUNT(sentiment.sentiment_id),
+    PUBLIC STAYS.total_charges AS SUM(stays.total_charges),
+    PUBLIC STAYS.stay_id AS COUNT(DISTINCT stays.stay_id)
+)
+COMMENT='Guest-level sentiment tracking over time. Enables trend analysis, churn risk identification, and VIP sentiment monitoring. Query by guest, loyalty tier, hotel, or time period to identify declining sentiment patterns.';
+
+-- =====================================================================
+-- 8. GUEST_ARRIVALS_VIEW (Future bookings with service history)
 -- Purpose: Natural language access to upcoming arrivals with VIP/service context
 -- =====================================================================
 
@@ -304,6 +342,6 @@ COMMENT='Future guest arrivals (confirmed bookings) with loyalty status, service
 -- ============================================================================
 SELECT 'All semantic views created successfully!' AS STATUS;
 SELECT 
-    '7 semantic views: Guest Analytics, Personalization, Amenity Analytics, Portfolio Intelligence, Loyalty Intelligence, CX & Service Intelligence, Guest Arrivals' AS VIEWS_CREATED,
+    '8 semantic views: Guest Analytics, Personalization, Amenity Analytics, Portfolio Intelligence, Loyalty Intelligence, CX & Service Intelligence, Guest Sentiment Intelligence, Guest Arrivals' AS VIEWS_CREATED,
     'Ready for Intelligence Agents setup' AS NEXT_STEP;
 

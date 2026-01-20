@@ -323,17 +323,18 @@ $$;
 -- ============================================================================
 -- 5. HOTEL INTELLIGENCE MASTER AGENT
 -- ============================================================================
--- Comprehensive agent with access to all 7 semantic views:
+-- Comprehensive agent with access to all 8 semantic views:
 --   - Guest Analytics (existing)
 --   - Personalization Insights (existing)
 --   - Amenity Analytics (existing)
 --   - Portfolio Intelligence (Intelligence Hub)
 --   - Loyalty Intelligence (Intelligence Hub)
 --   - CX & Service Intelligence (Intelligence Hub)
+--   - Guest Sentiment Intelligence (NEW - Individual guest sentiment trends)
 --   - Guest Arrivals (Future bookings + VIP watchlist)
 -- ============================================================================
 CREATE OR REPLACE AGENT GOLD."Hotel Intelligence Master Agent"
-COMMENT = 'Comprehensive hotel intelligence agent with guest analytics, personalization, amenities, portfolio performance, loyalty insights, and CX intelligence'
+COMMENT = 'Comprehensive hotel intelligence agent with guest analytics, personalization, amenities, portfolio performance, loyalty insights, CX intelligence, and guest sentiment tracking'
 FROM SPECIFICATION $$
 models:
   orchestration: "auto"
@@ -370,6 +371,14 @@ instructions:
     - Service recovery effectiveness
     - At-risk high-value guest alerts
     - VIP watchlist for proactive service
+    
+    **Guest Sentiment Intelligence** (NEW - Individual Tracking):
+    - Guest-level sentiment tracking over time (not just aggregates)
+    - Sentiment trend analysis to identify declining patterns
+    - High-value guest sentiment monitoring for churn prevention
+    - Sentiment correlation with loyalty tier, LTV, and stay frequency
+    - Enable queries like "show me high-value guests with declining sentiment"
+    - Temporal analysis: recent sentiment vs. historical averages
     
     **Guest Arrivals & VIP Watchlist** (Proactive Service):
     - Future bookings and arrival schedules (next 30 days)
@@ -435,13 +444,19 @@ instructions:
     - question: "Which properties have the highest service recovery success rates?"
       answer: "I'll rank properties by their effectiveness in resolving guest issues and restoring satisfaction."
     - question: "Show me high-value guests with declining sentiment"
-      answer: "I'll identify VIP guests showing negative sentiment trends who require proactive outreach."
+      answer: "I'll query individual guest sentiment trends to identify VIP guests with declining satisfaction who need proactive outreach."
+    - question: "Which Diamond guests have negative sentiment in their last 3 feedback submissions?"
+      answer: "I'll analyze recent sentiment patterns for Diamond tier members to catch deteriorating relationships early."
+    - question: "Show me guests with LTV > $5000 whose sentiment dropped from positive to negative"
+      answer: "I'll compare recent vs. historical sentiment for high-value guests to identify churn risk."
     - question: "What's the average resolution time for service cases by brand?"
       answer: "I'll compare service recovery speed across brands to identify operational excellence."
     - question: "Which regions have the worst sentiment scores?"
       answer: "I'll analyze net sentiment across AMER, EMEA, and APAC to highlight experience quality issues."
     - question: "How many VIP guests are checking in tomorrow with prior service issues?"
       answer: "I'll create a watchlist of high-value arrivals with service history requiring special attention."
+    - question: "Show me guests whose sentiment score average dropped by more than 20 points in the last 60 days"
+      answer: "I'll identify guests with significant sentiment decline requiring immediate retention efforts."
     
     # Guest Intelligence & Personalization
     - question: "Which guests have the highest spa upsell propensity?"
@@ -524,6 +539,10 @@ tools:
   - tool_spec:
       type: "cortex_analyst_text_to_sql"
       name: "cx_service_intelligence"
+  # Guest Sentiment Tracking tool (NEW - individual guest sentiment trends)
+  - tool_spec:
+      type: "cortex_analyst_text_to_sql"
+      name: "guest_sentiment_intelligence"
   # Guest Arrivals & VIP Watchlist tool
   - tool_spec:
       type: "cortex_analyst_text_to_sql"
@@ -544,6 +563,10 @@ tool_resources:
     semantic_view: "HOTEL_PERSONALIZATION.SEMANTIC_VIEWS.LOYALTY_INTELLIGENCE_VIEW"
   cx_service_intelligence:
     semantic_view: "HOTEL_PERSONALIZATION.SEMANTIC_VIEWS.CX_SERVICE_INTELLIGENCE_VIEW"
+  # Guest Sentiment Intelligence (NEW - enables "declining sentiment" queries)
+  guest_sentiment_intelligence:
+    semantic_view: "HOTEL_PERSONALIZATION.SEMANTIC_VIEWS.GUEST_SENTIMENT_INTELLIGENCE_VIEW"
+  # Guest Arrivals
   guest_arrivals_intelligence:
     semantic_view: "HOTEL_PERSONALIZATION.SEMANTIC_VIEWS.GUEST_ARRIVALS_VIEW"
 $$;
