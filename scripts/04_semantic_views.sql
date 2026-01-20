@@ -327,9 +327,12 @@ METRICS (
     PUBLIC BOOKINGS.num_adults AS SUM(BOOKINGS.num_adults),
     PUBLIC BOOKINGS.num_children AS SUM(BOOKINGS.num_children),
     PUBLIC BOOKINGS.total_amount AS SUM(BOOKINGS.total_amount),
-    PUBLIC BOOKINGS.advance_booking_days AS AVG(BOOKINGS.advance_booking_days)
+    PUBLIC BOOKINGS.advance_booking_days AS AVG(BOOKINGS.advance_booking_days),
+    PUBLIC GUEST360.TOTAL_SERVICE_CASES AS SUM(GUEST360.TOTAL_SERVICE_CASES),
+    PUBLIC GUEST360.RECENT_SERVICE_CASES_90D AS SUM(GUEST360.RECENT_SERVICE_CASES_90D),
+    PUBLIC GUEST360.HIGH_SEVERITY_CASES AS SUM(GUEST360.HIGH_SEVERITY_CASES)
 )
-COMMENT='Future guest arrivals (confirmed bookings) with loyalty tier and property context. Shows ALL upcoming arrivals - use LEFT JOIN to BRONZE.SERVICE_CASES to identify which VIPs have prior service issues. Enables VIP watchlist queries, service recovery planning, and proactive personalized service preparation.';
+COMMENT='Future guest arrivals (confirmed bookings) with loyalty tier, service history, and property context. Shows ALL upcoming arrivals with their service case metrics. Enables VIP watchlist queries, service recovery planning, and proactive personalized service preparation for guests with prior issues.';
 
 -- =====================================================================
 -- 9. GUEST_PREFERENCES_VIEW (Room & Service Preferences)

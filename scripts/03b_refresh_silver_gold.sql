@@ -429,6 +429,19 @@ SELECT
 FROM SILVER.amenity_usage_enriched
 GROUP BY guest_id;
 
+-- Pre-aggregate service case data
+CREATE OR REPLACE TEMPORARY TABLE temp_service_case_agg AS
+SELECT 
+    guest_id,
+    COUNT(DISTINCT case_id) as total_service_cases,
+    COUNT(DISTINCT CASE WHEN reported_at >= DATEADD(day, -90, CURRENT_DATE()) 
+        THEN case_id END) as recent_service_cases_90d,
+    COUNT(DISTINCT CASE WHEN severity IN ('high', 'critical') 
+        THEN case_id END) as high_severity_cases,
+    MAX(reported_at) as last_service_case_date
+FROM BRONZE.SERVICE_CASES
+GROUP BY guest_id;
+
 -- Now build GOLD table with pre-aggregated data (NO cartesian product!)
 CREATE OR REPLACE TABLE guest_360_view_enhanced AS
 SELECT 
@@ -510,12 +523,17 @@ SELECT
         WHEN COALESCE(ase.total_amenity_spend, 0) > 0 THEN 'Low Amenity Spender'
         ELSE 'No Amenity Usage'
     END as amenity_spending_category,
+    COALESCE(sca.total_service_cases, 0) as total_service_cases,
+    COALESCE(sca.recent_service_cases_90d, 0) as recent_service_cases_90d,
+    COALESCE(sca.high_severity_cases, 0) as high_severity_cases,
+    sca.last_service_case_date,
     CURRENT_TIMESTAMP() as processed_at
 FROM SILVER.guests_standardized g
 LEFT JOIN BRONZE.loyalty_program lp ON g.guest_id = lp.guest_id
 LEFT JOIN temp_booking_agg ba ON g.guest_id = ba.guest_id
 LEFT JOIN temp_amenity_spend_agg ase ON g.guest_id = ase.guest_id
-LEFT JOIN temp_amenity_usage_agg aue ON g.guest_id = aue.guest_id;
+LEFT JOIN temp_amenity_usage_agg aue ON g.guest_id = aue.guest_id
+LEFT JOIN temp_service_case_agg sca ON g.guest_id = sca.guest_id;
 
 -- ----------------------------------------------------------------------------
 -- Personalization Scores Enhanced (ML-powered scoring for personalization)
