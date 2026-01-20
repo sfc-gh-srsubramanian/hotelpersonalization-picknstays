@@ -74,3 +74,14 @@ credentials/
 # Streamlit build artifacts
 streamlit/output/
 
+
+# Snowflake CLI build artifacts
+streamlit/*/output/
+streamlit/hotel_personalization/output/
+streamlit/intelligence_hub/output/
+
+# Temporary fix documentation
+*_FIX.md
+*_FIXES.md
+*_SUMMARY.md
+*_VALIDATION.md
