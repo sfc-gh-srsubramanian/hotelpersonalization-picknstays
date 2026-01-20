@@ -279,8 +279,7 @@ DIMENSIONS (
 )
 METRICS (
     PUBLIC SENTIMENT.sentiment_score AS AVG(SENTIMENT.sentiment_score),
-    PUBLIC STAYS.total_charges AS SUM(STAYS.total_charges),
-    PUBLIC STAYS.stay_id AS COUNT(DISTINCT STAYS.stay_id)
+    PUBLIC STAYS.total_charges AS SUM(STAYS.total_charges)
 )
 COMMENT='Guest-level sentiment tracking over time. Enables trend analysis, churn risk identification, and VIP sentiment monitoring. Query by guest, loyalty tier, hotel, or time period to identify declining sentiment patterns.';
 
