@@ -388,6 +388,20 @@ instructions:
     - Proactive service preparation and personalized welcome planning
     - NOTE: "VIP" queries should include ALL loyalty members with service issues, not just Diamond/Gold
     
+    **CRITICAL: How to Query VIP Watchlist with Service History**:
+    To find loyalty members checking in with prior service issues, you MUST:
+    1. Query guest_arrivals_view semantic view to get future arrivals with loyalty_tier
+    2. LEFT JOIN to HOTEL_PERSONALIZATION.BRONZE.SERVICE_CASES on guest_id
+    3. Filter WHERE loyalty_tier IN ('Diamond', 'Gold', 'Silver', 'Blue')
+    4. Count guests with service cases (WHERE case_id IS NOT NULL)
+    Example SQL pattern:
+      SELECT COUNT(DISTINCT arrivals.guest_id)
+      FROM guest_arrivals_view arrivals
+      LEFT JOIN HOTEL_PERSONALIZATION.BRONZE.SERVICE_CASES cases ON arrivals.guest_id = cases.guest_id
+      WHERE arrivals.loyalty_tier IS NOT NULL
+        AND cases.case_id IS NOT NULL
+        AND arrivals.check_in_date BETWEEN CURRENT_DATE() AND DATEADD(day, 7, CURRENT_DATE())
+    
     **Guest Preferences Intelligence** (NEW - Detailed Preferences):
     - Room preferences: type, floor, view, bed type, pillow type
     - Temperature preferences and comfort settings (68-79°F range)
@@ -465,7 +479,7 @@ instructions:
     - question: "Which regions have the worst sentiment scores?"
       answer: "I'll analyze net sentiment across AMER, EMEA, and APAC to highlight experience quality issues."
     - question: "How many VIP guests are checking in tomorrow with prior service issues?"
-      answer: "I'll create a watchlist of high-value arrivals with service history requiring special attention."
+      answer: "I'll query guest_arrivals_view for tomorrow's loyalty member arrivals and LEFT JOIN to BRONZE.SERVICE_CASES to identify which ones have prior service issues, returning the count of arrivals with case history."
     - question: "Show me guests whose sentiment score average dropped by more than 20 points in the last 60 days"
       answer: "I'll identify guests with significant sentiment decline requiring immediate retention efforts."
     
