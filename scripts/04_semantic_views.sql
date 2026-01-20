@@ -279,10 +279,10 @@ DIMENSIONS (
     PUBLIC STAYS.actual_check_in AS stay_date
 )
 METRICS (
-    PUBLIC SENTIMENT.sentiment_score AS AVG(sentiment.sentiment_score),
-    PUBLIC SENTIMENT.sentiment_id AS COUNT(sentiment.sentiment_id),
-    PUBLIC STAYS.total_charges AS SUM(stays.total_charges),
-    PUBLIC STAYS.stay_id AS COUNT(DISTINCT stays.stay_id)
+    PUBLIC SENTIMENT.sentiment_score AS AVG(SENTIMENT.sentiment_score),
+    PUBLIC SENTIMENT.sentiment_id AS COUNT(SENTIMENT.sentiment_id),
+    PUBLIC STAYS.total_charges AS SUM(STAYS.total_charges),
+    PUBLIC STAYS.stay_id AS COUNT(DISTINCT STAYS.stay_id)
 )
 COMMENT='Guest-level sentiment tracking over time. Enables trend analysis, churn risk identification, and VIP sentiment monitoring. Query by guest, loyalty tier, hotel, or time period to identify declining sentiment patterns.';
 
@@ -327,11 +327,11 @@ DIMENSIONS (
     PUBLIC PROPERTIES.sub_region AS sub_region
 )
 METRICS (
-    PUBLIC BOOKINGS.num_nights AS SUM(bookings.num_nights),
-    PUBLIC BOOKINGS.num_adults AS SUM(bookings.num_adults),
-    PUBLIC BOOKINGS.num_children AS SUM(bookings.num_children),
-    PUBLIC BOOKINGS.total_amount AS SUM(bookings.total_amount),
-    PUBLIC BOOKINGS.advance_booking_days AS AVG(bookings.advance_booking_days)
+    PUBLIC BOOKINGS.num_nights AS SUM(BOOKINGS.num_nights),
+    PUBLIC BOOKINGS.num_adults AS SUM(BOOKINGS.num_adults),
+    PUBLIC BOOKINGS.num_children AS SUM(BOOKINGS.num_children),
+    PUBLIC BOOKINGS.total_amount AS SUM(BOOKINGS.total_amount),
+    PUBLIC BOOKINGS.advance_booking_days AS AVG(BOOKINGS.advance_booking_days)
 )
 COMMENT='Future guest arrivals (confirmed bookings) with loyalty status, service history, and property context. Enables VIP watchlist queries, service recovery planning, and proactive personalized service preparation for upcoming arrivals.';
 
@@ -372,9 +372,9 @@ DIMENSIONS (
     PUBLIC PREFS.last_updated AS preference_last_updated
 )
 METRICS (
-    PUBLIC PREFS.temperature_preference AS AVG(prefs.temperature_preference),
-    PUBLIC PREFS.preference_completeness_score AS AVG(prefs.preference_completeness_score),
-    PUBLIC PREFS.guest_id AS COUNT(DISTINCT prefs.guest_id)
+    PUBLIC PREFS.temperature_preference AS AVG(PREFS.temperature_preference),
+    PUBLIC PREFS.preference_completeness_score AS AVG(PREFS.preference_completeness_score),
+    PUBLIC PREFS.guest_id AS COUNT(DISTINCT PREFS.guest_id)
 )
 COMMENT='Guest room and service preferences for personalized experiences. Track preferences by loyalty tier, nationality, and demographics. Query pillow types, room preferences, temperature settings, and communication methods for targeted service delivery.';
 
