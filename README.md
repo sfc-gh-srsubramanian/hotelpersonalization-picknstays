@@ -1,36 +1,37 @@
-# 🏨 Hotel Guest Personalization System
-## *Transforming Hospitality Through AI-Powered Personalization*
+# 🏨 Hotel Personalization Pick'N Stays
+## *Executive Intelligence Hub & AI-Powered Personalization Platform*
 
 ---
 
 ## 🎯 **WHY This System Exists**
 
 ### **The Hospitality Challenge**
-Modern hotel guests expect **personalized experiences** that rival industry leaders like Ritz-Carlton and Four Seasons. However, most hotel chains struggle with:
+Modern hotel executives and operators face unprecedented complexity managing multi-property portfolios:
 
-- **Fragmented guest data** across multiple systems (PMS, booking platforms, loyalty programs)
-- **Manual personalization** that doesn't scale across thousands of guests
-- **Reactive service** instead of proactive guest experience optimization
-- **Limited insights** into guest preferences and behavior patterns
-- **Missed revenue opportunities** from poor upselling and cross-selling
+- **Fragmented data across 100+ properties** making portfolio-wide visibility impossible
+- **No unified executive dashboard** for RevPAR, occupancy, and satisfaction metrics
+- **Opaque loyalty member behavior** - unclear which Diamond/Gold members are at risk of churning
+- **Reactive service management** - issues discovered after guest complaints, not proactively
+- **Manual reporting** - executives wait days for insights that should be real-time
+- **Poor guest personalization** across touchpoints due to siloed PMS, CRM, and loyalty systems
 
 ### **The Business Opportunity**
-Industry leaders and hospitality studies indicate that **AI-powered personalization platforms** can potentially deliver:
-- 📈 **10-25% revenue increase** through intelligent upselling and cross-selling
-- 😊 **20-35% improvement in guest satisfaction** through accurate preference matching
-- 🔄 **30-50% boost in repeat bookings** via enhanced loyalty and personalized experiences
-- 💰 **15-25% reduction in guest churn** through proactive intervention and service recovery
-- ⚡ **Faster service delivery and operational efficiency** with pre-configured room setups
+Industry leaders and hospitality studies indicate that **unified intelligence platforms** can potentially deliver:
+- 📈 **8-15% portfolio RevPAR increase** through proactive outlier detection and remediation
+- 🎯 **15-25% loyalty member retention improvement** via AI-driven at-risk segment identification
+- 😊 **20-30% reduction in service case escalations** through proactive sentiment monitoring
+- ⚡ **85% reduction in executive reporting time** (days → minutes) with self-service dashboards
+- 💰 **10-25% revenue increase** through intelligent guest upselling and cross-selling
 
 > **Note:** These are industry benchmark ranges based on common hospitality technology ROI studies. Actual results vary significantly based on implementation quality, property type, guest demographics, and existing personalization maturity. This platform demonstrates the technical capabilities to enable such outcomes.
 
 ### **Our Solution**
-A **comprehensive AI-powered personalization platform** that:
-- 🧠 **Unifies all guest data** into a single source of truth
-- 🎯 **Delivers hyper-personalized experiences** at scale
-- 💡 **Provides actionable insights** through natural language queries
-- 🚀 **Enables proactive service** with predictive analytics
-- 📊 **Drives revenue growth** through intelligent recommendations
+A **comprehensive AI-powered intelligence hub and personalization platform** that:
+- 🎯 **Executive Intelligence Hub** with 3 dashboards: Portfolio Performance, Loyalty Intelligence, CX & Service Signals
+- 🧠 **Unifies all guest, loyalty, and service data** into a single source of truth across 100+ global properties
+- 💡 **Provides natural language insights** via Snowflake Intelligence Agents for self-service executive queries
+- 🚀 **Enables proactive management** with outlier detection and at-risk segment alerts
+- 📊 **Drives revenue growth** through guest personalization and intelligent recommendations
 
 ---
 
@@ -57,15 +58,19 @@ snow connection add demo
 ```
 
 **What Gets Deployed:**
-- ✅ Database with 5 schemas (Bronze, Silver, Gold, Business Views, Semantic Views)
-- ✅ 23 tables across medallion architecture (13 Bronze, 7 Silver, 3 Gold)
-- ✅ **50 Summit Hospitality Group properties** across 4 brands (Luxury, Select Service, Extended Stay, Urban/Modern)
-- ✅ 10,000 synthetic guest profiles with realistic data
-- ✅ 25,000+ bookings and 20,000+ completed stays
-- ✅ 30,000+ amenity transactions and 15,000+ usage records
-- ✅ 3 semantic views for natural language querying
-- ✅ 5 Snowflake Intelligence Agents with granular RBAC
-- ✅ **1 Streamlit Dashboard Application** with 5 interactive pages
+- ✅ Database with 4 schemas (Bronze, Silver, Gold, Semantic Views)
+- ✅ 33 tables across medallion architecture (17 Bronze, 9 Silver, 7 Gold)
+- ✅ **100 global properties** across 3 regions (50 AMER, 30 EMEA, 20 APAC) and 4 brands
+- ✅ **100,000 synthetic guest profiles** with realistic demographics and behavior
+- ✅ **250,000+ bookings** (historical + future) and **1.9M+ stay records** (12 months of history)
+- ✅ **50,000 loyalty members** across 4 tiers (Diamond, Gold, Silver, Blue) with 50% repeat rate
+- ✅ **5M+ amenity usage records** (WiFi, TV, dining, pool, spa) with realistic patterns
+- ✅ **30,000+ service cases** with sentiment analysis and issue tracking
+- ✅ **7 semantic views** for natural language querying (portfolio, loyalty, service, guest analytics)
+- ✅ **1 Master Intelligence Agent** with access to all semantic views
+- ✅ **2 Streamlit Applications:**
+  - **Hotel Personalization - PickNStays** (5 pages: Guest 360, Personalization Hub, Amenity Performance, Revenue Analytics, Executive Overview)
+  - **Hotel Intelligence Hub** (3 executive dashboards: Portfolio Overview, Loyalty Intelligence, CX & Service Signals)
 
 **Step 2: Validate the Deployment**
 ```bash
@@ -163,23 +168,33 @@ SELECT SNOWFLAKE.CORTEX.COMPLETE_AGENT(
 
 ### Platform Components
 
-**SQL Files** (Numbered for execution order):
+**SQL Scripts** (Numbered for execution order):
 - `scripts/01_account_setup.sql` - Database, schemas, roles, warehouse
-- `scripts/02_schema_setup.sql` - All table definitions (23 tables across Bronze/Silver/Gold)
-- `scripts/03_data_generation.sql` - Synthetic data generation for all Bronze tables
-- `scripts/03b_refresh_silver_gold.sql` - Refresh Silver and Gold tables after data load
-- `scripts/04_semantic_views.sql` - 3 semantic views for natural language querying
-- `scripts/05_intelligence_agents.sql` - 5 AI agents with granular RBAC
+- `scripts/01b_expand_to_100_properties.sql` - Expand from 50 to 100 global properties (AMER, EMEA, APAC)
+- `scripts/02_schema_setup.sql` - All table definitions (33 tables across Bronze/Silver/Gold)
+- `scripts/03_data_generation.sql` - Synthetic data generation for core Bronze tables (100K guests, 1.9M stays)
+- `scripts/03a_future_bookings_enhancement.sql` - Generate ~3,000 future bookings for next 30 days
+- `scripts/03b_intelligence_hub_data_generation.sql` - Generate Intelligence Hub data (service cases, sentiment, issues)
+- `scripts/03b_refresh_silver_gold.sql` - Refresh all Silver and Gold tables with comprehensive KPIs
+- `scripts/04_semantic_views.sql` - 7 semantic views for natural language querying
+- `scripts/05_intelligence_agents.sql` - Hotel Intelligence Master Agent with 40+ sample questions
+- `scripts/06_agent_chatbot_procedures.sql` - Agent integration procedures (deprecated - use Snowflake Intelligence UI)
 - `scripts/08_sample_queries.sql` - Example BI queries across all layers
+
+**Streamlit Applications:**
+- `streamlit/hotel_personalization/` - Original personalization app (Guest 360, Amenity Performance, Revenue Analytics)
+- `streamlit/intelligence_hub/` - Executive Intelligence Hub (Portfolio, Loyalty, CX & Service dashboards)
 
 **Documentation:**
 - `README.md` - This file, complete platform overview
 - `DEPLOYMENT_GUIDE.md` - Detailed deployment instructions
-- `SCHEMA_VALIDATION_REPORT.md` - Schema validation and fixes
-- `VALIDATION_REPORT.md` - Data generation validation
+- `STREAMLIT_DEPLOYMENT_GUIDE.md` - Streamlit app deployment guide
+- `docs/INTELLIGENCE_HUB_GUIDE.md` - Intelligence Hub feature guide and use cases
 - `docs/AGENT_DETAILED_QUESTIONS.md` - Sample agent test questions
 - `docs/hotel_architecture_diagram.xml` - Visual architecture diagram
-- `solution_presentation/` - Solution overview and presentation materials
+- `solution_presentation/Hotel_Personalization_Solution_Overview.md` - Original solution overview
+- `solution_presentation/Hotel_Personalization_PickNStays_Solution_Overview.md` - Intelligence Hub solution overview
+- `solution_presentation/Hotel_Personalization_PicksNstays_Presentation_Guide.md` - ISF-aligned presentation guide
 
 ### Estimated Costs
 
@@ -216,13 +231,13 @@ To remove all deployed resources:
 │  │ 🏨 PMS Systems  │──────────────▶│        🥉 BRONZE LAYER              │ │ 🤖 AI AGENTS│ │
 │  │ 📊 Booking APIs │               │     (Raw Data Ingestion)            │ │             │ │
 │  │ 💳 Payment Data │               │                                     │ │ Guest       │ │
-│  │ 📱 Social Media │               │ • guest_profiles (1000 records)     │ │ Analytics   │ │
-│  │ 📝 Reviews/CRM  │               │ • booking_history (25000 records)   │ │             │ │
-│  │ 🎯 Loyalty APIs │               │ • room_preferences (10000 records)  │ │ Personaliz- │ │
-│  │ 🌐 WiFi Systems │               │ • loyalty_program (10000 records)   │ │ ation       │ │
-│  │ 📺 Smart TV API │               │ • hotel_properties (50 records)     │ │ Specialist  │ │
-│  │ 🏊 Pool Systems │               │ • amenity_transactions (30000+ recs)│ │             │ │
-│  └─────────────────┘               │ • amenity_usage (15000+ sessions)   │ │ Revenue     │ │
+│  │ 📱 Social Media │               │ • guest_profiles (100K records)     │ │ Analytics   │ │
+│  │ 📝 Reviews/CRM  │               │ • booking_history (250K records)    │ │             │ │
+│  │ 🎯 Loyalty APIs │               │ • stay_history (1.9M records)       │ │ Portfolio & │ │
+│  │ 🌐 WiFi Systems │               │ • loyalty_program (50K members)     │ │ Loyalty     │ │
+│  │ 📺 Smart TV API │               │ • hotel_properties (100 global)     │ │ Intelligence│ │
+│  │ 🏊 Pool Systems │               │ • amenity_usage (5M+ sessions)      │ │             │ │
+│  └─────────────────┘               │ • service_cases (30K+ cases)        │ │ CX & Service│ │
 │           │                        │                                     │ │             │ │
 │           ▼                        └─────────────┬───────────────────────┘ │ Revenue     │ │
 │                                                  │                         │ Optimizer   │ │
@@ -331,22 +346,36 @@ To remove all deployed resources:
 ## 🛠️ **WHAT WE BUILT**
 
 ### **🗄️ Database Architecture**
-- **Database**: `HOTEL_PERSONALIZATION` with 5 specialized schemas
-- **Production Scale**: 10,000 guests, 25,000+ bookings, 50 properties across 4 brands
-- **Security Model**: Role-based access control with 6 project-specific roles
-- **Data Governance**: Comprehensive audit trails and compliance framework
+- **Database**: `HOTEL_PERSONALIZATION` with 4 specialized schemas (Bronze, Silver, Gold, Semantic Views)
+- **Enterprise Scale**: 
+  - **100,000 guests** with comprehensive profiles and preferences
+  - **250,000+ bookings** (historical + future 30 days)
+  - **1.9M+ stay records** (12 months of history with 60-70% occupancy)
+  - **50,000 loyalty members** across 4 tiers with realistic repeat rates
+  - **5M+ amenity usage records** with detailed behavior patterns
+  - **30,000+ service cases** with sentiment analysis
+- **Security Model**: Role-based access control with project-specific roles
+- **Data Governance**: Comprehensive audit trails, PII masking, and compliance framework
 
-### **🏨 Summit Hospitality Group - Brand Portfolio**
-This platform showcases a **multi-brand hotel portfolio** managed under the Summit Hospitality Group parent brand:
+### **🏨 Global Property Portfolio - 100 Properties Across 3 Regions**
+This platform showcases a **global multi-brand hotel portfolio** with **100 properties** spanning three regions:
 
-| Brand | Category | Properties | Star Rating | Room Count | Target Market |
-|-------|----------|------------|-------------|------------|---------------|
-| **Summit Peak Reserve** | Luxury | 10 | 5⭐ | 250-475 | Full-service luxury travelers, high-value guests |
-| **Summit Ice** | Select Service | 20 | 3-4⭐ | 120-170 | Business/leisure travelers seeking value |
-| **Summit Permafrost** | Extended Stay | 10 | 3⭐ | 100-150 | Corporate relocations, long-term stays |
-| **The Snowline by Summit** | Urban/Modern | 10 | 4⭐ | 80-120 | Millennial travelers, urban explorers |
+#### **Regional Distribution**
+| Region | Properties | Coverage |
+|--------|-----------|----------|
+| **🇺🇸 AMER (Americas)** | 50 properties | HOTEL_000 - HOTEL_049 |
+| **🇪🇺 EMEA (Europe, Middle East, Africa)** | 30 properties | HOTEL_050 - HOTEL_079 |
+| **🌏 APAC (Asia-Pacific)** | 20 properties | HOTEL_080 - HOTEL_099 |
 
-**Geographic Distribution**: 50 properties across 25+ major US markets including NYC, LA, Chicago, San Francisco, Miami, Boston, Seattle, and more.
+#### **Brand Portfolio Across All Regions**
+| Brand | Category | Global Properties | Star Rating | Room Count | Target Market |
+|-------|----------|------------------|-------------|------------|---------------|
+| **Summit Peak Reserve** | Luxury | 25 | 5⭐ | 250-475 | Full-service luxury travelers, high-value international guests |
+| **Summit Ice** | Select Service | 40 | 3-4⭐ | 120-170 | Business/leisure travelers seeking value across regions |
+| **Summit Permafrost** | Extended Stay | 20 | 3⭐ | 100-150 | Corporate relocations, long-term stays, global mobility |
+| **The Snowline by Summit** | Urban/Modern | 15 | 4⭐ | 80-120 | Millennial travelers, urban explorers, digital nomads |
+
+**Geographic Coverage**: 100 properties across major markets in North America, Europe, Middle East, Africa, and Asia-Pacific including NYC, LA, SF, Chicago, London, Paris, Dubai, Singapore, Tokyo, Sydney, and more.
 
 ### **📊 Data Layers Implemented**
 
@@ -433,13 +462,24 @@ All agents are deployed in the **GOLD schema** and use **"auto" orchestration** 
 #### **🏆 Hotel Intelligence Master Agent**
 - **Location**: `HOTEL_PERSONALIZATION.GOLD."Hotel Intelligence Master Agent"`
 - **Access**: `HOTEL_PERSONALIZATION_ROLE_REVENUE_ANALYST`, `HOTEL_PERSONALIZATION_ROLE_ADMIN`
-- **Data Sources**: All 3 semantic views (comprehensive cross-functional access)
-- **Expertise**: Strategic business analysis, executive insights, comprehensive KPIs
-- **Sample Questions** (15+): Strategic analysis, ROI, portfolio optimization, competitive insights
+- **Data Sources**: All 7 semantic views (comprehensive cross-functional access):
+  - `PORTFOLIO_INTELLIGENCE_VIEW` - Portfolio performance metrics (RevPAR, occupancy, ADR)
+  - `LOYALTY_INTELLIGENCE_VIEW` - Loyalty member behavior and segments
+  - `CX_SERVICE_INTELLIGENCE_VIEW` - Service cases and sentiment analysis
+  - `GUEST_ANALYTICS_VIEW` - Guest demographics and behavior
+  - `PERSONALIZATION_INSIGHTS_VIEW` - Upsell opportunities and propensity scores
+  - `REVENUE_ANALYTICS_VIEW` - Revenue performance and trends
+  - `GUEST_ARRIVALS_VIEW` - Future bookings and VIP arrivals
+- **Expertise**: Executive intelligence, portfolio optimization, loyalty analytics, service quality monitoring
+- **Sample Questions** (40+): Portfolio performance, loyalty member retention, service quality alerts, guest arrivals, regional benchmarking
 
-### **📱 Interactive Streamlit Dashboard Application**
+### **📱 Interactive Streamlit Dashboard Applications**
 
-**"Hotel Personalization - Pic'N Stays"** - A consolidated enterprise dashboard deployed to the GOLD schema with 5 interactive pages for comprehensive business intelligence.
+#### **Application 1: Hotel Personalization - PickNStays**
+**"Hotel Personalization - PickNStays"** - Original personalization app with 5 pages for guest intelligence and revenue optimization.
+
+**Application 2: Hotel Intelligence Hub**
+**"Hotel Personalization Pick'N Stays"** - Executive Intelligence Hub with 3 executive dashboards for portfolio management, loyalty intelligence, and service quality monitoring.
 
 #### **Application Details**
 - **Location**: `HOTEL_PERSONALIZATION.GOLD.HOTEL_PERSONALIZATION_APP`
@@ -515,8 +555,79 @@ All agents are deployed in the **GOLD schema** and use **"auto" orchestration** 
 
 **Access**: Experience Analysts, Admins
 
+#### **Intelligence Hub Dashboards** (Executive Focus)
+
+##### **1. Portfolio Overview** 📊
+**Purpose**: Real-time executive dashboard for 100-property portfolio performance
+
+**Features**:
+- **Executive KPIs**:
+  - Average RevPAR across portfolio with trend comparison
+  - Average Occupancy % with historical benchmarks
+  - Average ADR (Average Daily Rate) metrics
+  - Guest Satisfaction Score (0-100 scale)
+- **Performance Metrics**:
+  - RevPAR by Brand (Summit Peak Reserve, Summit Ice, Summit Permafrost, Snowline)
+  - RevPAR by Region (AMER, EMEA, APAC)
+  - Occupancy & ADR Trend Over Time (line chart)
+  - RevPAR Heatmap (Brand vs Region)
+- **Outliers & Exceptions** (color-coded for performance):
+  - Underperforming properties (RevPAR Δ vs brand)
+  - Satisfaction drops (Guest Satisfaction Δ vs region)
+  - Service case rate spikes (elevated case rates)
+  - Guest knowledge gaps (% of guests with profile data)
+  - CSV download for analysis
+
+**Access**: COO, Regional VPs, Property GMs, Revenue Managers
+
+##### **2. Loyalty Intelligence** 💎
+**Purpose**: AI-driven loyalty member behavior and retention insights
+
+**Features**:
+- **Loyalty KPIs**:
+  - Active Loyalty Members (exclude non-members)
+  - Average Repeat Stay Rate (industry benchmark: ~50%)
+  - High-Value Guest Share (Diamond + Gold members)
+  - At-Risk Segments (members with <40% repeat rate)
+- **Repeat Rate Analysis**:
+  - Repeat Stay Rate by Loyalty Tier (Diamond, Gold, Silver, Blue, Non-Member)
+  - Visual distribution of repeat rates
+- **Revenue & Spend Hierarchy**:
+  - Average Spend Per Stay by Loyalty Tier
+  - Revenue Mix by Loyalty Tier (total contribution)
+- **Experience Drivers**:
+  - Top amenity categories driving repeat stays
+  - Service quality correlation with loyalty
+  - Regional performance by loyalty tier
+
+**Access**: VP of Loyalty, Revenue Managers, Marketing Teams
+
+##### **3. CX & Service Signals** 😊
+**Purpose**: Proactive service quality monitoring and sentiment analysis
+
+**Features**:
+- **Service KPIs**:
+  - Total Service Cases (30K+ tracked)
+  - Average Resolution Time (days)
+  - Overall Guest Sentiment Score (0-100)
+  - Recovery Action Success Rate (%)
+- **Service Case Analysis**:
+  - Cases by Category (Room Quality, Amenities, Staff Service, Billing, Technical, Noise)
+  - Cases by Priority (Low, Medium, High, Critical)
+  - Service case trends over time
+- **Sentiment Analysis**:
+  - Sentiment Distribution (Positive, Neutral, Negative)
+  - Sentiment Trends by Region
+  - Early warning alerts for sentiment drops
+- **Issue Tracking**:
+  - Open vs Resolved issues
+  - Average time-to-resolution by category
+  - Service recovery actions taken
+
+**Access**: VP of Guest Experience, Property GMs, Service Quality Managers
+
 ##### **4. Revenue Analytics** 💰
-**Purpose**: Financial performance and optimization
+**Purpose**: Financial performance and optimization (Original App)
 
 **Features**:
 - **Revenue Mix**:
