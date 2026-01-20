@@ -242,7 +242,7 @@ For existing Snowflake customers, explicitly answer:
    * Revenue and data teams focus on strategic initiatives, not manual reporting
 
 **Snowflake's Role (Business Language):**
-"This transformation is enabled by consolidating all guest touchpoints—PMS, CRM, loyalty platform, service cases, sentiment data—into Snowflake's AI Data Cloud. Governed semantic views, Snowflake Intelligence Agents, and Streamlit native apps turn data into executive intelligence at every level."
+"This transformation is enabled by consolidating all guest touchpoints—PMS, CRM, loyalty platform, service cases, sentiment data, guest preferences—into Snowflake's AI Data Cloud. 9 governed semantic views (including NEW guest preferences view), Snowflake Intelligence Agents, and Streamlit native apps turn data into executive intelligence at every level."
 
 **Visual Guidance:**
 * **Before/After split diagram** or **From → To table**

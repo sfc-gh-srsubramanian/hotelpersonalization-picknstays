@@ -59,8 +59,8 @@ cd "/path/to/Hotel-Personalization-System"
 2. ✅ Creates database, schemas, roles, and warehouse
 3. ✅ Deploys all tables across Bronze, Silver, Gold layers
 4. ✅ Generates 10,000+ synthetic data records
-5. ✅ Creates semantic views for natural language querying
-6. ✅ Deploys 5 Snowflake Intelligence Agents (optional)
+5. ✅ Creates 9 semantic views for natural language querying (includes NEW guest preferences view)
+6. ✅ Deploys 5 Snowflake Intelligence Agents (optional, Master Agent has 48+ sample questions)
 7. ✅ Registers agents with Snowflake Intelligence for UI visibility
 8. ✅ Runs validation queries to confirm success
 
@@ -137,9 +137,9 @@ Your Snowflake user needs:
 - **918 Revenue opportunities** worth $1.26M+
 
 ### **AI Capabilities:**
-- **5 Specialized Agents** for different hotel operations
-- **3 Semantic Views** for natural language queries
-- **100+ Sample questions** for staff training
+- **5 Specialized Agents** for different hotel operations (Master Agent with 48+ sample questions)
+- **9 Semantic Views** for natural language queries (includes NEW guest preferences view)
+- **48+ Sample questions** for executive training (8 new preference queries)
 
 ### **Security:**
 - **6 Role-based access** levels
@@ -273,8 +273,8 @@ Your deployment is successful when:
 ✅ **Database created** with all 5 schemas  
 ✅ **1000+ guest records** generated  
 ✅ **All data layers populated** (Bronze → Silver → Gold)  
-✅ **3 semantic views created** without errors  
-✅ **5 AI agents deployed** and accessible  
+✅ **9 semantic views created** without errors (includes NEW guest preferences view)  
+✅ **5 AI agents deployed** and accessible (Master Agent with 48+ questions)  
 ✅ **Agents registered** with Snowflake Intelligence and visible in UI  
 ✅ **Security roles configured** with proper permissions  
 

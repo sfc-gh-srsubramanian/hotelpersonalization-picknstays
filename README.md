@@ -66,8 +66,8 @@ snow connection add demo
 - ✅ **50,000 loyalty members** across 4 tiers (Diamond, Gold, Silver, Blue) with 50% repeat rate
 - ✅ **5M+ amenity usage records** (WiFi, TV, dining, pool, spa) with realistic patterns
 - ✅ **30,000+ service cases** with sentiment analysis and issue tracking
-- ✅ **7 semantic views** for natural language querying (portfolio, loyalty, service, guest analytics)
-- ✅ **1 Master Intelligence Agent** with access to all semantic views
+- ✅ **9 semantic views** for natural language querying (portfolio, loyalty, service, guest analytics, preferences, sentiment, arrivals)
+- ✅ **1 Master Intelligence Agent** with access to all 9 semantic views (including new guest preferences view)
 - ✅ **2 Streamlit Applications:**
   - **Hotel Personalization - PickNStays** (5 pages: Guest 360, Personalization Hub, Amenity Performance, Revenue Analytics, Executive Overview)
   - **Hotel Intelligence Hub** (3 executive dashboards: Portfolio Overview, Loyalty Intelligence, CX & Service Signals)
@@ -176,8 +176,8 @@ SELECT SNOWFLAKE.CORTEX.COMPLETE_AGENT(
 - `scripts/03a_future_bookings_enhancement.sql` - Generate ~3,000 future bookings for next 30 days
 - `scripts/03b_intelligence_hub_data_generation.sql` - Generate Intelligence Hub data (service cases, sentiment, issues)
 - `scripts/03b_refresh_silver_gold.sql` - Refresh all Silver and Gold tables with comprehensive KPIs
-- `scripts/04_semantic_views.sql` - 7 semantic views for natural language querying
-- `scripts/05_intelligence_agents.sql` - Hotel Intelligence Master Agent with 40+ sample questions
+- `scripts/04_semantic_views.sql` - 9 semantic views for natural language querying (includes NEW: guest preferences)
+- `scripts/05_intelligence_agents.sql` - Hotel Intelligence Master Agent with 48+ sample questions (8 new preference queries)
 - `scripts/06_agent_chatbot_procedures.sql` - Agent integration procedures (deprecated - use Snowflake Intelligence UI)
 - `scripts/08_sample_queries.sql` - Example BI queries across all layers
 
@@ -414,12 +414,28 @@ This platform showcases a **global multi-brand hotel portfolio** with **100 prop
 | `personalization_scores_enhanced` | 10,000 | AI-powered propensity scores (upsell, churn, loyalty) |
 | `amenity_analytics` | Aggregated | Business intelligence for all amenity services |
 
-#### **🔍 Semantic Views Layer (3 Views)**
+#### **🔍 Semantic Views Layer (9 Views)**
+
+**Core Guest & Personalization Views (3):**
 | Semantic View | Purpose | AI Integration |
 |---------------|---------|----------------|
 | `GUEST_ANALYTICS_VIEW` | Guest behavior, booking patterns, loyalty analysis, amenity spend | Natural language queries via Agents |
 | `PERSONALIZATION_INSIGHTS_VIEW` | Personalization scores, upsell propensity, customer segments | Cortex Analyst ready |
 | `AMENITY_ANALYTICS_VIEW` | Infrastructure service performance, revenue analytics | Natural language queries via Agents |
+
+**Intelligence Hub Views (3):**
+| Semantic View | Purpose | AI Integration |
+|---------------|---------|----------------|
+| `PORTFOLIO_INTELLIGENCE_VIEW` | Portfolio performance metrics (RevPAR, occupancy, ADR) across 100 properties | Executive dashboards & Agent queries |
+| `LOYALTY_INTELLIGENCE_VIEW` | Loyalty segment behavior, repeat rates, spend patterns by tier | Retention & loyalty analysis |
+| `CX_SERVICE_INTELLIGENCE_VIEW` | Customer experience, service quality, sentiment, at-risk guests | Service excellence & VIP watchlist |
+
+**Guest Intelligence Views (3):**
+| Semantic View | Purpose | AI Integration |
+|---------------|---------|----------------|
+| `GUEST_SENTIMENT_INTELLIGENCE_VIEW` | Individual guest sentiment trends, churn risk, high-value guest monitoring | Proactive churn prevention |
+| `GUEST_ARRIVALS_VIEW` | Future bookings, VIP arrivals, service history for upcoming guests | Proactive service preparation |
+| `GUEST_PREFERENCES_VIEW` | **NEW:** Room & service preferences (pillow types, temperature, dining, spa) by loyalty tier | Personalized guest experience |
 
 ### **🤖 AI-Powered Intelligence Agents (5 Agents)**
 
@@ -462,16 +478,18 @@ All agents are deployed in the **GOLD schema** and use **"auto" orchestration** 
 #### **🏆 Hotel Intelligence Master Agent**
 - **Location**: `HOTEL_PERSONALIZATION.GOLD."Hotel Intelligence Master Agent"`
 - **Access**: `HOTEL_PERSONALIZATION_ROLE_REVENUE_ANALYST`, `HOTEL_PERSONALIZATION_ROLE_ADMIN`
-- **Data Sources**: All 7 semantic views (comprehensive cross-functional access):
+- **Data Sources**: All 9 semantic views (comprehensive cross-functional access):
   - `PORTFOLIO_INTELLIGENCE_VIEW` - Portfolio performance metrics (RevPAR, occupancy, ADR)
   - `LOYALTY_INTELLIGENCE_VIEW` - Loyalty member behavior and segments
   - `CX_SERVICE_INTELLIGENCE_VIEW` - Service cases and sentiment analysis
+  - `GUEST_SENTIMENT_INTELLIGENCE_VIEW` - Individual guest sentiment trends for churn prevention
+  - `GUEST_ARRIVALS_VIEW` - Future bookings and VIP arrivals
+  - `GUEST_PREFERENCES_VIEW` - **NEW:** Room & service preferences (pillow types, temperature, dining, spa) by loyalty tier
   - `GUEST_ANALYTICS_VIEW` - Guest demographics and behavior
   - `PERSONALIZATION_INSIGHTS_VIEW` - Upsell opportunities and propensity scores
-  - `REVENUE_ANALYTICS_VIEW` - Revenue performance and trends
-  - `GUEST_ARRIVALS_VIEW` - Future bookings and VIP arrivals
-- **Expertise**: Executive intelligence, portfolio optimization, loyalty analytics, service quality monitoring
-- **Sample Questions** (40+): Portfolio performance, loyalty member retention, service quality alerts, guest arrivals, regional benchmarking
+  - `AMENITY_ANALYTICS_VIEW` - Amenity performance and infrastructure usage
+- **Expertise**: Executive intelligence, portfolio optimization, loyalty analytics, service quality monitoring, **guest preference analysis**
+- **Sample Questions** (48+): Portfolio performance, loyalty member retention, service quality alerts, guest arrivals, regional benchmarking, **preference insights (8 new questions)**
 
 ### **📱 Interactive Streamlit Dashboard Applications**
 
@@ -1011,8 +1029,8 @@ Hotel-Personalization-System/
 │   ├── scripts/02_schema_setup.sql            # 23 tables (Bronze, Silver, Gold)
 │   ├── scripts/03_data_generation.sql         # Synthetic data for Bronze tables
 │   ├── scripts/03b_refresh_silver_gold.sql    # Refresh Silver/Gold after data load
-│   ├── scripts/04_semantic_views.sql          # 3 semantic views
-│   ├── scripts/05_intelligence_agents.sql     # 5 AI agents with RBAC
+│   ├── scripts/04_semantic_views.sql          # 9 semantic views (includes NEW: guest preferences)
+│   ├── scripts/05_intelligence_agents.sql     # 5 AI agents with RBAC (Master Agent has 48+ questions)
 │   └── scripts/08_sample_queries.sql          # Example BI queries
 │
 ├── 🚀 Deployment Scripts
