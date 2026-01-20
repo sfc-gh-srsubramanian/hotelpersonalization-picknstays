@@ -47,7 +47,7 @@ KPI_DEFINITIONS = {
     
     "at_risk_high_value_guests": "Count of high-value guests ($10K+ LTV) with recent negative sentiment or service issues. Priority for retention efforts.",
     
-    "vip_watchlist_count": "Number of Diamond/Platinum guests with 2+ service cases in last 90 days. Requires immediate attention.",
+    "vip_watchlist_count": "Number of Diamond/Gold guests with 2+ service cases in last 90 days. Requires immediate attention.",
     
     # =========================================================================
     # Segment & Table Column Metrics

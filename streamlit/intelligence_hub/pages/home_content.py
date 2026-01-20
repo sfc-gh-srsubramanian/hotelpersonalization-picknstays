@@ -74,7 +74,7 @@ with tab1:
     - Do brands with higher guest-knowledge coverage perform better?
     
     **Loyalty & Retention Questions:**
-    - Which amenities correlate most with repeat stays for Platinum guests?
+    - Which amenities correlate most with repeat stays for Diamond guests?
     - Which loyalty segment is growing fastest—and what's driving it?
     - Where are we under-delivering experiences our best guests value?
     

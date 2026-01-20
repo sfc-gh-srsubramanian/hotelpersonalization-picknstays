@@ -51,8 +51,8 @@ with col3:
     create_kpi_card("Avg Booking Value", format_currency(guests_df['AVG_BOOKING_VALUE'].mean()))
 
 with col4:
-    platinum_count = len(guests_df[guests_df['LOYALTY_TIER'] == 'Platinum'])
-    create_kpi_card("Platinum Members", format_number(platinum_count))
+    diamond_count = len(guests_df[guests_df['LOYALTY_TIER'] == 'Diamond'])
+    create_kpi_card("Diamond Members", format_number(diamond_count))
 
 with col5:
     high_risk = len(guests_df[guests_df['CHURN_RISK'] == 'High Risk'])

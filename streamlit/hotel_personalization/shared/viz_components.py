@@ -124,7 +124,7 @@ def display_risk_badge(risk_level):
 def display_loyalty_badge(tier):
     """Display a loyalty tier badge"""
     badge_colors = {
-        'Platinum': '#E5E4E2',
+        'Diamond': '#E5E4E2',
         'Gold': '#FFD700',
         'Silver': '#C0C0C0',
         'Bronze': '#CD7F32',

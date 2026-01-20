@@ -183,7 +183,7 @@ def load_future_arrivals(days_ahead=7):
         *,
         CASE 
             WHEN lifetime_value > 10000 AND prior_issue_count > 0 THEN 90
-            WHEN tier_level IN ('Diamond', 'Platinum') AND prior_issue_count > 0 THEN 75
+            WHEN tier_level IN ('Diamond', 'Gold') AND prior_issue_count > 0 THEN 75
             WHEN latest_sentiment_score < 0 THEN 60
             WHEN prior_issue_count > 2 THEN 50
             ELSE 20

@@ -540,7 +540,7 @@ SELECT
         50 + 
         (g360.avg_booking_value / 100) +
         (g360.total_amenity_spend / 50) +
-        (CASE WHEN g360.loyalty_tier IN ('Gold', 'Platinum', 'Diamond') THEN 20 ELSE 0 END) -
+        (CASE WHEN g360.loyalty_tier IN ('Gold', 'Diamond') THEN 20 ELSE 0 END) -
         (CASE WHEN g360.churn_risk = 'High Risk' THEN 30 
               WHEN g360.churn_risk = 'Medium Risk' THEN 15 
               ELSE 0 END)
@@ -575,7 +575,7 @@ SELECT
         (g360.total_bookings * 5) +
         (g360.lifetime_points / 100) +
         (CASE WHEN g360.loyalty_tier = 'Diamond' THEN 25
-              WHEN g360.loyalty_tier = 'Platinum' THEN 15
+              WHEN g360.loyalty_tier = 'Gold' THEN 15
               WHEN g360.loyalty_tier = 'Gold' THEN 5
               ELSE -10 END) -
         (CASE WHEN g360.churn_risk = 'High Risk' THEN 40 ELSE 0 END)
@@ -707,9 +707,9 @@ WITH case_context AS (
         g360.lifetime_value,
         g360.total_stays,
         g360.avg_satisfaction,
-        -- Determine if VIP (Diamond/Platinum + $10K+ LTV)
+        -- Determine if VIP (Diamond/Gold + $10K+ LTV)
         CASE 
-            WHEN lm.tier_level IN ('Diamond', 'Platinum') AND g360.lifetime_value > 10000 THEN TRUE
+            WHEN lm.tier_level IN ('Diamond', 'Gold') AND g360.lifetime_value > 10000 THEN TRUE
             ELSE FALSE
         END as is_vip,
         -- Stay context
