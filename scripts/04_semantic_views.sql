@@ -269,13 +269,13 @@ RELATIONSHIPS (
 DIMENSIONS (
     PUBLIC SENTIMENT.guest_id AS guest_id,
     PUBLIC SENTIMENT.hotel_id AS hotel_id,
-    PUBLIC SENTIMENT.source AS sentiment_source,
+    PUBLIC SENTIMENT.source AS source,
     PUBLIC SENTIMENT.sentiment_label AS sentiment_label,
-    PUBLIC SENTIMENT.platform AS feedback_platform,
-    PUBLIC SENTIMENT.posted_at AS feedback_date,
+    PUBLIC SENTIMENT.platform AS platform,
+    PUBLIC SENTIMENT.posted_at AS posted_at,
     PUBLIC GUESTS.nationality AS nationality,
     PUBLIC GUESTS.language_preference AS language_preference,
-    PUBLIC STAYS.actual_check_in AS stay_date
+    PUBLIC STAYS.actual_check_in AS check_in_date
 )
 METRICS (
     PUBLIC SENTIMENT.sentiment_score AS AVG(SENTIMENT.sentiment_score),
