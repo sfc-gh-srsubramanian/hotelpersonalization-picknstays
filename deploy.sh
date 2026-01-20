@@ -401,12 +401,49 @@ else
 fi
 
 ###############################################################################
+# Step 4a: Generate Intelligence Hub Bronze Data
+###############################################################################
+if should_run_step "data_generation"; then
+    echo "Step 4a: Generating Intelligence Hub Bronze data..."
+    echo "-------------------------------------------------------------------------"
+    echo "Loading: Service Cases, Issue Tracking, Sentiment, Recovery Actions"
+    echo ""
+    
+    echo "Generating Intelligence Hub Bronze data (18 months history)..."
+    temp_sql=$(mktemp)
+    {
+        echo "USE DATABASE ${DATABASE};"
+        echo "USE SCHEMA BRONZE;"
+        echo "USE WAREHOUSE ${WAREHOUSE};"
+        echo "SET FULL_PREFIX = '${FULL_PREFIX}';"
+        cat scripts/03b_intelligence_hub_data_generation.sql
+    } > "$temp_sql"
+    snow sql $SNOW_CONN -f "$temp_sql"
+    rm -f "$temp_sql"
+    
+    if [ $? -eq 0 ]; then
+        echo ""
+        echo -e "${GREEN}✓${NC} Intelligence Hub Bronze data generated"
+        echo "  • service_cases: ~5,000 records (12.5% of stays)"
+        echo "  • issue_tracking: ~40,000 records (8 per case avg)"
+        echo "  • sentiment_data: ~30,000 records (sentiment analysis)"
+        echo "  • service_recovery_actions: ~5,000 records (recovery tracking)"
+    else
+        error_exit "Intelligence Hub data generation failed"
+    fi
+    echo ""
+else
+    echo "Step 4a: Skipped (--only-$ONLY_COMPONENT)"
+    echo ""
+fi
+
+###############################################################################
 # Step 4b: Refresh Silver and Gold Layers
 ###############################################################################
 if should_run_step "data_generation"; then
     echo "Step 4b: Refreshing Silver and Gold layers..."
     echo "-------------------------------------------------------------------------"
-    echo "Rebuilding: Silver and Gold tables with fresh Bronze data"
+    echo "Rebuilding: Silver and Gold tables with fresh Bronze data (including Intelligence Hub)"
     echo ""
     
     {
@@ -604,7 +641,7 @@ definition_version: 2
 entities:
   hotel_personalization_app:
     type: streamlit
-    title: "Hotel Personalization - PickNStays"
+    title: "Hotel Personalization - PickNStays Deprecated"
     query_warehouse: ${FULL_PREFIX}_WH
     main_file: hotel_personalization_app.py
     stage: streamlit
@@ -700,27 +737,12 @@ if (should_run_step "intel_hub" || [ -z "$ONLY_COMPONENT" ]) && [ "$SKIP_INTEL_H
     fi
     echo ""
     
-    # 7b.2: Intelligence Hub Bronze data
-    echo "[2/2] Generating Intelligence Hub Bronze data (18 months history)..."
-    temp_sql=$(mktemp)
-    {
-        echo "USE DATABASE ${DATABASE};"
-        echo "USE SCHEMA BRONZE;"
-        echo "USE WAREHOUSE ${WAREHOUSE};"
-        echo "SET FULL_PREFIX = '${FULL_PREFIX}';"
-        cat scripts/03b_intelligence_hub_data_generation.sql
-    } > "$temp_sql"
-    snow sql $SNOW_CONN -f "$temp_sql"
-    rm -f "$temp_sql"
-    
-    if [ $? -eq 0 ]; then
-        echo -e "${GREEN}✓${NC} Intelligence Hub Bronze data generated (~40K records)"
-    else
-        error_exit "Intelligence Hub data generation failed"
-    fi
+    # Note: Intelligence Hub Bronze data is now generated in Step 4a (before Silver/Gold refresh)
+    echo "[2/2] Intelligence Hub Bronze data already generated in Step 4a"
+    echo "      (service_cases, issue_tracking, sentiment_data, service_recovery_actions)"
     echo ""
     echo "  Note: Intelligence Hub Silver (3 tables) and Gold (3 tables) layers"
-    echo "        are built in Step 4b by scripts/03b_refresh_silver_gold.sql"
+    echo "        were built in Step 4b by scripts/03b_refresh_silver_gold.sql"
     echo ""
     
     echo -e "${GREEN}✓${NC} Intelligence Hub SQL infrastructure deployed successfully"
@@ -758,7 +780,7 @@ definition_version: 2
 entities:
   hotel_intelligence_hub:
     type: streamlit
-    title: "Hotel Intelligence Hub"
+    title: "Hotel Personalization - PickNStays"
     query_warehouse: HOTEL_PERSONALIZATION_WH
     main_file: hotel_intelligence_hub.py
     stage: streamlit

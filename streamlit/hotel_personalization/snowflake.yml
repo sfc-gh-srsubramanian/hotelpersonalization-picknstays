@@ -2,7 +2,7 @@ definition_version: 2
 entities:
   hotel_personalization_app:
     type: streamlit
-    title: "Hotel Personalization - PickNStays"
+    title: "Hotel Personalization - PickNStays Deprecated"
     query_warehouse: HOTEL_PERSONALIZATION_WH
     main_file: hotel_personalization_app.py
     stage: streamlit
