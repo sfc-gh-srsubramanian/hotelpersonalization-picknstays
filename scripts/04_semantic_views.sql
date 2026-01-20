@@ -260,8 +260,7 @@ CREATE OR REPLACE SEMANTIC VIEW GUEST_SENTIMENT_INTELLIGENCE_VIEW
 TABLES (
     SENTIMENT AS BRONZE.SENTIMENT_DATA PRIMARY KEY (sentiment_id),
     STAYS AS BRONZE.STAY_HISTORY PRIMARY KEY (stay_id),
-    GUESTS AS BRONZE.GUEST_PROFILES PRIMARY KEY (guest_id),
-    LOYALTY AS BRONZE.LOYALTY_PROGRAM PRIMARY KEY (loyalty_id)
+    GUESTS AS BRONZE.GUEST_PROFILES PRIMARY KEY (guest_id)
 )
 RELATIONSHIPS (
     SENTIMENT_TO_GUEST AS SENTIMENT(guest_id) REFERENCES GUESTS(guest_id),
@@ -274,7 +273,8 @@ DIMENSIONS (
     PUBLIC SENTIMENT.sentiment_label AS sentiment_label,
     PUBLIC SENTIMENT.platform AS feedback_platform,
     PUBLIC SENTIMENT.posted_at AS feedback_date,
-    PUBLIC LOYALTY.tier_level AS loyalty_tier,
+    PUBLIC GUESTS.nationality AS nationality,
+    PUBLIC GUESTS.language_preference AS language_preference,
     PUBLIC STAYS.actual_check_in AS stay_date
 )
 METRICS (
@@ -295,7 +295,6 @@ TABLES (
     BOOKINGS AS BRONZE.BOOKING_HISTORY PRIMARY KEY (booking_id),
     GUESTS AS BRONZE.GUEST_PROFILES PRIMARY KEY (guest_id),
     PROPERTIES AS BRONZE.HOTEL_PROPERTIES PRIMARY KEY (hotel_id),
-    LOYALTY AS BRONZE.LOYALTY_PROGRAM PRIMARY KEY (loyalty_id),
     SERVICE_CASES AS BRONZE.SERVICE_CASES PRIMARY KEY (case_id)
 )
 RELATIONSHIPS (
@@ -342,8 +341,7 @@ COMMENT='Future guest arrivals (confirmed bookings) with loyalty status, service
 CREATE OR REPLACE SEMANTIC VIEW GUEST_PREFERENCES_VIEW
 TABLES (
     PREFS AS GOLD.PREFERENCES_CONSOLIDATED PRIMARY KEY (guest_id),
-    GUESTS AS BRONZE.GUEST_PROFILES PRIMARY KEY (guest_id),
-    LOYALTY AS BRONZE.LOYALTY_PROGRAM PRIMARY KEY (loyalty_id)
+    GUESTS AS BRONZE.GUEST_PROFILES PRIMARY KEY (guest_id)
 )
 RELATIONSHIPS (
     PREFS_TO_GUESTS AS PREFS(guest_id) REFERENCES GUESTS(guest_id)
@@ -354,7 +352,6 @@ DIMENSIONS (
     PUBLIC GUESTS.last_name AS last_name,
     PUBLIC GUESTS.nationality AS nationality,
     PUBLIC GUESTS.language_preference AS language_preference,
-    PUBLIC LOYALTY.tier_level AS loyalty_tier,
     PUBLIC PREFS.room_type_preference AS room_type_preference,
     PUBLIC PREFS.floor_preference AS floor_preference,
     PUBLIC PREFS.view_preference AS view_preference,
