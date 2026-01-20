@@ -611,6 +611,7 @@ WITH transaction_metrics AS (
     SELECT
         DATE_TRUNC('month', at.transaction_date) as metric_month,
         at.amenity_category,
+        'N/A' as amenity_name,
         CASE
             WHEN at.amenity_category = 'spa' THEN 'Wellness'
             WHEN at.amenity_category IN ('bar', 'restaurant') THEN 'Food & Beverage'
@@ -636,15 +637,17 @@ WITH transaction_metrics AS (
         0 as avg_session_duration,
         0 as total_data_consumed_mb
     FROM BRONZE.amenity_transactions at
-    GROUP BY 1,2,3,4
+    GROUP BY 1,2,3,4,5
 ),
 usage_metrics AS (
     SELECT
         DATE_TRUNC('month', au.usage_start_time) as metric_month,
         au.amenity_category,
+        au.amenity_name,
         CASE
             WHEN au.amenity_category IN ('wifi', 'smart_tv') THEN 'Technology Services'
             WHEN au.amenity_category = 'pool' THEN 'Recreation Services'
+            WHEN au.amenity_category = 'spa' THEN 'Wellness'
             ELSE 'Other Services'
         END as service_group,
         au.location,
@@ -661,11 +664,12 @@ usage_metrics AS (
         ROUND(AVG(au.usage_duration_minutes), 2) as avg_session_duration,
         COALESCE(SUM(au.data_consumed_mb), 0) as total_data_consumed_mb
     FROM BRONZE.amenity_usage au
-    GROUP BY 1,2,3,4
+    GROUP BY 1,2,3,4,5
 )
 SELECT
     COALESCE(tm.metric_month, um.metric_month) as metric_month,
     COALESCE(tm.amenity_category, um.amenity_category) as amenity_category,
+    COALESCE(tm.amenity_name, um.amenity_name) as amenity_name,
     COALESCE(tm.service_group, um.service_group) as service_group,
     COALESCE(tm.location, um.location) as location,
     COALESCE(tm.total_transactions, 0) + COALESCE(um.total_transactions, 0) as total_transactions,
@@ -688,6 +692,7 @@ FROM transaction_metrics tm
 FULL OUTER JOIN usage_metrics um 
     ON tm.metric_month = um.metric_month 
     AND tm.amenity_category = um.amenity_category 
+    AND tm.amenity_name = um.amenity_name
     AND tm.location = um.location;
 
 -- ============================================================================
