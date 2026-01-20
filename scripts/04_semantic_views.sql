@@ -293,13 +293,11 @@ TABLES (
     BOOKINGS AS BRONZE.BOOKING_HISTORY PRIMARY KEY (booking_id),
     GUESTS AS BRONZE.GUEST_PROFILES PRIMARY KEY (guest_id),
     PROPERTIES AS BRONZE.HOTEL_PROPERTIES PRIMARY KEY (hotel_id),
-    SERVICE_CASES AS BRONZE.SERVICE_CASES PRIMARY KEY (case_id),
     GUEST360 AS GOLD.GUEST_360_VIEW_ENHANCED PRIMARY KEY (GUEST_ID)
 )
 RELATIONSHIPS (
     BOOKINGS_TO_GUESTS AS BOOKINGS(guest_id) REFERENCES GUESTS(guest_id),
     BOOKINGS_TO_HOTELS AS BOOKINGS(hotel_id) REFERENCES PROPERTIES(hotel_id),
-    SERVICE_TO_GUESTS AS SERVICE_CASES(guest_id) REFERENCES GUESTS(guest_id),
     GUESTS_TO_GUEST360 AS GUESTS(guest_id) REFERENCES GUEST360(GUEST_ID)
 )
 DIMENSIONS (
@@ -331,7 +329,7 @@ METRICS (
     PUBLIC BOOKINGS.total_amount AS SUM(BOOKINGS.total_amount),
     PUBLIC BOOKINGS.advance_booking_days AS AVG(BOOKINGS.advance_booking_days)
 )
-COMMENT='Future guest arrivals (confirmed bookings) with loyalty status, service history, and property context. Enables VIP watchlist queries, service recovery planning, and proactive personalized service preparation for upcoming arrivals.';
+COMMENT='Future guest arrivals (confirmed bookings) with loyalty tier and property context. Shows ALL upcoming arrivals - use LEFT JOIN to BRONZE.SERVICE_CASES to identify which VIPs have prior service issues. Enables VIP watchlist queries, service recovery planning, and proactive personalized service preparation.';
 
 -- =====================================================================
 -- 9. GUEST_PREFERENCES_VIEW (Room & Service Preferences)
