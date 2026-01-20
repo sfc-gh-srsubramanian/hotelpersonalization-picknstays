@@ -360,8 +360,8 @@ DIMENSIONS (
     PUBLIC PREFS.lighting_preference AS lighting_preference,
     PUBLIC PREFS.pillow_type_preference AS pillow_type_preference,
     PUBLIC PREFS.noise_level_preference AS noise_level_preference,
-    PUBLIC PREFS.preferred_communication_method AS communication_method,
-    PUBLIC PREFS.last_updated AS preference_last_updated
+    PUBLIC PREFS.preferred_communication_method AS preferred_communication_method,
+    PUBLIC PREFS.last_updated AS last_updated
 )
 METRICS (
     PUBLIC PREFS.temperature_preference AS AVG(PREFS.temperature_preference),
