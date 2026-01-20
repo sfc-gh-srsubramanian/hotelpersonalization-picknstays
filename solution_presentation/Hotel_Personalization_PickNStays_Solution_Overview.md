@@ -1261,35 +1261,7 @@ High-value guest with $35K lifetime value arriving tomorrow—past service issue
 
 ---
 
-## 11. Customer Testimonials & Success Stories
-
-> **Note**: As this is a demonstration platform using fictitious Summit Hospitality Group, the following represent **typical outcomes** reported by hotel chains implementing similar executive intelligence platforms on Snowflake.
-
-### Regional VP Operations, Major Hotel Chain (500+ Properties)
-
-*"Before this platform, my team spent 2 full days each month compiling performance reports for executive review. Now I can identify outliers in 5 minutes and have root cause analysis from AI agents in another 10. The time savings alone justify the investment, but the revenue impact from rapid intervention is transformational—we're catching declining ADR trends 6-8 weeks earlier than quarterly reviews used to surface."*
-
-**Impact**: 90% reduction in reporting time, $4.2M recovered revenue from early outlier detection
-
----
-
-### Chief Marketing Officer, Boutique Luxury Portfolio (75 Properties)
-
-*"We were spending $3.5M annually on loyalty programs but had no clear visibility into segment ROI. The Loyalty Intelligence dashboard revealed that 40% of our spend was going to segments with <25% repeat rates. We reallocated that budget to high-performing segments and experience categories (dining, wellness) that actually drive loyalty. Our portfolio repeat rate improved 14 percentage points in 6 months."*
-
-**Impact**: $1.4M loyalty budget optimization, 14-point repeat rate improvement, 3.8x campaign ROI
-
----
-
-### VP Guest Experience, Global Resort Chain (120 Properties)
-
-*"The VIP Watchlist changed how we operate. We used to be reactive—discovering high-value guests had bad experiences only after they left negative reviews or churned. Now we get a 7-day lookahead with churn risk scores, allowing proactive outreach and service recovery before arrival. Our high-value guest churn rate dropped 62% in the first year, protecting over $8M in lifetime value."*
-
-**Impact**: 62% reduction in VIP churn, $8M LTV protected, 18-point NPS improvement
-
----
-
-## 12. Next Steps
+## 11. Next Steps
 
 ### Explore the Demo
 
