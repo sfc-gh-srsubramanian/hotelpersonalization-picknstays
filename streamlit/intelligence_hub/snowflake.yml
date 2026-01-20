@@ -1,0 +1,13 @@
+definition_version: 2
+entities:
+  hotel_intelligence_hub:
+    type: streamlit
+    title: "Hotel Personalization - PickNStays"
+    query_warehouse: HOTEL_PERSONALIZATION_WH
+    main_file: hotel_intelligence_hub.py
+    stage: streamlit
+    artifacts:
+      - hotel_intelligence_hub.py
+      - pages/
+      - shared/
+      - environment.yml

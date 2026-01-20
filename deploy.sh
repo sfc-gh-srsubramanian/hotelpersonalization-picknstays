@@ -27,6 +27,7 @@ ENV_PREFIX=""
 ONLY_COMPONENT=""
 SKIP_AGENTS=false
 SKIP_DASHBOARDS=false
+SKIP_INTEL_HUB=false
 
 # Project settings
 PROJECT_PREFIX="HOTEL_PERSONALIZATION"
@@ -66,11 +67,13 @@ Options:
   -p, --prefix PREFIX      Environment prefix for resources (e.g., DEV, PROD)
   --skip-agents            Skip Intelligence Agents creation
   --skip-dashboards        Skip Streamlit Dashboard deployment
+  --skip-intel-hub         Skip Intelligence Hub deployment
   --only-sql               Deploy only SQL infrastructure
   --only-data              Deploy only data generation
   --only-semantic          Deploy only semantic views
   --only-agents            Deploy only intelligence agents
   --only-dashboards        Deploy only Streamlit dashboard
+  --only-intel-hub         Deploy only Intelligence Hub app
   -h, --help               Show this help message
 
 Examples:
@@ -107,6 +110,10 @@ while [[ $# -gt 0 ]]; do
             SKIP_DASHBOARDS=true
             shift
             ;;
+        --skip-intel-hub)
+            SKIP_INTEL_HUB=true
+            shift
+            ;;
         --only-sql)
             ONLY_COMPONENT="sql"
             shift
@@ -125,6 +132,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         --only-dashboards)
             ONLY_COMPONENT="dashboards"
+            shift
+            ;;
+        --only-intel-hub)
+            ONLY_COMPONENT="intel_hub"
             shift
             ;;
         *)
@@ -169,6 +180,9 @@ should_run_step() {
             ;;
         dashboards)
             [[ "$step_name" == "dashboards" ]]
+            ;;
+        intel_hub)
+            [[ "$step_name" == "intel_hub" ]]
             ;;
         *)
             return 1
@@ -224,7 +238,7 @@ fi
 echo -e "${GREEN}✓${NC} Connection '$CONNECTION_NAME' verified"
 
 # Check required SQL files
-for file in "sql/01_account_setup.sql" "sql/02_schema_setup.sql" "sql/03_data_generation.sql" "sql/04_semantic_views.sql"; do
+for file in "scripts/01_account_setup.sql" "scripts/02_schema_setup.sql" "scripts/03_data_generation.sql" "scripts/04_semantic_views.sql"; do
     if [ ! -f "$file" ]; then
         error_exit "Required file not found: $file"
     fi
@@ -232,8 +246,8 @@ done
 echo -e "${GREEN}✓${NC} Required SQL files present"
 
 if [ "$SKIP_AGENTS" = false ] && should_run_step "agents"; then
-    if [ ! -f "sql/05_intelligence_agents.sql" ]; then
-        error_exit "Agent file not found: sql/05_intelligence_agents.sql"
+    if [ ! -f "scripts/05_intelligence_agents.sql" ]; then
+        error_exit "Agent file not found: scripts/05_intelligence_agents.sql"
     fi
     echo -e "${GREEN}✓${NC} Intelligence Agents SQL present"
 fi
@@ -254,7 +268,7 @@ if should_run_step "account_sql"; then
         echo "SET PROJECT_ROLE = '${ROLE}';"
         echo "SET PROJECT_WH = '${WAREHOUSE}';"
         echo ""
-        cat sql/01_account_setup.sql
+        cat scripts/01_account_setup.sql
     } | snow sql $SNOW_CONN -i
     
     if [ $? -eq 0 ]; then
@@ -289,7 +303,7 @@ if should_run_step "schema_sql"; then
         echo "SET FULL_PREFIX = '${FULL_PREFIX}';"
         echo "SET PROJECT_ROLE = '${ROLE}';"
         echo ""
-        grep -v "^USE ROLE" sql/02_schema_setup.sql
+        grep -v "^USE ROLE" scripts/02_schema_setup.sql
     } | snow sql $SNOW_CONN -i
     
     if [ $? -eq 0 ]; then
@@ -316,6 +330,8 @@ if should_run_step "data_generation"; then
     echo "Loading: Hotels, Guests, Bookings, Stays, Amenity Transactions & Usage"
     echo ""
     
+    # First: Generate base 50 hotels and guest profiles
+    echo "[Phase 1/2] Generating 50 AMER properties + guest profiles..."
     {
         echo "USE DATABASE ${DATABASE};"
         echo "USE WAREHOUSE ${WAREHOUSE};"
@@ -323,18 +339,58 @@ if should_run_step "data_generation"; then
         echo "SET FULL_PREFIX = '${FULL_PREFIX}';"
         echo "SET PROJECT_ROLE = '${ROLE}';"
         echo ""
-        grep -v "^USE ROLE" sql/03_data_generation.sql
+        # Only run hotel and guest profile generation (lines before stay_history)
+        grep -v "^USE ROLE" scripts/03_data_generation.sql | sed -n '1,/^TRUNCATE TABLE stay_history/p'
+    } | snow sql $SNOW_CONN -i
+    
+    if [ $? -ne 0 ]; then
+        error_exit "Base data generation failed"
+    fi
+    echo -e "${GREEN}✓${NC} Phase 1 complete: 50 AMER hotels + guest profiles"
+    echo ""
+    
+    # Second: Expand to 100 properties BEFORE generating stays
+    echo "[Phase 2/2] Expanding to 100 properties (adding 50 EMEA/APAC hotels)..."
+    temp_sql=$(mktemp)
+    {
+        echo "USE DATABASE ${DATABASE};"
+        echo "USE WAREHOUSE ${WAREHOUSE};"
+        echo "SET FULL_PREFIX = '${FULL_PREFIX}';"
+        cat scripts/01b_expand_to_100_properties.sql
+    } > "$temp_sql"
+    snow sql $SNOW_CONN -f "$temp_sql"
+    rm -f "$temp_sql"
+    
+    if [ $? -ne 0 ]; then
+        error_exit "Portfolio expansion failed"
+    fi
+    echo -e "${GREEN}✓${NC} Portfolio expanded to 100 properties (50 AMER, 30 EMEA, 20 APAC)"
+    echo ""
+    
+    # Third: Now generate stays for ALL 100 hotels
+    echo "[Phase 3/3] Generating stay history for ALL 100 properties..."
+    {
+        echo "USE DATABASE ${DATABASE};"
+        echo "USE WAREHOUSE ${WAREHOUSE};"
+        echo "USE SCHEMA BRONZE;"
+        echo ""
+        echo "SET FULL_PREFIX = '${FULL_PREFIX}';"
+        echo "SET PROJECT_ROLE = '${ROLE}';"
+        echo ""
+        # Only run stay_history generation onwards
+        grep -v "^USE ROLE" scripts/03_data_generation.sql | sed -n '/^TRUNCATE TABLE stay_history/,$p'
     } | snow sql $SNOW_CONN -i
     
     if [ $? -eq 0 ]; then
         echo ""
         echo -e "${GREEN}✓${NC} Synthetic data generation completed"
-        echo "  • Hotels: 50 properties"
-        echo "  • Guests: 10,000 profiles"
-        echo "  • Bookings: 25,000 reservations"
-        echo "  • Stays: 20,000 completed stays"
-        echo "  • Amenity Transactions: 30,000+ records"
-        echo "  • Amenity Usage: 15,000+ sessions"
+        echo "  • Hotels: 100 properties (50 AMER, 30 EMEA, 20 APAC)"
+        echo "  • Guests: 100,000 profiles"
+        echo "  • Loyalty: 50,000 members (50%)"
+        echo "  • Bookings: 250,000 reservations"
+        echo "  • Stays: ~1.9M completed stays (ALL regions, ~50% repeat rate)"
+        echo "  • Amenity Transactions: 60,000+ records"
+        echo "  • Amenity Usage: 30,000+ sessions"
     else
         error_exit "Data generation failed"
     fi
@@ -360,14 +416,14 @@ if should_run_step "data_generation"; then
         echo "SET FULL_PREFIX = '${FULL_PREFIX}';"
         echo "SET PROJECT_ROLE = '${ROLE}';"
         echo ""
-        grep -v "^USE ROLE" sql/03b_refresh_silver_gold.sql
+        grep -v "^USE ROLE" scripts/03b_refresh_silver_gold.sql
     } | snow sql $SNOW_CONN -i
     
     if [ $? -eq 0 ]; then
         echo ""
         echo -e "${GREEN}✓${NC} Silver and Gold layers refreshed"
-        echo "  • Silver Layer: 7 tables rebuilt (cleaned and enriched data)"
-        echo "  • Gold Layer: 3 tables rebuilt (analytics-ready aggregations)"
+        echo "  • Silver Layer: 10 tables (7 core + 3 Intelligence Hub)"
+        echo "  • Gold Layer: 6 tables (3 core + 3 Intelligence Hub)"
     else
         error_exit "Silver/Gold refresh failed"
     fi
@@ -393,21 +449,77 @@ if should_run_step "semantic_views"; then
         echo "SET FULL_PREFIX = '${FULL_PREFIX}';"
         echo "SET PROJECT_ROLE = '${ROLE}';"
         echo ""
-        grep -v "^USE ROLE" sql/04_semantic_views.sql
+        grep -v "^USE ROLE" scripts/04_semantic_views.sql
     } | snow sql $SNOW_CONN -i
     
     if [ $? -eq 0 ]; then
         echo ""
-        echo -e "${GREEN}✓${NC} Semantic views created"
+        echo -e "${GREEN}✓${NC} All 7 semantic views created successfully"
+        echo "  Core Guest & Personalization Views:"
         echo "  • GUEST_ANALYTICS_VIEW: Guest behavior and amenity usage"
         echo "  • PERSONALIZATION_INSIGHTS_VIEW: AI scoring and upsell propensity"
         echo "  • AMENITY_ANALYTICS_VIEW: Unified amenity performance metrics"
+        echo "  Intelligence Hub Views (100 properties):"
+        echo "  • PORTFOLIO_INTELLIGENCE_VIEW: Executive portfolio performance"
+        echo "  • LOYALTY_INTELLIGENCE_VIEW: Loyalty segment intelligence"
+        echo "  • CX_SERVICE_INTELLIGENCE_VIEW: Customer experience & service quality"
     else
         error_exit "Semantic views creation failed"
     fi
     echo ""
 else
     echo "Step 5: Skipped (--only-$ONLY_COMPONENT)"
+    echo ""
+fi
+
+###############################################################################
+# Step 5b: Create Agent Chatbot Procedures
+###############################################################################
+if should_run_step "semantic_views"; then
+    echo "Step 5b: Creating agent chatbot procedures..."
+    echo "-------------------------------------------------------------------------"
+    echo "Deploying stored procedures for Streamlit chatbot integration"
+    echo ""
+    
+    if [ -f "scripts/06_agent_chatbot_procedures.sql" ]; then
+        {
+            echo "SET FULL_PREFIX = '${FULL_PREFIX}';"
+            echo "SET PROJECT_ROLE = '${ROLE}';"
+            echo ""
+            grep -v "^USE ROLE" scripts/06_agent_chatbot_procedures.sql
+        } | snow sql $SNOW_CONN -i
+        
+        if [ $? -eq 0 ]; then
+            echo ""
+            echo -e "${GREEN}✓${NC} Agent chatbot procedures created"
+            echo "  • CREATE_AGENT_THREAD: Initialize conversation threads"
+            echo "  • CALL_AGENT_WITH_THREAD: Call agent with conversation context"
+        else
+            echo -e "${YELLOW}⚠${NC} Warning: Agent chatbot procedures creation failed (non-critical)"
+        fi
+    else
+        echo -e "${YELLOW}⚠${NC} Warning: scripts/06_agent_chatbot_procedures.sql not found (skipping)"
+    fi
+    
+    # Deploy agent wrapper procedure
+    if [ -f "scripts/06b_agent_wrapper_function.sql" ]; then
+        {
+            echo "SET FULL_PREFIX = '${FULL_PREFIX}';"
+            echo "SET PROJECT_ROLE = '${ROLE}';"
+            echo ""
+            grep -v "^USE ROLE" scripts/06b_agent_wrapper_function.sql
+        } | snow sql $SNOW_CONN -i
+        
+        if [ $? -eq 0 ]; then
+            echo -e "${GREEN}✓${NC} Agent wrapper procedure created"
+            echo "  • AGENT_CHAT: Direct agent invocation from Streamlit"
+        else
+            echo -e "${YELLOW}⚠${NC} Warning: Agent wrapper procedure creation failed (non-critical)"
+        fi
+    fi
+    echo ""
+else
+    echo "Step 5b: Skipped (--only-$ONLY_COMPONENT)"
     echo ""
 fi
 
@@ -425,7 +537,7 @@ if should_run_step "agents" && [ "$SKIP_AGENTS" = false ]; then
         echo "SET PROJECT_ROLE = '${ROLE}';"
         echo ""
         # Filter out USE ROLE statements to avoid session restriction issues
-        grep -v "^USE ROLE" sql/05_intelligence_agents.sql
+        grep -v "^USE ROLE" scripts/05_intelligence_agents.sql
     } | snow sql $SNOW_CONN -i
     
     if [ $? -eq 0 ]; then
@@ -438,7 +550,27 @@ if should_run_step "agents" && [ "$SKIP_AGENTS" = false ]; then
         echo "  • Hotel Intelligence Master Agent"
         echo ""
         echo "Registering agents with Snowflake Intelligence..."
-        echo "  ✓ Agents now visible in Snowflake Intelligence UI"
+        
+        # Register each agent (drop first to handle duplicates, then add)
+        for AGENT_NAME in "Hotel Guest Analytics Agent" "Hotel Personalization Specialist" "Hotel Amenities Intelligence Agent" "Guest Experience Optimizer" "Hotel Intelligence Master Agent"; do
+            # Drop first (ignore errors if not registered)
+            {
+                echo "USE ROLE ACCOUNTADMIN;"
+                echo "SET AGENT_PATH = '${FULL_PREFIX}.GOLD.\"${AGENT_NAME}\"';"
+                echo "ALTER SNOWFLAKE INTELLIGENCE IF EXISTS SNOWFLAKE_INTELLIGENCE_OBJECT_DEFAULT DROP AGENT IDENTIFIER(\$AGENT_PATH);"
+            } | snow sql $SNOW_CONN -i 2>/dev/null || true
+            
+            # Then add (this should succeed)
+            {
+                echo "USE ROLE ACCOUNTADMIN;"
+                echo "SET AGENT_PATH = '${FULL_PREFIX}.GOLD.\"${AGENT_NAME}\"';"
+                echo "ALTER SNOWFLAKE INTELLIGENCE IF EXISTS SNOWFLAKE_INTELLIGENCE_OBJECT_DEFAULT ADD AGENT IDENTIFIER(\$AGENT_PATH);"
+            } | snow sql $SNOW_CONN -i || {
+                echo "  Warning: Failed to register ${AGENT_NAME}"
+            }
+        done
+        
+        echo "  ✓ Agents registered in Snowflake Intelligence UI"
     else
         echo -e "${YELLOW}[WARNING]${NC} Intelligence Agents creation failed"
         echo "This is optional - core platform is still functional"
@@ -464,7 +596,7 @@ if should_run_step "dashboards" && [ "$SKIP_DASHBOARDS" = false ]; then
     
     # Update snowflake.yml with correct warehouse name
     echo "Configuring Streamlit app..."
-    cd streamlit_apps
+    cd streamlit/hotel_personalization
     
     # Create a temporary snowflake.yml with the correct warehouse
     cat > snowflake.yml << EOF
@@ -497,7 +629,7 @@ EOF
         --replace 2>&1 | tee /tmp/streamlit_deploy.log
     
     STREAMLIT_EXIT=$?
-    cd ..
+    cd ../..
     
     if [ $STREAMLIT_EXIT -eq 0 ]; then
         echo ""
@@ -522,7 +654,7 @@ EOF
         echo "Check /tmp/streamlit_deploy.log for details"
         echo ""
         echo "To deploy manually, run:"
-        echo "  cd streamlit_apps"
+        echo "  cd streamlit/hotel_personalization"
         echo "  snow streamlit deploy $SNOW_CONN --database ${FULL_PREFIX} --schema GOLD --replace"
     fi
     echo ""
@@ -531,6 +663,169 @@ else
         echo "Step 7: Skipped (--skip-dashboards flag)"
     else
         echo "Step 7: Skipped (--only-$ONLY_COMPONENT)"
+    fi
+    echo ""
+fi
+
+###############################################################################
+# Step 7b: Deploy Intelligence Hub SQL Infrastructure
+###############################################################################
+if (should_run_step "intel_hub" || [ -z "$ONLY_COMPONENT" ]) && [ "$SKIP_INTEL_HUB" = false ]; then
+    echo "Step 7b: Deploying Intelligence Hub SQL infrastructure..."
+    echo "-------------------------------------------------------------------------"
+    echo "Creating: Bronze/Silver/Gold tables for executive intelligence"
+    echo ""
+    
+    echo "  Note: Portfolio expansion to 100 properties completed in Step 4"
+    echo "  Note: Intelligence Hub Bronze tables (service_cases, issue_tracking, sentiment_data, service_recovery_actions)"
+    echo "        are included in Step 3 schema setup (scripts/02_schema_setup.sql)"
+    echo ""
+    
+    # 7b.1: Future bookings enhancement
+    echo "[1/2] Generating future bookings (30 days ahead)..."
+    temp_sql=$(mktemp)
+    {
+        echo "USE DATABASE ${DATABASE};"
+        echo "USE WAREHOUSE ${WAREHOUSE};"
+        echo "SET FULL_PREFIX = '${FULL_PREFIX}';"
+        cat scripts/03a_future_bookings_enhancement.sql
+    } > "$temp_sql"
+    snow sql $SNOW_CONN -f "$temp_sql"
+    rm -f "$temp_sql"
+    
+    if [ $? -eq 0 ]; then
+        echo -e "${GREEN}✓${NC} Future bookings generated (~3,000 bookings)"
+    else
+        error_exit "Future bookings enhancement failed"
+    fi
+    echo ""
+    
+    # 7b.2: Intelligence Hub Bronze data
+    echo "[2/2] Generating Intelligence Hub Bronze data (18 months history)..."
+    temp_sql=$(mktemp)
+    {
+        echo "USE DATABASE ${DATABASE};"
+        echo "USE SCHEMA BRONZE;"
+        echo "USE WAREHOUSE ${WAREHOUSE};"
+        echo "SET FULL_PREFIX = '${FULL_PREFIX}';"
+        cat scripts/03b_intelligence_hub_data_generation.sql
+    } > "$temp_sql"
+    snow sql $SNOW_CONN -f "$temp_sql"
+    rm -f "$temp_sql"
+    
+    if [ $? -eq 0 ]; then
+        echo -e "${GREEN}✓${NC} Intelligence Hub Bronze data generated (~40K records)"
+    else
+        error_exit "Intelligence Hub data generation failed"
+    fi
+    echo ""
+    echo "  Note: Intelligence Hub Silver (3 tables) and Gold (3 tables) layers"
+    echo "        are built in Step 4b by scripts/03b_refresh_silver_gold.sql"
+    echo ""
+    
+    echo -e "${GREEN}✓${NC} Intelligence Hub SQL infrastructure deployed successfully"
+    echo "  • Bronze: 4 tables (service_cases, issue_tracking, sentiment_data, service_recovery_actions)"
+    echo "  • Silver: 3 tables (enriched in Step 4b)"
+    echo "  • Gold: 3 tables (analytics in Step 4b)"
+    echo "  • Semantic Views: 7 views created in Step 5 (3 core + 3 Intelligence Hub + 1 Guest Arrivals)"
+    echo "  • AI Agent: Hotel Intelligence Master Agent has access to all views"
+    echo ""
+else
+    if [ "$SKIP_INTEL_HUB" = true ]; then
+        echo "Step 7b: Skipped (--skip-intel-hub flag)"
+    else
+        echo "Step 7b: Skipped (--only-$ONLY_COMPONENT)"
+    fi
+    echo ""
+fi
+
+###############################################################################
+# Step 7c: Deploy Intelligence Hub Streamlit App
+###############################################################################
+if (should_run_step "intel_hub" || [ -z "$ONLY_COMPONENT" ]) && [ "$SKIP_INTEL_HUB" = false ]; then
+    echo "Step 7c: Deploying Intelligence Hub Streamlit app..."
+    echo "-------------------------------------------------------------------------"
+    echo "Creating 'Hotel Intelligence Hub' executive dashboard"
+    echo ""
+    
+    # Update snowflake.yml with correct warehouse name
+    echo "Configuring Intelligence Hub app..."
+    cd streamlit/intelligence_hub
+    
+    # Create a temporary snowflake.yml with the correct warehouse
+    cat > snowflake.yml << 'EOF'
+definition_version: 2
+entities:
+  hotel_intelligence_hub:
+    type: streamlit
+    title: "Hotel Intelligence Hub"
+    query_warehouse: HOTEL_PERSONALIZATION_WH
+    main_file: hotel_intelligence_hub.py
+    stage: streamlit
+    artifacts:
+      - hotel_intelligence_hub.py
+      - pages/
+      - shared/
+      - environment.yml
+EOF
+    
+    # Ensure environment.yml doesn't specify Python version (Snowflake will use default)
+    cat > environment.yml << 'EOF'
+name: intel_hub
+channels:
+  - snowflake
+dependencies:
+  - snowflake-snowpark-python
+  - plotly
+  - pandas
+  - numpy
+EOF
+    
+    echo "Deploying Intelligence Hub to ${FULL_PREFIX}.GOLD schema..."
+    echo ""
+    
+    # Deploy using snow streamlit deploy
+    snow streamlit deploy $SNOW_CONN \
+        --database "${FULL_PREFIX}" \
+        --schema "GOLD" \
+        --replace 2>&1 | tee /tmp/intel_hub_deploy.log
+    
+    INTEL_HUB_EXIT=$?
+    cd ../..
+    
+    if [ $INTEL_HUB_EXIT -eq 0 ]; then
+        echo ""
+        echo -e "${GREEN}✓${NC} Intelligence Hub deployed successfully"
+        echo ""
+        echo "  📱 Application: Hotel Intelligence Hub"
+        echo "  📍 Location: ${FULL_PREFIX}.GOLD.HOTEL_INTELLIGENCE_HUB"
+        echo ""
+        echo "  📊 Dashboard Tabs:"
+        echo "     1. Portfolio Overview - Executive command center"
+        echo "     2. Loyalty Intelligence - Segment behavior & retention"
+        echo "     3. CX & Service Signals - Service quality & VIP watchlist"
+        echo ""
+        echo "  🌍 Global Coverage: 100 properties (50 AMER, 30 EMEA, 20 APAC)"
+        echo "  📈 Data Scope: 18 months history + 30 days future bookings"
+        echo ""
+        echo "  🔗 Access: Snowsight → Projects → Streamlit"
+        echo "     https://app.snowflake.com → ${FULL_PREFIX}.GOLD → 'Hotel Intelligence Hub'"
+        echo ""
+    else
+        echo ""
+        echo -e "${YELLOW}[WARNING]${NC} Intelligence Hub deployment had issues"
+        echo "Check /tmp/intel_hub_deploy.log for details"
+        echo ""
+        echo "To deploy manually, run:"
+        echo "  cd streamlit/intelligence_hub"
+        echo "  snow streamlit deploy $SNOW_CONN --database ${FULL_PREFIX} --schema GOLD --replace"
+    fi
+    echo ""
+else
+    if [ "$SKIP_INTEL_HUB" = true ]; then
+        echo "Step 7c: Skipped (--skip-intel-hub flag)"
+    else
+        echo "Step 7c: Skipped (--only-$ONLY_COMPONENT)"
     fi
     echo ""
 fi

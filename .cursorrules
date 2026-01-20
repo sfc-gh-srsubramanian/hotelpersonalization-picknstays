@@ -1,0 +1,260 @@
+# Cursor Rules for Hotel Personalization Demo Project
+
+## 🚨 CRITICAL RULE #1: ALWAYS FIX SOURCE SCRIPTS - NO ONE-TIME FIXES
+
+**NEVER run SQL commands directly or create temporary fixes.**
+
+**ALWAYS fix the source script files first:**
+- ✅ Fix: `scripts/*.sql` files
+- ✅ Fix: `streamlit/**/*.py` files
+- ✅ Fix: `deploy.sh`, `clean.sh`, `run.sh`
+- ❌ NEVER: Direct SQL execution
+- ❌ NEVER: Temporary workarounds
+- ❌ NEVER: "Let me run this quick fix..."
+
+**Why?** This is a demo that must deploy cleanly and reliably every time. One-time fixes break repeatability and make the demo fragile.
+
+**If you catch yourself about to run a direct SQL command, STOP and fix the source script instead.**
+
+---
+
+## Database & Schema
+
+- **Database**: `HOTEL_PERSONALIZATION`
+- **Schemas**: `BRONZE`, `SILVER`, `GOLD`, `SEMANTIC_VIEWS`
+- **Connection**: `USWEST_DEMOACCOUNT`
+- **Warehouse**: `HOTEL_PERSONALIZATION_WH`
+
+---
+
+## Deployment Philosophy
+
+### 1. Idempotency is Sacred
+- All scripts MUST be re-runnable without errors
+- Use `DELETE` before `INSERT` or `TRUNCATE` before data generation
+- Use `CREATE OR REPLACE` for views/tables
+- Use `DROP IF EXISTS` before creates when appropriate
+
+### 2. Source Script Priority
+When fixing issues:
+1. **First**: Update the source script (e.g., `scripts/03_data_generation.sql`)
+2. **Second**: Update deployment scripts if needed (e.g., `deploy.sh`)
+3. **Third**: Run the fixed deployment
+4. **Never**: Execute one-time SQL fixes directly
+
+### 3. Deployment Order Matters
+```
+01_account_setup.sql
+02_schema_setup.sql
+03_data_generation.sql
+  → Then 01b_expand_to_100_properties.sql (during Phase 2)
+03a_future_bookings_enhancement.sql
+03b_intelligence_hub_data_generation.sql
+03b_refresh_silver_gold.sql
+04_semantic_views.sql
+05_intelligence_agents.sql
+```
+
+---
+
+## Data Generation Standards
+
+### Scale (100K Guests)
+- Guest Profiles: **100,000** (GUEST_000000 to GUEST_099999)
+- Loyalty Members: **50,000** (50%, GUEST_000000 to GUEST_049999)
+- Room Preferences: **75,000** (75% coverage)
+- Service Preferences: **70,000** (70% coverage)
+- Booking History: **250,000** (includes historical + cancelled)
+- Stay History: **~1.9M** (60-70% occupancy, 12 months)
+
+### Repeat Rate Logic
+- **Target**: ~50% repeat rate (industry benchmark)
+- **Method**: Deterministic assignment, NOT random
+- First 50K stays → 50K unique one-time guests (GUEST_050000-099999)
+- Remaining stays → 50K repeat guests (GUEST_000000-049999)
+- **Never** use pure random assignment that can't guarantee the target rate
+
+### Regional Distribution
+- **50 AMER** hotels (HOTEL_000 to HOTEL_049)
+- **30 EMEA** hotels (HOTEL_050 to HOTEL_079)
+- **20 APAC** hotels (HOTEL_080 to HOTEL_099)
+- **All** hotels must have stay history data
+
+---
+
+## Snowflake Semantic Views
+
+When creating semantic views, **ALWAYS** use this syntax:
+
+```sql
+CREATE OR REPLACE SEMANTIC VIEW VIEW_NAME
+TABLES (
+  TABLE_ALIAS AS DATABASE.SCHEMA.TABLE_NAME PRIMARY KEY (column_name)
+)
+RELATIONSHIPS (
+  REL_NAME AS TABLE1(column) REFERENCES TABLE2(column)
+)
+DIMENSIONS (
+  PUBLIC TABLE_ALIAS.column AS dimension_name
+)
+METRICS (
+  PUBLIC TABLE_ALIAS.metric AS AGG_FUNCTION(column)
+)
+COMMENT='Description';
+```
+
+- **Location**: `HOTEL_PERSONALIZATION.SEMANTIC_VIEWS.*`
+- **Never** create semantic views in `GOLD` schema
+- Use fully qualified names in agent tool_resources
+
+---
+
+## Snowflake Intelligence Agents
+
+When creating agents, use this syntax:
+
+```sql
+CREATE OR REPLACE AGENT DATABASE.SCHEMA."Agent Name"
+COMMENT='Description'
+FROM SPECIFICATION $$
+models:
+  orchestration: "auto"
+
+instructions:
+  response: "Agent instructions..."
+  
+tools:
+  - tool_spec:
+      type: "cortex_analyst_text_to_sql"
+      name: "tool_name"
+
+tool_resources:
+  tool_name:
+    semantic_view: "DATABASE.SCHEMA.VIEW_NAME"
+$$;
+```
+
+- Use `"auto"` for model orchestration (not `"claude-4-sonnet"`)
+- Always use fully qualified semantic view paths
+- Include comprehensive sample questions in comments
+
+---
+
+## Streamlit App Development
+
+### Database Connections
+- **NEVER** use `session.sql("USE DATABASE...")` or `session.sql("USE SCHEMA...")`
+- **ALWAYS** use fully qualified names: `HOTEL_PERSONALIZATION.GOLD.TABLE_NAME`
+- Snowflake Streamlit doesn't allow USE statements
+
+### Chart Formatting
+- **RevPAR**: Use `tickformat='$,.0f'` for currency, `rangemode='tozero'`
+- **Occupancy**: Use `range=[0, 100]`, `tickformat='.1f'`
+- **Colors**: Be explicit (e.g., `color='#4A90E2'` for blue)
+- **Heatmaps**: Set explicit `zmin`, `zmax` for colorscale
+
+### NaN Handling
+All formatter functions MUST handle NaN:
+```python
+# Check for NaN (using the fact that NaN != NaN)
+if value != value:
+    return "—"
+```
+
+### Caching
+- Use `@st.cache_data` for data loading functions
+- Provide a "🔄 Refresh Data" button using `st.experimental_rerun()`
+- Clear cache with `st.cache_data.clear()`
+
+---
+
+## Testing & Validation
+
+Before considering any task "complete":
+
+1. ✅ **Source scripts updated** with all fixes
+2. ✅ **deploy.sh success messages** reflect actual volumes
+3. ✅ **Streamlit data sources** sidebar shows correct counts
+4. ✅ **Comments/documentation** updated
+5. ✅ **Idempotency verified** - scripts can be re-run
+6. ✅ **Data validation queries** run successfully
+
+### Key Validation Queries
+
+```sql
+-- Guest counts
+SELECT COUNT(*) FROM BRONZE.guest_profiles;  -- Expected: 100,000
+SELECT COUNT(*) FROM BRONZE.loyalty_program; -- Expected: 50,000
+
+-- Repeat rate
+SELECT 
+    COUNT(DISTINCT CASE WHEN stay_count > 1 THEN guest_id END) * 100.0 
+    / COUNT(DISTINCT guest_id) as repeat_rate_pct
+FROM (
+    SELECT guest_id, COUNT(*) as stay_count
+    FROM BRONZE.stay_history
+    GROUP BY guest_id
+);  -- Expected: ~50%
+
+-- Regional coverage
+SELECT region, COUNT(DISTINCT hotel_id), COUNT(stay_id)
+FROM BRONZE.hotel_properties hp
+LEFT JOIN BRONZE.stay_history sh ON hp.hotel_id = sh.hotel_id
+GROUP BY region;  -- Expected: All regions with data
+```
+
+---
+
+## File Organization
+
+```
+/scripts/              -- All SQL scripts (renamed from /sql/)
+/streamlit/            -- All Streamlit apps (renamed from /streamlit_apps/)
+  /hotel_personalization/  -- Original app
+  /intelligence_hub/       -- New Intelligence Hub app
+/docs/                 -- Documentation
+/solution_presentation/ -- Presentation materials
+deploy.sh              -- Main deployment script
+clean.sh               -- Cleanup script
+run.sh                 -- Runtime operations
+```
+
+---
+
+## Error Recovery
+
+When errors occur during deployment:
+
+1. **Diagnose**: Check what failed and why
+2. **Fix Source**: Update the source script file
+3. **Validate**: Review the fix for idempotency
+4. **Document**: Update comments and documentation
+5. **Redeploy**: Run the full deployment again
+6. **Never**: Apply band-aid fixes or workarounds
+
+---
+
+## Communication with User
+
+- ✅ **Do**: Explain what source scripts are being fixed
+- ✅ **Do**: Show before/after code snippets
+- ✅ **Do**: Provide validation queries
+- ✅ **Do**: Update documentation files
+- ❌ **Don't**: Say "let me run this quick command"
+- ❌ **Don't**: Apply temporary fixes
+- ❌ **Don't**: Skip source script updates
+
+---
+
+## Summary
+
+**Golden Rule**: If you're about to type `snow sql -q` or execute SQL directly, STOP. Fix the source script first, then deploy properly.
+
+This ensures:
+- ✅ Demo reliability
+- ✅ Reproducibility
+- ✅ Version control
+- ✅ Team alignment
+- ✅ Professional quality
+
+**No shortcuts. No one-time fixes. Source scripts always.**

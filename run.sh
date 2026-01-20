@@ -61,6 +61,7 @@ Commands:
   query "SQL"        Execute a custom SQL query against the platform
   test-agents        Test Intelligence Agents with sample questions
   streamlit          Check Streamlit app status and get access information
+  intel-hub          Check Intelligence Hub deployment and data volumes
 
 Options:
   -c, --connection NAME    Snowflake CLI connection name (default: demo)
@@ -92,7 +93,7 @@ while [[ $# -gt 0 ]]; do
             ENV_PREFIX="$2"
             shift 2
             ;;
-        status|validate|test-agents|streamlit)
+        status|validate|test-agents|streamlit|intel-hub)
             COMMAND="$1"
             shift
             ;;
@@ -194,7 +195,7 @@ cmd_status() {
     # Check semantic views
     echo ""
     echo "Checking semantic views..."
-    for view in GUEST_ANALYTICS_VIEW PERSONALIZATION_INSIGHTS_VIEW AMENITY_ANALYTICS_VIEW; do
+    for view in GUEST_ANALYTICS_VIEW PERSONALIZATION_INSIGHTS_VIEW AMENITY_ANALYTICS_VIEW PORTFOLIO_INTELLIGENCE_VIEW LOYALTY_INTELLIGENCE_VIEW CX_SERVICE_INTELLIGENCE_VIEW GUEST_ARRIVALS_VIEW; do
         VIEW_EXISTS=$(snow sql $SNOW_CONN -q "SHOW VIEWS LIKE '${view}' IN SCHEMA ${DATABASE}.SEMANTIC_VIEWS" --format CSV 2>/dev/null | tail -n +2 | wc -l | xargs)
         VIEW_EXISTS=${VIEW_EXISTS:-0}
         if [ "$VIEW_EXISTS" -gt 0 ] 2>/dev/null; then
@@ -710,6 +711,171 @@ cmd_streamlit() {
 }
 
 ###############################################################################
+# Command: intel-hub - Check Intelligence Hub status
+###############################################################################
+cmd_intel_hub() {
+    echo "========================================================================="
+    echo "Hotel Intelligence Hub - Status & Validation"
+    echo "========================================================================="
+    echo ""
+    echo "Configuration:"
+    echo "  Database: $DATABASE"
+    echo "  Connection: $CONNECTION_NAME"
+    echo ""
+    
+    echo "Checking Intelligence Hub infrastructure..."
+    echo "-------------------------------------------------------------------------"
+    echo ""
+    
+    # Check Bronze tables (Intelligence Hub specific)
+    echo "[1/4] Intelligence Hub Bronze Tables:"
+    snow sql $SNOW_CONN -q "
+        USE DATABASE ${DATABASE};
+        USE WAREHOUSE ${WAREHOUSE};
+        
+        SELECT 'BRONZE.SERVICE_CASES' AS TABLE_NAME, COUNT(*) AS ROW_COUNT FROM BRONZE.SERVICE_CASES
+        UNION ALL
+        SELECT 'BRONZE.ISSUE_TRACKING', COUNT(*) FROM BRONZE.ISSUE_TRACKING
+        UNION ALL
+        SELECT 'BRONZE.SENTIMENT_DATA', COUNT(*) FROM BRONZE.SENTIMENT_DATA
+        UNION ALL
+        SELECT 'BRONZE.SERVICE_RECOVERY_ACTIONS', COUNT(*) FROM BRONZE.SERVICE_RECOVERY_ACTIONS
+        ORDER BY TABLE_NAME;
+    " --format TABLE
+    echo ""
+    
+    # Check Silver tables
+    echo "[2/4] Intelligence Hub Silver Tables:"
+    snow sql $SNOW_CONN -q "
+        USE DATABASE ${DATABASE};
+        USE WAREHOUSE ${WAREHOUSE};
+        
+        SELECT 'SILVER.SERVICE_CASES_ENRICHED' AS TABLE_NAME, COUNT(*) AS ROW_COUNT FROM SILVER.SERVICE_CASES_ENRICHED
+        UNION ALL
+        SELECT 'SILVER.ISSUE_DRIVERS_AGGREGATED', COUNT(*) FROM SILVER.ISSUE_DRIVERS_AGGREGATED
+        UNION ALL
+        SELECT 'SILVER.SENTIMENT_PROCESSED', COUNT(*) FROM SILVER.SENTIMENT_PROCESSED
+        ORDER BY TABLE_NAME;
+    " --format TABLE
+    echo ""
+    
+    # Check Gold tables
+    echo "[3/4] Intelligence Hub Gold Tables:"
+    snow sql $SNOW_CONN -q "
+        USE DATABASE ${DATABASE};
+        USE WAREHOUSE ${WAREHOUSE};
+        
+        SELECT 'GOLD.PORTFOLIO_PERFORMANCE_KPIS' AS TABLE_NAME, COUNT(*) AS ROW_COUNT FROM GOLD.PORTFOLIO_PERFORMANCE_KPIS
+        UNION ALL
+        SELECT 'GOLD.LOYALTY_SEGMENT_INTELLIGENCE', COUNT(*) FROM GOLD.LOYALTY_SEGMENT_INTELLIGENCE
+        UNION ALL
+        SELECT 'GOLD.EXPERIENCE_SERVICE_SIGNALS', COUNT(*) FROM GOLD.EXPERIENCE_SERVICE_SIGNALS
+        ORDER BY TABLE_NAME;
+    " --format TABLE
+    echo ""
+    
+    # Check Semantic Views
+    echo "[4/4] Intelligence Hub Semantic Views:"
+    for view in PORTFOLIO_INTELLIGENCE_VIEW LOYALTY_INTELLIGENCE_VIEW CX_SERVICE_INTELLIGENCE_VIEW GUEST_ARRIVALS_VIEW; do
+        VIEW_EXISTS=$(snow sql $SNOW_CONN -q "SHOW VIEWS LIKE '${view}' IN SCHEMA ${DATABASE}.SEMANTIC_VIEWS" --format CSV 2>/dev/null | tail -n +2 | wc -l | xargs)
+        VIEW_EXISTS=${VIEW_EXISTS:-0}
+        if [ "$VIEW_EXISTS" -gt 0 ] 2>/dev/null; then
+            echo -e "  ${GREEN}✓${NC} $view"
+        else
+            echo -e "  ${RED}✗${NC} $view"
+        fi
+    done
+    echo ""
+    
+    # Check Streamlit app
+    echo "Checking Intelligence Hub Streamlit deployment..."
+    echo "-------------------------------------------------------------------------"
+    APP_EXISTS=$(snow sql $SNOW_CONN -q "SHOW STREAMLITS LIKE 'HOTEL_INTELLIGENCE_HUB' IN SCHEMA ${DATABASE}.GOLD" --format CSV 2>/dev/null | tail -n +2 | wc -l | xargs)
+    APP_EXISTS=${APP_EXISTS:-0}
+    
+    if [ "$APP_EXISTS" -gt 0 ] 2>/dev/null; then
+        echo -e "${GREEN}✓ Intelligence Hub app deployed${NC}"
+        echo ""
+        echo "  📱 App: Hotel Intelligence Hub"
+        echo "  📍 Location: ${DATABASE}.GOLD.HOTEL_INTELLIGENCE_HUB"
+        echo ""
+        echo "  📊 Tabs:"
+        echo "     • Portfolio Overview (100 properties, 3 regions)"
+        echo "     • Loyalty Intelligence (segment behavior)"
+        echo "     • CX & Service Signals (VIP watchlist)"
+        echo ""
+        echo "  🔗 Access: Snowsight → Projects → Streamlit → 'Hotel Intelligence Hub'"
+    else
+        echo -e "${RED}✗ Intelligence Hub app not found${NC}"
+        echo ""
+        echo "To deploy Intelligence Hub:"
+        echo "  ./deploy.sh --only-intel-hub"
+    fi
+    echo ""
+    
+    # Run sample validation queries
+    echo "Sample Queries - Portfolio Overview:"
+    echo "-------------------------------------------------------------------------"
+    echo ""
+    
+    echo -e "${CYAN}[Q1]${NC} Portfolio by Region (last 30 days):"
+    snow sql $SNOW_CONN -q "
+        USE DATABASE ${DATABASE};
+        USE WAREHOUSE ${WAREHOUSE};
+        
+        SELECT 
+            region,
+            COUNT(DISTINCT hotel_id) as properties,
+            ROUND(AVG(occupancy_pct), 1) as avg_occupancy,
+            ROUND(AVG(revpar), 0) as avg_revpar,
+            ROUND(AVG(satisfaction_index), 2) as avg_satisfaction
+        FROM GOLD.PORTFOLIO_PERFORMANCE_KPIS
+        WHERE performance_date >= DATEADD(day, -30, CURRENT_DATE())
+        GROUP BY region
+        ORDER BY region;
+    " --format TABLE
+    echo ""
+    
+    echo -e "${CYAN}[Q2]${NC} Top 5 Loyalty Segments by Revenue:"
+    snow sql $SNOW_CONN -q "
+        USE DATABASE ${DATABASE};
+        USE WAREHOUSE ${WAREHOUSE};
+        
+        SELECT 
+            segment,
+            active_members,
+            ROUND(repeat_rate_pct, 1) as repeat_rate,
+            ROUND(avg_spend_per_stay, 0) as avg_spend,
+            recommended_focus
+        FROM GOLD.LOYALTY_SEGMENT_INTELLIGENCE
+        ORDER BY total_revenue DESC
+        LIMIT 5;
+    " --format TABLE
+    echo ""
+    
+    echo -e "${CYAN}[Q3]${NC} Service Quality by Brand:"
+    snow sql $SNOW_CONN -q "
+        USE DATABASE ${DATABASE};
+        USE WAREHOUSE ${WAREHOUSE};
+        
+        SELECT 
+            brand,
+            ROUND(AVG(service_case_rate), 1) as case_rate_per_1k,
+            ROUND(AVG(negative_sentiment_rate_pct), 1) as neg_sentiment_pct,
+            ROUND(AVG(service_recovery_success_pct), 1) as recovery_success_pct,
+            SUM(at_risk_high_value_guests_count) as at_risk_vips
+        FROM GOLD.EXPERIENCE_SERVICE_SIGNALS
+        GROUP BY brand
+        ORDER BY brand;
+    " --format TABLE
+    echo ""
+    
+    echo "-------------------------------------------------------------------------"
+    echo -e "${GREEN}✓${NC} Intelligence Hub validation complete"
+    echo ""
+}
+
+###############################################################################
 # Execute command
 ###############################################################################
 case "$COMMAND" in
@@ -727,6 +893,9 @@ case "$COMMAND" in
         ;;
     streamlit)
         cmd_streamlit
+        ;;
+    intel-hub)
+        cmd_intel_hub
         ;;
     *)
         error_exit "Unknown command: $COMMAND"

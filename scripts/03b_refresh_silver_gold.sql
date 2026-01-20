@@ -15,8 +15,8 @@
 --   $FULL_PREFIX, $PROJECT_ROLE
 -- ============================================================================
 
-USE ROLE IDENTIFIER($PROJECT_ROLE);
-USE DATABASE IDENTIFIER($FULL_PREFIX);
+-- USE ROLE IDENTIFIER($PROJECT_ROLE);  -- Role is set by deploy.sh
+USE DATABASE HOTEL_PERSONALIZATION;
 
 -- ============================================================================
 -- SILVER LAYER: Rebuild Tables with Fresh Data
@@ -673,10 +673,649 @@ FULL OUTER JOIN usage_metrics um
     AND tm.location = um.location;
 
 -- ============================================================================
+-- SILVER LAYER: Intelligence Hub Tables
+-- ============================================================================
+-- Enriched tables for executive intelligence with guest/property context
+-- ============================================================================
+
+USE SCHEMA SILVER;
+
+-- ----------------------------------------------------------------------------
+-- Service Cases Enriched (Service cases with full context)
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE TABLE service_cases_enriched AS
+WITH case_context AS (
+    SELECT 
+        sc.*,
+        -- Guest context
+        gp.first_name,
+        gp.last_name,
+        gp.email,
+        gp.nationality,
+        -- Loyalty context
+        lm.tier_level,
+        lm.points_balance,
+        lm.lifetime_points,
+        -- Property context
+        hp.brand,
+        hp.category,
+        hp.region,
+        hp.sub_region,
+        hp.city,
+        hp.country,
+        -- Guest metrics from Bronze data
+        g360.lifetime_value,
+        g360.total_stays,
+        g360.avg_satisfaction,
+        -- Determine if VIP (Diamond/Platinum + $10K+ LTV)
+        CASE 
+            WHEN lm.tier_level IN ('Diamond', 'Platinum') AND g360.lifetime_value > 10000 THEN TRUE
+            ELSE FALSE
+        END as is_vip,
+        -- Stay context
+        cs.actual_check_in,
+        cs.actual_check_out,
+        cs.total_charges
+    FROM BRONZE.service_cases sc
+    LEFT JOIN BRONZE.guest_profiles gp ON sc.guest_id = gp.guest_id
+    LEFT JOIN BRONZE.loyalty_program lm ON sc.guest_id = lm.guest_id
+    LEFT JOIN BRONZE.hotel_properties hp ON sc.hotel_id = hp.hotel_id
+    LEFT JOIN BRONZE.stay_history cs ON sc.stay_id = cs.stay_id
+    LEFT JOIN (
+        SELECT 
+            guest_id,
+            COUNT(DISTINCT stay_id) as total_stays,
+            SUM(total_charges) as lifetime_value,
+            AVG(guest_satisfaction_score) as avg_satisfaction
+        FROM BRONZE.stay_history
+        GROUP BY guest_id
+    ) g360 ON sc.guest_id = g360.guest_id
+),
+case_counts AS (
+    SELECT 
+        guest_id,
+        COUNT(*) as case_count_last_90_days
+    FROM BRONZE.service_cases
+    WHERE reported_at >= DATEADD(day, -90, CURRENT_DATE())
+    GROUP BY guest_id
+),
+property_benchmarks AS (
+    SELECT 
+        hotel_id,
+        AVG(resolution_time_minutes) as avg_resolution_time_property,
+        STDDEV(resolution_time_minutes) as stddev_resolution_time
+    FROM BRONZE.service_cases
+    GROUP BY hotel_id
+)
+SELECT 
+    cc.*,
+    COALESCE(counts.case_count_last_90_days, 0) as case_count_last_90_days,
+    pb.avg_resolution_time_property,
+    CASE cc.severity
+        WHEN 'critical' THEN cc.resolution_time_minutes - 240
+        WHEN 'high' THEN cc.resolution_time_minutes - 120
+        WHEN 'medium' THEN cc.resolution_time_minutes - 60
+        ELSE cc.resolution_time_minutes - 30
+    END as time_to_resolution_vs_target,
+    cc.resolution_time_minutes - pb.avg_resolution_time_property as resolution_variance_from_property_avg,
+    CURRENT_TIMESTAMP() as refreshed_at
+FROM case_context cc
+LEFT JOIN case_counts counts ON cc.guest_id = counts.guest_id
+LEFT JOIN property_benchmarks pb ON cc.hotel_id = pb.hotel_id;
+
+-- ----------------------------------------------------------------------------
+-- Issue Drivers Aggregated (Rolled-up issue analytics)
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE TABLE issue_drivers_aggregated AS
+WITH issue_stats AS (
+    SELECT 
+        it.hotel_id,
+        it.brand,
+        it.region,
+        it.issue_category,
+        it.issue_driver,
+        DATE_TRUNC('month', sc.reported_at) as month,
+        COUNT(*) as issue_count,
+        AVG(it.impact_on_satisfaction) as avg_impact_on_satisfaction,
+        SUM(CASE WHEN it.recurring_issue_flag THEN 1 ELSE 0 END) as recurring_issue_count,
+        COUNT(DISTINCT sc.guest_id) as guests_affected,
+        COUNT(DISTINCT sc.case_id) as cases_affected
+    FROM BRONZE.issue_tracking it
+    JOIN BRONZE.service_cases sc ON it.case_id = sc.case_id
+    GROUP BY 
+        it.hotel_id,
+        it.brand,
+        it.region,
+        it.issue_category,
+        it.issue_driver,
+        DATE_TRUNC('month', sc.reported_at)
+),
+prior_period AS (
+    SELECT 
+        hotel_id,
+        brand,
+        region,
+        issue_category,
+        issue_driver,
+        month,
+        issue_count,
+        LAG(issue_count, 1) OVER (
+            PARTITION BY hotel_id, issue_category, issue_driver 
+            ORDER BY month
+        ) as prior_month_count
+    FROM issue_stats
+)
+SELECT 
+    ist.*,
+    pp.prior_month_count,
+    CASE 
+        WHEN pp.prior_month_count IS NULL THEN 'new'
+        WHEN ist.issue_count > pp.prior_month_count * 1.2 THEN 'increasing'
+        WHEN ist.issue_count < pp.prior_month_count * 0.8 THEN 'decreasing'
+        ELSE 'stable'
+    END as trend_vs_prior_period,
+    ROUND((ist.issue_count - COALESCE(pp.prior_month_count, ist.issue_count)) * 100.0 / 
+          NULLIF(pp.prior_month_count, 0), 1) as pct_change_vs_prior,
+    CURRENT_TIMESTAMP() as refreshed_at
+FROM issue_stats ist
+LEFT JOIN prior_period pp ON 
+    ist.hotel_id = pp.hotel_id AND
+    ist.issue_category = pp.issue_category AND
+    ist.issue_driver = pp.issue_driver AND
+    ist.month = pp.month;
+
+-- ----------------------------------------------------------------------------
+-- Sentiment Processed (Sentiment with trend detection)
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE TABLE sentiment_processed AS
+WITH sentiment_context AS (
+    SELECT 
+        sd.*,
+        gp.first_name,
+        gp.last_name,
+        gp.email,
+        lm.tier_level,
+        lm.lifetime_points,
+        hp.brand,
+        hp.category,
+        hp.region,
+        hp.sub_region,
+        g360.lifetime_value,
+        g360.total_stays,
+        CASE 
+            WHEN g360.lifetime_value > 10000 THEN TRUE
+            ELSE FALSE
+        END as high_value_guest_flag,
+        CASE 
+            WHEN sd.sentiment_score < -20 THEN TRUE
+            ELSE FALSE
+        END as negative_sentiment_flag
+    FROM BRONZE.sentiment_data sd
+    LEFT JOIN BRONZE.guest_profiles gp ON sd.guest_id = gp.guest_id
+    LEFT JOIN BRONZE.loyalty_program lm ON sd.guest_id = lm.guest_id
+    LEFT JOIN BRONZE.hotel_properties hp ON sd.hotel_id = hp.hotel_id
+    LEFT JOIN (
+        SELECT 
+            guest_id,
+            COUNT(DISTINCT stay_id) as total_stays,
+            SUM(total_charges) as lifetime_value,
+            AVG(guest_satisfaction_score) as avg_satisfaction
+        FROM BRONZE.stay_history
+        GROUP BY guest_id
+    ) g360 ON sd.guest_id = g360.guest_id
+),
+guest_sentiment_trend AS (
+    SELECT 
+        sentiment_id,
+        guest_id,
+        sentiment_score,
+        AVG(sentiment_score) OVER (
+            PARTITION BY guest_id 
+            ORDER BY posted_at
+            ROWS BETWEEN 2 PRECEDING AND CURRENT ROW
+        ) as sentiment_trend_avg,
+        LAG(sentiment_score, 1) OVER (
+            PARTITION BY guest_id 
+            ORDER BY posted_at
+        ) as prior_sentiment_score
+    FROM BRONZE.sentiment_data
+)
+SELECT 
+    sc.*,
+    gst.sentiment_trend_avg,
+    gst.prior_sentiment_score,
+    CASE 
+        WHEN gst.prior_sentiment_score IS NULL THEN 'first_feedback'
+        WHEN sc.sentiment_score > gst.sentiment_trend_avg + 20 THEN 'improving'
+        WHEN sc.sentiment_score < gst.sentiment_trend_avg - 20 THEN 'declining'
+        ELSE 'stable'
+    END as sentiment_trend,
+    CASE 
+        WHEN sc.high_value_guest_flag 
+         AND (sc.negative_sentiment_flag OR gst.sentiment_trend_avg < 0)
+        THEN TRUE
+        ELSE FALSE
+    END as at_risk_flag,
+    CURRENT_TIMESTAMP() as refreshed_at
+FROM sentiment_context sc
+LEFT JOIN guest_sentiment_trend gst ON sc.sentiment_id = gst.sentiment_id;
+
+-- ============================================================================
+-- GOLD LAYER: Intelligence Hub Tables
+-- ============================================================================
+-- Executive analytics tables with portfolio KPIs and intelligence metrics
+-- ============================================================================
+
+USE SCHEMA GOLD;
+
+-- ----------------------------------------------------------------------------
+-- Portfolio Performance KPIs (Daily KPIs by hotel/brand/region)
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE TABLE portfolio_performance_kpis AS
+WITH date_series AS (
+    -- Generate daily dates for past 12 months
+    SELECT DISTINCT
+        DATEADD(day, -SEQ4(), CURRENT_DATE()) as performance_date
+    FROM TABLE(GENERATOR(ROWCOUNT => 365))
+    WHERE DATEADD(day, -SEQ4(), CURRENT_DATE()) >= DATEADD(month, -12, CURRENT_DATE())
+),
+hotel_dates AS (
+    -- Cross join hotels with dates
+    SELECT 
+        ds.performance_date,
+        hp.hotel_id,
+        hp.brand,
+        hp.category,
+        hp.region,
+        hp.sub_region,
+        hp.city,
+        hp.country,
+        hp.total_rooms
+    FROM date_series ds
+    CROSS JOIN BRONZE.hotel_properties hp
+),
+daily_occupancy AS (
+    -- Count rooms occupied on each date (check_in <= date < check_out)
+    SELECT 
+        hd.performance_date,
+        hd.hotel_id,
+        COUNT(DISTINCT cs.stay_id) as rooms_occupied,
+        -- Calculate revenue for that day (total charges / length of stay)
+        SUM(cs.total_charges / NULLIF(DATEDIFF(day, cs.actual_check_in, cs.actual_check_out), 0)) as daily_revenue
+    FROM hotel_dates hd
+    LEFT JOIN BRONZE.stay_history cs 
+        ON hd.hotel_id = cs.hotel_id
+        AND hd.performance_date >= cs.actual_check_in
+        AND hd.performance_date < cs.actual_check_out
+    GROUP BY hd.performance_date, hd.hotel_id
+),
+daily_performance AS (
+    SELECT 
+        hd.performance_date,
+        hd.hotel_id,
+        hd.brand,
+        hd.category,
+        hd.region,
+        hd.sub_region,
+        hd.city,
+        hd.country,
+        hd.total_rooms,
+        COALESCE(do.rooms_occupied, 0) as rooms_occupied,
+        ROUND(COALESCE(do.rooms_occupied, 0) * 100.0 / NULLIF(hd.total_rooms, 0), 2) as occupancy_pct,
+        -- ADR = daily revenue / rooms occupied
+        ROUND(COALESCE(do.daily_revenue / NULLIF(do.rooms_occupied, 0), 0), 2) as adr,
+        -- RevPAR = daily revenue / total available rooms
+        ROUND(COALESCE(do.daily_revenue / NULLIF(hd.total_rooms, 0), 0), 2) as revpar,
+        COALESCE(do.daily_revenue, 0) as total_revenue
+    FROM hotel_dates hd
+    LEFT JOIN daily_occupancy do ON hd.performance_date = do.performance_date AND hd.hotel_id = do.hotel_id
+),
+overall_repeat_rate AS (
+    -- Calculate overall repeat rate (% of unique guests with 2+ stays)
+    -- This gives us the true repeat guest percentage, not inflated by multiple check-ins
+    WITH guest_totals AS (
+        SELECT 
+            guest_id,
+            COUNT(DISTINCT stay_id) as total_stays
+        FROM BRONZE.stay_history
+        WHERE actual_check_in >= DATEADD(month, -12, CURRENT_DATE())
+        GROUP BY guest_id
+    )
+    SELECT 
+        ROUND(
+            COUNT(DISTINCT CASE WHEN total_stays > 1 THEN guest_id END) * 100.0 / 
+            NULLIF(COUNT(DISTINCT guest_id), 0), 
+            2
+        ) as repeat_stay_rate_pct
+    FROM guest_totals
+),
+repeat_stays_by_date AS (
+    -- Use overall repeat rate for all dates (consistent metric)
+    SELECT 
+        cs.hotel_id,
+        DATE(cs.actual_check_in) as performance_date,
+        orr.repeat_stay_rate_pct
+    FROM BRONZE.stay_history cs
+    CROSS JOIN overall_repeat_rate orr
+    WHERE cs.actual_check_in >= DATEADD(month, -12, CURRENT_DATE())
+    GROUP BY cs.hotel_id, DATE(cs.actual_check_in), orr.repeat_stay_rate_pct
+),
+satisfaction_by_date AS (
+    -- Aggregate satisfaction metrics by date (using check-in date)
+    SELECT 
+        cs.hotel_id,
+        DATE(cs.actual_check_in) as performance_date,
+        ROUND(AVG(cs.guest_satisfaction_score), 2) as satisfaction_index
+    FROM BRONZE.stay_history cs
+    WHERE cs.actual_check_in >= DATEADD(month, -12, CURRENT_DATE())
+      AND cs.guest_satisfaction_score IS NOT NULL
+    GROUP BY cs.hotel_id, DATE(cs.actual_check_in)
+),
+personalization_by_date AS (
+    -- Aggregate personalization metrics by date (using check-in date)
+    SELECT 
+        cs.hotel_id,
+        DATE(cs.actual_check_in) as performance_date,
+        COUNT(DISTINCT CASE WHEN rp.preference_id IS NOT NULL THEN cs.stay_id END) as stays_with_preferences,
+        COUNT(DISTINCT cs.stay_id) as total_stays,
+        ROUND(stays_with_preferences * 100.0 / NULLIF(total_stays, 0), 2) as personalization_coverage_pct
+    FROM BRONZE.stay_history cs
+    LEFT JOIN BRONZE.room_preferences rp ON cs.guest_id = rp.guest_id
+    WHERE cs.actual_check_in >= DATEADD(month, -12, CURRENT_DATE())
+    GROUP BY cs.hotel_id, DATE(cs.actual_check_in)
+),
+service_cases_by_date AS (
+    -- Aggregate service case metrics by date (using check-in date)
+    SELECT 
+        cs.hotel_id,
+        DATE(cs.actual_check_in) as performance_date,
+        COUNT(DISTINCT sc.case_id) as service_cases,
+        COUNT(DISTINCT cs.stay_id) as total_stays,
+        ROUND(service_cases * 1000.0 / NULLIF(total_stays, 0), 2) as service_case_rate_per_1000_stays
+    FROM BRONZE.stay_history cs
+    LEFT JOIN BRONZE.service_cases sc ON cs.stay_id = sc.stay_id
+    WHERE cs.actual_check_in >= DATEADD(month, -12, CURRENT_DATE())
+    GROUP BY cs.hotel_id, DATE(cs.actual_check_in)
+),
+sentiment_by_date AS (
+    -- Aggregate sentiment scores by date
+    SELECT 
+        sd.hotel_id,
+        DATE(sd.posted_at) as performance_date,
+        ROUND(AVG(sd.sentiment_score), 1) as net_sentiment_score
+    FROM BRONZE.sentiment_data sd
+    WHERE sd.posted_at >= DATEADD(month, -12, CURRENT_DATE())
+    GROUP BY sd.hotel_id, DATE(sd.posted_at)
+)
+SELECT 
+    dp.*,
+    COALESCE(rs.repeat_stay_rate_pct, 0) as repeat_stay_rate_pct,
+    COALESCE(sm.satisfaction_index, 0) as satisfaction_index,
+    COALESCE(pc.personalization_coverage_pct, 0) as personalization_coverage_pct,
+    COALESCE(scr.service_case_rate_per_1000_stays, 0) as service_case_rate_per_1000_stays,
+    COALESCE(ss.net_sentiment_score, 0) as net_sentiment_score,
+    CURRENT_TIMESTAMP() as refreshed_at
+FROM daily_performance dp
+LEFT JOIN repeat_stays_by_date rs ON dp.hotel_id = rs.hotel_id AND dp.performance_date = rs.performance_date
+LEFT JOIN satisfaction_by_date sm ON dp.hotel_id = sm.hotel_id AND dp.performance_date = sm.performance_date
+LEFT JOIN personalization_by_date pc ON dp.hotel_id = pc.hotel_id AND dp.performance_date = pc.performance_date
+LEFT JOIN service_cases_by_date scr ON dp.hotel_id = scr.hotel_id AND dp.performance_date = scr.performance_date
+LEFT JOIN sentiment_by_date ss ON dp.hotel_id = ss.hotel_id AND dp.performance_date = ss.performance_date
+WHERE dp.rooms_occupied > 0 OR dp.performance_date >= DATEADD(day, -30, CURRENT_DATE());
+
+-- ----------------------------------------------------------------------------
+-- Experience Service Signals (CX and service quality metrics)
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE TABLE experience_service_signals AS
+WITH service_metrics AS (
+    SELECT 
+        hp.hotel_id,
+        hp.brand,
+        hp.category,
+        hp.region,
+        hp.city,
+        hp.country,
+        hp.sub_region,
+        COUNT(DISTINCT sc.case_id) as total_service_cases,
+        COUNT(DISTINCT cs.stay_id) as total_stays,
+        ROUND(total_service_cases * 1000.0 / NULLIF(total_stays, 0), 2) as service_case_rate,
+        ROUND(AVG(sc.resolution_time_minutes) / 60.0, 2) as avg_resolution_time_hours,
+        COUNT(DISTINCT CASE WHEN sc.severity IN ('high', 'critical') THEN sc.case_id END) as critical_cases
+    FROM BRONZE.hotel_properties hp
+    LEFT JOIN BRONZE.stay_history cs ON hp.hotel_id = cs.hotel_id 
+        AND cs.actual_check_in >= DATEADD(day, -30, CURRENT_DATE())
+    LEFT JOIN BRONZE.service_cases sc ON cs.stay_id = sc.stay_id
+    GROUP BY hp.hotel_id, hp.brand, hp.category, hp.region, hp.city, hp.country, hp.sub_region
+),
+sentiment_analysis AS (
+    SELECT 
+        sd.hotel_id,
+        COUNT(DISTINCT CASE WHEN sd.sentiment_label = 'negative' THEN sd.sentiment_id END) as negative_sentiments,
+        COUNT(DISTINCT sd.sentiment_id) as total_sentiments,
+        ROUND(negative_sentiments * 100.0 / NULLIF(total_sentiments, 0), 2) as negative_sentiment_rate_pct,
+        ROUND(AVG(sd.sentiment_score), 1) as avg_sentiment_score
+    FROM BRONZE.sentiment_data sd
+    WHERE sd.posted_at >= DATEADD(day, -30, CURRENT_DATE())
+    GROUP BY sd.hotel_id
+),
+service_recovery AS (
+    SELECT 
+        sra.hotel_id,
+        COUNT(DISTINCT CASE WHEN sra.guest_response = 'accepted' THEN sra.recovery_id END) as successful_recoveries,
+        COUNT(DISTINCT sra.recovery_id) as total_recovery_attempts,
+        ROUND(successful_recoveries * 100.0 / NULLIF(total_recovery_attempts, 0), 2) as service_recovery_success_pct
+    FROM BRONZE.service_recovery_actions sra
+    WHERE sra.offered_at >= DATEADD(day, -30, CURRENT_DATE())
+    GROUP BY sra.hotel_id
+),
+at_risk_guests AS (
+    SELECT 
+        hp.hotel_id,
+        COUNT(DISTINCT CASE 
+            WHEN sp.at_risk_flag 
+             AND g360.lifetime_value > 10000 
+            THEN sp.guest_id 
+        END) as at_risk_high_value_guests_count
+    FROM BRONZE.hotel_properties hp
+    LEFT JOIN SILVER.sentiment_processed sp ON hp.hotel_id = sp.hotel_id
+    LEFT JOIN (
+        SELECT 
+            guest_id,
+            SUM(total_charges) as lifetime_value
+        FROM BRONZE.stay_history
+        GROUP BY guest_id
+    ) g360 ON sp.guest_id = g360.guest_id
+    WHERE sp.posted_at >= DATEADD(day, -30, CURRENT_DATE())
+    GROUP BY hp.hotel_id
+),
+vip_watchlist AS (
+    SELECT 
+        hp.hotel_id,
+        COUNT(DISTINCT CASE 
+            WHEN sce.is_vip 
+             AND sce.case_count_last_90_days >= 2 
+            THEN sce.guest_id 
+        END) as vip_watchlist_count
+    FROM BRONZE.hotel_properties hp
+    LEFT JOIN SILVER.service_cases_enriched sce ON hp.hotel_id = sce.hotel_id
+    WHERE sce.reported_at >= DATEADD(day, -30, CURRENT_DATE())
+    GROUP BY hp.hotel_id
+),
+issue_drivers AS (
+    SELECT 
+        it.hotel_id,
+        ARRAY_AGG(DISTINCT it.issue_driver) WITHIN GROUP (ORDER BY it.issue_driver) as top_issue_drivers
+    FROM BRONZE.issue_tracking it
+    JOIN BRONZE.service_cases sc ON it.case_id = sc.case_id
+    WHERE sc.reported_at >= DATEADD(day, -30, CURRENT_DATE())
+    GROUP BY it.hotel_id
+)
+SELECT 
+    sm.*,
+    COALESCE(sa.negative_sentiment_rate_pct, 0) as negative_sentiment_rate_pct,
+    COALESCE(sa.avg_sentiment_score, 0) as avg_sentiment_score,
+    COALESCE(sr.service_recovery_success_pct, 0) as service_recovery_success_pct,
+    COALESCE(arg.at_risk_high_value_guests_count, 0) as at_risk_high_value_guests_count,
+    COALESCE(vw.vip_watchlist_count, 0) as vip_watchlist_count,
+    id.top_issue_drivers[0]::STRING as top_issue_driver_1,
+    id.top_issue_drivers[1]::STRING as top_issue_driver_2,
+    id.top_issue_drivers[2]::STRING as top_issue_driver_3,
+    CURRENT_TIMESTAMP() as refreshed_at
+FROM service_metrics sm
+LEFT JOIN sentiment_analysis sa ON sm.hotel_id = sa.hotel_id
+LEFT JOIN service_recovery sr ON sm.hotel_id = sr.hotel_id
+LEFT JOIN at_risk_guests arg ON sm.hotel_id = arg.hotel_id
+LEFT JOIN vip_watchlist vw ON sm.hotel_id = vw.hotel_id
+LEFT JOIN issue_drivers id ON sm.hotel_id = id.hotel_id;
+
+-- ----------------------------------------------------------------------------
+-- Loyalty Segment Intelligence (Loyalty metrics by tier + guest type)
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE TABLE loyalty_segment_intelligence AS
+WITH guest_stay_stats AS (
+    -- Get stay statistics for each guest
+    SELECT 
+        sh.guest_id,
+        COUNT(DISTINCT sh.stay_id) as stay_count,
+        SUM(sh.total_charges) as total_spend,
+        AVG(sh.total_charges) as avg_spend_per_stay,
+        SUM(sh.room_charges) as room_revenue,
+        MAX(sh.actual_check_out) as last_stay_date
+    FROM BRONZE.stay_history sh
+    GROUP BY sh.guest_id
+),
+loyalty_with_stays AS (
+    -- Join ALL loyalty members with their stay stats (LEFT JOIN = includes members without stays)
+    SELECT 
+        lp.guest_id,
+        lp.tier_level,
+        'Leisure' as guest_type,  -- Simplified: all guests categorized as Leisure
+        COALESCE(gss.stay_count, 0) as stay_count,
+        COALESCE(gss.total_spend, 0) as total_spend,
+        COALESCE(gss.avg_spend_per_stay, 0) as avg_spend_per_stay,
+        COALESCE(gss.room_revenue, 0) as room_revenue,
+        gss.last_stay_date,
+        CASE 
+            WHEN COALESCE(gss.stay_count, 0) >= 2 THEN 1 
+            ELSE 0 
+        END as is_repeat_guest
+    FROM BRONZE.loyalty_program lp
+    LEFT JOIN guest_stay_stats gss ON lp.guest_id = gss.guest_id
+),
+segment_metrics AS (
+    -- Aggregate by tier + guest type
+    SELECT 
+        tier_level || ' - ' || guest_type as segment,
+        tier_level as loyalty_tier,
+        guest_type,
+        COUNT(DISTINCT guest_id) as active_members,
+        SUM(is_repeat_guest) as repeat_guests,
+        ROUND(SUM(is_repeat_guest) * 100.0 / COUNT(DISTINCT guest_id), 2) as repeat_rate_pct,
+        ROUND(AVG(CASE WHEN stay_count > 0 THEN avg_spend_per_stay ELSE 0 END), 0) as avg_spend_per_stay,
+        ROUND(SUM(total_spend), 2) as total_revenue,
+        -- Revenue mix breakdown
+        ROUND(SUM(room_revenue) * 100.0 / NULLIF(SUM(total_spend), 0), 1) as room_revenue_pct,
+        ROUND(SUM(total_spend - room_revenue) * 100.0 / NULLIF(SUM(total_spend), 0), 1) as other_revenue_pct
+    FROM loyalty_with_stays
+    GROUP BY tier_level, guest_type
+),
+amenity_affinity AS (
+    -- Find top amenity per segment
+    SELECT 
+        lp.tier_level || ' - Leisure' as segment,
+        au.amenity_category,
+        COUNT(*) as usage_count,
+        ROW_NUMBER() OVER (PARTITION BY lp.tier_level 
+            ORDER BY COUNT(*) DESC) as rank
+    FROM BRONZE.loyalty_program lp
+    LEFT JOIN BRONZE.amenity_usage au ON lp.guest_id = au.guest_id
+    GROUP BY lp.tier_level, au.amenity_category
+)
+SELECT 
+    sm.segment,
+    sm.loyalty_tier,
+    sm.guest_type,
+    sm.active_members,
+    sm.repeat_guests,
+    sm.repeat_rate_pct,
+    sm.avg_spend_per_stay,
+    sm.total_revenue,
+    sm.room_revenue_pct,
+    -- Amenity/incidental revenue breakdown (approximate)
+    ROUND((100 - sm.room_revenue_pct) * 0.50, 1) as amenity_revenue_pct,
+    ROUND((100 - sm.room_revenue_pct) * 0.30, 1) as fb_revenue_pct,
+    ROUND((100 - sm.room_revenue_pct) * 0.15, 1) as spa_revenue_pct,
+    ROUND((100 - sm.room_revenue_pct) * 0.05, 1) as other_revenue_pct,
+    '' as top_friction_driver,  -- Placeholder
+    0.00 as issue_rate_pct,  -- Placeholder
+    COALESCE(aa.amenity_category, 'dining') as experience_affinity,
+    'Engagement & Retention' as recommended_focus,
+    CASE 
+        WHEN sm.repeat_rate_pct < 30 THEN 'Dining Experiences'
+        WHEN aa.amenity_category IN ('pool', 'spa') THEN 'Wellness Services'
+        ELSE 'Premium Amenities'
+    END as underutilized_opportunity,
+    CURRENT_TIMESTAMP() as refreshed_at
+FROM segment_metrics sm
+LEFT JOIN amenity_affinity aa ON sm.segment = aa.segment AND aa.rank = 1;
+
+-- Add non-member segment
+INSERT INTO loyalty_segment_intelligence
+WITH non_member_stats AS (
+    SELECT 
+        gp.guest_id,
+        'Leisure' as guest_type,  -- Simplified: all guests categorized as Leisure
+        COUNT(DISTINCT sh.stay_id) as stay_count,
+        SUM(sh.total_charges) as total_spend,
+        AVG(sh.total_charges) as avg_spend_per_stay,
+        SUM(sh.room_charges) as room_revenue,
+        CASE WHEN COUNT(DISTINCT sh.stay_id) >= 2 THEN 1 ELSE 0 END as is_repeat_guest
+    FROM BRONZE.guest_profiles gp
+    LEFT JOIN BRONZE.stay_history sh ON gp.guest_id = sh.guest_id
+    WHERE gp.guest_id NOT IN (SELECT guest_id FROM BRONZE.loyalty_program)
+    GROUP BY gp.guest_id
+),
+non_member_metrics AS (
+    SELECT 
+        'Non-Member - ' || guest_type as segment,
+        'Non-Member' as loyalty_tier,
+        guest_type,
+        COUNT(DISTINCT guest_id) as active_members,
+        SUM(is_repeat_guest) as repeat_guests,
+        ROUND(SUM(is_repeat_guest) * 100.0 / COUNT(DISTINCT guest_id), 2) as repeat_rate_pct,
+        ROUND(AVG(CASE WHEN stay_count > 0 THEN avg_spend_per_stay ELSE 0 END), 0) as avg_spend_per_stay,
+        ROUND(SUM(total_spend), 2) as total_revenue,
+        ROUND(SUM(room_revenue) * 100.0 / NULLIF(SUM(total_spend), 0), 1) as room_revenue_pct
+    FROM non_member_stats
+    GROUP BY guest_type
+)
+SELECT 
+    nm.segment,
+    nm.loyalty_tier,
+    nm.guest_type,
+    nm.active_members,
+    nm.repeat_guests,
+    nm.repeat_rate_pct,
+    nm.avg_spend_per_stay,
+    nm.total_revenue,
+    nm.room_revenue_pct,
+    ROUND((100 - nm.room_revenue_pct) * 0.50, 1) as amenity_revenue_pct,
+    ROUND((100 - nm.room_revenue_pct) * 0.30, 1) as fb_revenue_pct,
+    ROUND((100 - nm.room_revenue_pct) * 0.15, 1) as spa_revenue_pct,
+    ROUND((100 - nm.room_revenue_pct) * 0.05, 1) as other_revenue_pct,
+    '' as top_friction_driver,
+    0.00 as issue_rate_pct,
+    'bar' as experience_affinity,
+    'Engagement & Retention' as recommended_focus,
+    'Dining Experiences' as underutilized_opportunity,
+    CURRENT_TIMESTAMP() as refreshed_at
+FROM non_member_metrics nm;
+
+-- ============================================================================
 -- Summary
 -- ============================================================================
 SELECT 'Silver and Gold layers refreshed successfully!' AS STATUS;
 SELECT 
-    '7 Silver tables rebuilt with fresh Bronze data' AS SILVER_RESULT,
-    '3 Gold tables rebuilt with aggregated metrics' AS GOLD_RESULT;
+    '10 Silver tables rebuilt (7 core + 3 Intelligence Hub)' AS SILVER_RESULT,
+    '6 Gold tables rebuilt (3 core + 3 Intelligence Hub)' AS GOLD_RESULT;
 

@@ -1,0 +1,9 @@
+name: intel_hub
+channels:
+  - snowflake
+dependencies:
+  - snowflake-snowpark-python
+  - plotly
+  - pandas
+  - numpy
+  - requests

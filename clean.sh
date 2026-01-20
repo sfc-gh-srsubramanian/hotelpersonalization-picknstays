@@ -120,8 +120,8 @@ echo ""
 echo "Resources to be deleted:"
 echo "  - Database: $DATABASE"
 echo "    • All schemas: BRONZE, SILVER, GOLD, BUSINESS_VIEWS, SEMANTIC_VIEWS"
-echo "    • All tables: ~20 tables across layers"
-echo "    • All views: Semantic views and business views"
+echo "    • All tables: ~23 Bronze tables (15 core + 4 Intelligence Hub + 4 other)"
+echo "    • All views: 6 semantic views (3 core + 3 Intelligence Hub)"
 echo "  - Warehouse: $WAREHOUSE"
 echo "  - Role: $ROLE"
 if [ "$KEEP_AGENTS" = false ]; then
@@ -131,11 +131,17 @@ else
 fi
 echo ""
 echo "Data volumes to be deleted:"
-echo "  • ~10,000 guest profiles"
-echo "  • ~25,000 bookings"
-echo "  • ~20,000 stays"
-echo "  • ~30,000+ amenity transactions"
-echo "  • ~15,000+ amenity usage records"
+echo "  Core Data:"
+echo "    • ~20,000 guest profiles (scaled 2x for 100 properties)"
+echo "    • ~60,000 bookings (includes ~3,000 future bookings)"
+echo "    • ~50,000 stays"
+echo "    • ~60,000+ amenity transactions"
+echo "    • ~30,000+ amenity usage records"
+echo "  Intelligence Hub Data:"
+echo "    • ~15,000 service cases (last 18 months)"
+echo "    • ~22,000 issue tracking records"
+echo "    • ~8,000 sentiment data points"
+echo "    • ~2,000 service recovery actions"
 echo ""
 
 # Confirmation
@@ -232,12 +238,21 @@ echo "-------------------------------------------------------------------------"
 snow sql $SNOW_CONN -q "
     USE ROLE ACCOUNTADMIN;
     
+    -- Original semantic views
     DROP VIEW IF EXISTS ${DATABASE}.SEMANTIC_VIEWS.GUEST_ANALYTICS_VIEW;
     DROP VIEW IF EXISTS ${DATABASE}.SEMANTIC_VIEWS.PERSONALIZATION_INSIGHTS_VIEW;
     DROP VIEW IF EXISTS ${DATABASE}.SEMANTIC_VIEWS.AMENITY_ANALYTICS_VIEW;
+    
+    -- Intelligence Hub semantic views
+    DROP VIEW IF EXISTS ${DATABASE}.SEMANTIC_VIEWS.PORTFOLIO_INTELLIGENCE_VIEW;
+    DROP VIEW IF EXISTS ${DATABASE}.SEMANTIC_VIEWS.LOYALTY_INTELLIGENCE_VIEW;
+    DROP VIEW IF EXISTS ${DATABASE}.SEMANTIC_VIEWS.CX_SERVICE_INTELLIGENCE_VIEW;
+    
+    -- Guest Arrivals semantic view
+    DROP VIEW IF EXISTS ${DATABASE}.SEMANTIC_VIEWS.GUEST_ARRIVALS_VIEW;
 " 2>/dev/null || true
 
-echo -e "${GREEN}✓${NC} Semantic Views dropped"
+echo -e "${GREEN}✓${NC} Semantic Views dropped (7 views)"
 echo ""
 
 ###############################################################################

@@ -10,7 +10,7 @@ Hotel-Personalization-System/
 ├── run.sh                              # Runtime operations and validation
 ├── clean.sh                            # Cleanup and resource removal
 ├── 
-├── sql/                               # All SQL scripts (numbered for execution order)
+├── scripts/                               # All SQL scripts (numbered for execution order)
 │   ├── 01_account_setup.sql           # Database and schema creation
 │   ├── 02_schema_setup.sql            # All table definitions
 │   ├── 03_data_generation.sql         # Synthetic data generation
@@ -79,17 +79,17 @@ Execute SQL files in numbered order using Snowflake CLI:
 
 ```bash
 # Execute each file in sequence
-snow sql -f sql/01_account_setup.sql -c demo
-snow sql -f sql/02_schema_setup.sql -c demo
-snow sql -f sql/03_data_generation.sql -c demo
-snow sql -f sql/04_semantic_views.sql -c demo
-snow sql -f sql/05_intelligence_agents.sql -c demo
+snow sql -f scripts/01_account_setup.sql -c demo
+snow sql -f scripts/02_schema_setup.sql -c demo
+snow sql -f scripts/03_data_generation.sql -c demo
+snow sql -f scripts/04_semantic_views.sql -c demo
+snow sql -f scripts/05_intelligence_agents.sql -c demo
 ```
 
 Or using SnowSQL:
 ```bash
-snowsql -c demo -f sql/01_account_setup.sql
-snowsql -c demo -f sql/02_schema_setup.sql
+snowsql -c demo -f scripts/01_account_setup.sql
+snowsql -c demo -f scripts/02_schema_setup.sql
 # ... continue with remaining files
 ```
 
@@ -210,8 +210,8 @@ Try these sample questions with your agents:
    - Note: Agents are automatically registered with `SNOWFLAKE_INTELLIGENCE_OBJECT_DEFAULT` for UI visibility
 
 5. **Data Generation Takes Too Long:**
-   - Increase warehouse size in `sql/01_account_setup.sql` (default: MEDIUM)
-   - Consider reducing data volume in `sql/03_data_generation.sql` for testing
+   - Increase warehouse size in `scripts/01_account_setup.sql` (default: MEDIUM)
+   - Consider reducing data volume in `scripts/03_data_generation.sql` for testing
 
 ### **Getting Help:**
 
@@ -219,7 +219,7 @@ Try these sample questions with your agents:
 - Review `README.md` for complete system overview
 - Check `docs/DESIGN.md` for architecture details
 - See `docs/references/` for comprehensive agent questions and guides
-- Use sample queries in `sql/08_sample_queries.sql` for testing
+- Use sample queries in `scripts/08_sample_queries.sql` for testing
 
 **Validation Commands:**
 ```bash

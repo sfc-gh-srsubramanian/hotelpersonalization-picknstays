@@ -4,6 +4,13 @@
 -- Creates all tables across Bronze, Silver, and Gold layers
 -- Implements medallion architecture for data processing
 -- 
+-- Bronze Layer Tables:
+--   Core Tables: Guest profiles, bookings, stays, preferences, loyalty, etc. (15 tables)
+--   Intelligence Hub Tables: Service cases, issue tracking, sentiment, recovery (4 tables)
+-- 
+-- Silver Layer Tables: Cleaned and standardized data with business logic
+-- Gold Layer Tables: Analytics-ready aggregations with ML scoring
+-- 
 -- Requires:
 --   - Account-level setup completed (01_account_setup.sql)
 --   - Database and schemas already created
@@ -261,6 +268,8 @@ CREATE OR REPLACE TABLE hotel_properties (
     hotel_name STRING,
     brand STRING,
     category STRING,
+    region STRING,
+    sub_region STRING,
     address_line1 STRING,
     address_line2 STRING,
     city STRING,
@@ -329,6 +338,114 @@ CREATE OR REPLACE TABLE amenity_usage (
     channels_accessed VARIANT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP()
 );
+
+-- ============================================================================
+-- BRONZE LAYER: Intelligence Hub Tables
+-- ============================================================================
+-- Additional Bronze tables for executive intelligence and CX analytics
+-- Supports Hotel Intelligence Hub with service tracking and sentiment monitoring
+-- ============================================================================
+
+-- ----------------------------------------------------------------------------
+-- Service Cases (Guest-facing incidents and support tickets)
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE TABLE service_cases (
+    case_id STRING PRIMARY KEY,
+    stay_id STRING,
+    guest_id STRING,
+    hotel_id STRING,
+    case_type STRING,
+    severity STRING,
+    reported_at TIMESTAMP_NTZ,
+    resolved_at TIMESTAMP_NTZ,
+    resolution_time_minutes INTEGER,
+    channel STRING,
+    status STRING,
+    guest_impact_score INTEGER,
+    description TEXT,
+    resolution_notes TEXT,
+    created_at TIMESTAMP_NTZ DEFAULT CURRENT_TIMESTAMP(),
+    updated_at TIMESTAMP_NTZ DEFAULT CURRENT_TIMESTAMP()
+);
+
+COMMENT ON TABLE service_cases IS 'Guest-facing service incidents and support cases. Links to stays for operational intelligence.';
+
+-- ----------------------------------------------------------------------------
+-- Issue Tracking (Root cause breakdown for service cases)
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE TABLE issue_tracking (
+    issue_id STRING PRIMARY KEY,
+    case_id STRING,
+    hotel_id STRING,
+    brand STRING,
+    region STRING,
+    issue_category STRING,
+    issue_driver STRING,
+    impact_on_satisfaction INTEGER,
+    requires_followup BOOLEAN,
+    recurring_issue_flag BOOLEAN,
+    corrective_action_taken TEXT,
+    responsible_department STRING,
+    priority STRING,
+    created_at TIMESTAMP_NTZ DEFAULT CURRENT_TIMESTAMP(),
+    updated_at TIMESTAMP_NTZ DEFAULT CURRENT_TIMESTAMP()
+);
+
+COMMENT ON TABLE issue_tracking IS 'Detailed root cause analysis for service cases. Enables pattern detection and recurring issue identification.';
+
+-- ----------------------------------------------------------------------------
+-- Sentiment Data (Multi-source sentiment signals)
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE TABLE sentiment_data (
+    sentiment_id STRING PRIMARY KEY,
+    guest_id STRING,
+    stay_id STRING,
+    hotel_id STRING,
+    source STRING,
+    sentiment_score INTEGER,
+    sentiment_label STRING,
+    text_snippet TEXT,
+    topics VARIANT,
+    language STRING,
+    platform STRING,
+    posted_at TIMESTAMP_NTZ,
+    verified BOOLEAN,
+    response_provided BOOLEAN,
+    response_text TEXT,
+    helpfulness_score INTEGER,
+    created_at TIMESTAMP_NTZ DEFAULT CURRENT_TIMESTAMP(),
+    updated_at TIMESTAMP_NTZ DEFAULT CURRENT_TIMESTAMP()
+);
+
+COMMENT ON TABLE sentiment_data IS 'Multi-source sentiment tracking from reviews, surveys, social media, and in-app feedback.';
+
+-- ----------------------------------------------------------------------------
+-- Service Recovery Actions (Proactive recovery interventions)
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE TABLE service_recovery_actions (
+    recovery_id STRING PRIMARY KEY,
+    case_id STRING,
+    guest_id STRING,
+    hotel_id STRING,
+    stay_id STRING,
+    recovery_type STRING,
+    recovery_value_usd DECIMAL(10,2),
+    recovery_description TEXT,
+    offered_at TIMESTAMP_NTZ,
+    guest_response STRING,
+    accepted_at TIMESTAMP_NTZ,
+    repeat_booking_after BOOLEAN,
+    days_to_next_booking INTEGER,
+    satisfaction_before INTEGER,
+    satisfaction_after INTEGER,
+    authorized_by STRING,
+    cost_center STRING,
+    notes TEXT,
+    created_at TIMESTAMP_NTZ DEFAULT CURRENT_TIMESTAMP(),
+    updated_at TIMESTAMP_NTZ DEFAULT CURRENT_TIMESTAMP()
+);
+
+COMMENT ON TABLE service_recovery_actions IS 'Service recovery interventions and their effectiveness. Tracks ROI of recovery investments.';
 
 -- ============================================================================
 -- SILVER LAYER: Cleaned and Standardized Data

@@ -323,69 +323,188 @@ $$;
 -- ============================================================================
 -- 5. HOTEL INTELLIGENCE MASTER AGENT
 -- ============================================================================
+-- Comprehensive agent with access to all 7 semantic views:
+--   - Guest Analytics (existing)
+--   - Personalization Insights (existing)
+--   - Amenity Analytics (existing)
+--   - Portfolio Intelligence (Intelligence Hub)
+--   - Loyalty Intelligence (Intelligence Hub)
+--   - CX & Service Intelligence (Intelligence Hub)
+--   - Guest Arrivals (Future bookings + VIP watchlist)
+-- ============================================================================
 CREATE OR REPLACE AGENT GOLD."Hotel Intelligence Master Agent"
-COMMENT = 'Comprehensive strategic agent spanning all areas of hotel operations and business intelligence'
+COMMENT = 'Comprehensive hotel intelligence agent with guest analytics, personalization, amenities, portfolio performance, loyalty insights, and CX intelligence'
 FROM SPECIFICATION $$
 models:
   orchestration: "auto"
 
 instructions:
   response: |
-    You are a comprehensive hotel intelligence expert with access to all business data and strategic insights.
+    You are the Hotel Intelligence Master Agent for Summit Hospitality Group, a comprehensive AI assistant with expertise in:
     
-    Your expertise spans:
-    - Strategic business analysis and planning across all hotel operations
-    - Cross-functional insights combining guest, personalization, and amenity data
-    - Executive-level reporting and comprehensive KPI analysis
-    - Competitive advantage identification through integrated analytics
-    - ROI analysis for operational initiatives and service investments
-    - End-to-end guest journey analysis from booking to post-stay experience
+    **Core Guest Intelligence** (existing):
+    - Guest profiles, preferences, and 360-degree views
+    - Personalization and upsell propensity scoring
+    - Amenity usage patterns and performance analytics
     
-    Always provide comprehensive, strategic insights that support executive decision-making and long-term business growth.
+    **Executive Portfolio Intelligence** (Intelligence Hub):
+    - Portfolio performance metrics across 100 global properties (50 AMER, 30 EMEA, 20 APAC)
+    - Regional breakdown: AMER (Northeast, Southeast, Central, West), EMEA, APAC
+    - Revenue metrics: occupancy, ADR, RevPAR
+    - Operational metrics: satisfaction scores, service case rates, sentiment analysis
+    - Personalization coverage and guest knowledge metrics
+    - Geographic mappings: "East Coast" = Northeast + Southeast sub-regions, "West Coast" = West sub-region
+    - **Important**: For RevPAR/ADR queries by region or sub_region, query GOLD.PORTFOLIO_PERFORMANCE_KPIS directly and use AVG() aggregation
+    
+    **Loyalty & Retention Intelligence** (Intelligence Hub):
+    - Loyalty segment behavior and spend patterns
+    - Repeat stay rates and retention analysis
+    - Revenue mix by segment (room, amenities, spa, other)
+    - Strategic recommendations for segment engagement
+    - High-value guest identification and churn risk
+    
+    **Customer Experience & Service Intelligence** (Intelligence Hub):
+    - Service case tracking and resolution metrics
+    - Issue driver analysis by property, brand, and region
+    - Sentiment monitoring across multiple sources
+    - Service recovery effectiveness
+    - At-risk high-value guest alerts
+    - VIP watchlist for proactive service
+    
+    **Guest Arrivals & VIP Watchlist** (Proactive Service):
+    - Future bookings and arrival schedules (next 30 days)
+    - VIP and Diamond/Platinum guest arrivals
+    - Guests with past service issues requiring special attention
+    - Room preferences and special requests for arriving guests
+    - Proactive service preparation and personalized welcome planning
+    
+    **Your Capabilities**:
+    - Answer questions about guest behavior, preferences, and lifetime value
+    - Provide personalization and upsell recommendations
+    - Analyze portfolio performance across regions and brands
+    - Identify loyalty segment opportunities and retention strategies
+    - Track service quality and operational excellence
+    - Detect at-risk guests and recommend proactive interventions
+    - Compare performance across properties, brands, and regions
+    - Generate executive summaries and insights
+    
+    **Response Style**:
+    - Provide concise, executive-ready answers with specific metrics
+    - Include relevant comparisons (vs. brand average, vs. prior period, vs. region)
+    - Highlight actionable insights and recommendations
+    - Use natural language that is business-friendly (not technical SQL jargon)
+    - When showing numbers, format them appropriately (e.g., "$1.2M", "85.3%", "4.5/5.0")
+    - Prioritize recent data (last 30 days) unless asked for trends
   
   sample_questions:
+    # Portfolio Performance & Revenue Intelligence
+    - question: "What is the average RevPAR by brand for the last 30 days?"
+      answer: "I'll analyze portfolio performance data to show RevPAR metrics across Summit Ice, Summit Peak Reserve, Summit Permafrost, and The Snowline by Summit brands."
+    - question: "Which region has the highest occupancy rate this month?"
+      answer: "I'll compare occupancy rates across AMER, EMEA, and APAC regions using portfolio intelligence data."
+    - question: "What's the average RevPAR in the Northeast sub-region?"
+      answer: "I'll calculate RevPAR for Northeast properties (New York, Boston, Philadelphia, Washington DC area)."
+    - question: "Compare RevPAR between West Coast and East Coast properties"
+      answer: "I'll compare West sub-region (California, Seattle, etc.) against Northeast and Southeast sub-regions."
+    - question: "Show me properties with RevPAR below brand average"
+      answer: "I'll identify underperforming properties by comparing their RevPAR against their brand benchmarks."
+    - question: "What's driving the occupancy changes across brands this quarter?"
+      answer: "I'll analyze occupancy trends by brand and identify key performance drivers using portfolio metrics."
+    - question: "Compare satisfaction scores between luxury and midscale properties"
+      answer: "I'll segment properties by category and compare guest satisfaction indices."
+    - question: "Which properties have service case rates above 100 per 1000 stays?"
+      answer: "I'll identify properties requiring operational attention based on service case frequency."
+    
+    # Loyalty & Guest Retention Intelligence
+    - question: "Which loyalty segments have the highest repeat stay rates?"
+      answer: "I'll analyze repeat stay behavior across Diamond, Platinum, Gold, Silver, and Bronze loyalty tiers."
+    - question: "What is the average spend by loyalty tier?"
+      answer: "I'll break down spending patterns across all loyalty segments to show revenue contribution."
+    - question: "Show me retention opportunities for Gold members"
+      answer: "I'll identify high-potential Gold tier guests who could be upgraded to Platinum with targeted offers."
+    - question: "What's the revenue mix for Diamond members - room vs amenities?"
+      answer: "I'll show the breakdown of room revenue, spa, and other service spending for Diamond guests."
+    - question: "Which loyalty segment has the highest spa utilization?"
+      answer: "I'll compare spa amenity usage rates across all loyalty tiers."
+    - question: "What are the most common preferences for Platinum members?"
+      answer: "I'll analyze preference patterns and experience affinities for Platinum tier guests."
+    
+    # Customer Experience & Service Intelligence  
+    - question: "What are the top 3 service issues across all properties?"
+      answer: "I'll identify the most frequent service case types and their impact on guest satisfaction."
+    - question: "Which properties have the highest service recovery success rates?"
+      answer: "I'll rank properties by their effectiveness in resolving guest issues and restoring satisfaction."
+    - question: "Show me high-value guests with declining sentiment"
+      answer: "I'll identify VIP guests showing negative sentiment trends who require proactive outreach."
+    - question: "What's the average resolution time for service cases by brand?"
+      answer: "I'll compare service recovery speed across brands to identify operational excellence."
+    - question: "Which regions have the worst sentiment scores?"
+      answer: "I'll analyze net sentiment across AMER, EMEA, and APAC to highlight experience quality issues."
+    - question: "How many VIP guests are checking in tomorrow with prior service issues?"
+      answer: "I'll create a watchlist of high-value arrivals with service history requiring special attention."
+    
+    # Guest Intelligence & Personalization
+    - question: "Which guests have the highest spa upsell propensity?"
+      answer: "I'll rank guests by their likelihood to purchase spa services based on preferences and history."
+    - question: "Show me guests with high dining propensity checking in this week"
+      answer: "I'll identify upcoming arrivals likely to use restaurant services for proactive offers."
+    - question: "What are the room preferences for business travelers?"
+      answer: "I'll analyze preference patterns for corporate segment guests to optimize room assignments."
+    - question: "Which guests have never used amenities despite multiple stays?"
+      answer: "I'll find repeat guests with zero amenity engagement for targeted experience offers."
+    - question: "Show me guest lifetime value distribution by nationality"
+      answer: "I'll segment LTV metrics by guest origin to inform international marketing strategies."
+    
+    # Amenity Performance & Utilization
+    - question: "What's the utilization rate for spa services by property?"
+      answer: "I'll show spa capacity usage across all hotels to identify underutilized assets."
+    - question: "Which amenities have the highest revenue per transaction?"
+      answer: "I'll rank amenities by average transaction value to prioritize high-margin offerings."
+    - question: "Compare fitness center usage between AMER and EMEA properties"
+      answer: "I'll analyze fitness amenity engagement patterns across regional markets."
+    - question: "What's the attachment rate for room service at luxury properties?"
+      answer: "I'll calculate how frequently luxury guests order in-room dining as a percentage of stays."
+    
+    # Cross-functional & Executive Insights
+    - question: "How does personalization coverage correlate with satisfaction scores?"
+      answer: "I'll analyze the relationship between guest data completeness and satisfaction ratings."
+    - question: "Which brand has the best balance of RevPAR and guest satisfaction?"
+      answer: "I'll create a performance matrix showing revenue vs experience quality by brand."
+    - question: "What's the satisfaction trend for EMEA properties over the last 6 months?"
+      answer: "I'll show historical satisfaction index trends for European properties."
+    - question: "Compare service case rates between midscale and luxury properties"
+      answer: "I'll segment operational quality metrics by property category."
+    - question: "Which city has the highest concentration of at-risk VIP guests?"
+      answer: "I'll geo-analyze churn risk for high-value guests to prioritize regional interventions."
     - question: "Give me a complete strategic analysis of our hotel operations"
       answer: "I'll provide an executive-level analysis covering guest behavior, personalization effectiveness, and amenity performance."
     - question: "What's the comprehensive ROI of our personalization and amenity programs?"
       answer: "I'll analyze the financial impact and returns from personalization initiatives and amenity investments."
-    - question: "Which guest segments and service areas should we prioritize for growth?"
-      answer: "I'll identify high-potential segments and service categories based on revenue and satisfaction data."
-    - question: "How do our amenity services impact overall guest satisfaction and revenue?"
-      answer: "I'll examine the correlation between amenity usage, guest satisfaction, and revenue generation."
-    - question: "What strategic recommendations would transform our guest experience?"
-      answer: "I'll provide actionable recommendations to elevate guest experience and competitive positioning."
-    - question: "Show me the business case for expanding spa services based on guest data"
-      answer: "I'll analyze guest behavior, propensity scores, and revenue potential to justify spa expansion."
-    - question: "What's the lifetime value comparison across all customer segments?"
-      answer: "I'll calculate and compare LTV across segments to guide resource allocation."
-    - question: "How effective is our loyalty program at driving repeat bookings and revenue?"
-      answer: "I'll analyze loyalty program performance including tier progression and incremental revenue."
-    - question: "Which initiatives would have the biggest impact on reducing churn?"
-      answer: "I'll identify the highest-leverage opportunities for retention improvement."
-    - question: "Show me the guest journey from first booking through loyalty program progression"
-      answer: "I'll trace typical guest lifecycles and identify optimization opportunities."
-    - question: "What's the revenue potential from better personalization of amenity offers?"
-      answer: "I'll quantify upsell opportunities based on propensity scores and current conversion rates."
-    - question: "How do international vs domestic guests differ in behavior and profitability?"
-      answer: "I'll compare guest segments by origin across all key performance metrics."
-    - question: "Which amenity investments would generate the highest returns?"
-      answer: "I'll prioritize amenity expansion opportunities based on demand signals and revenue potential."
-    - question: "What's the business impact of improving WiFi and technology infrastructure?"
-      answer: "I'll analyze tech adoption, satisfaction correlation, and revenue implications."
-    - question: "Show me the complete financial picture of our top 100 guests"
-      answer: "I'll provide comprehensive profiles including revenue, costs, satisfaction, and retention risk."
-    - question: "How should we optimize our service portfolio to maximize profitability?"
-      answer: "I'll analyze the profitability and strategic value of each amenity category."
-    - question: "What's the correlation between amenity engagement and guest lifetime value?"
-      answer: "I'll quantify how amenity usage drives long-term guest value."
-    - question: "Which customer acquisition channels produce the most valuable guests?"
-      answer: "I'll analyze guest behavior and value by acquisition source."
-    - question: "How can we increase revenue per guest by 20% over the next year?"
-      answer: "I'll create a strategic roadmap combining personalization, amenity optimization, and retention."
-    - question: "What are the key drivers of guest satisfaction across all touchpoints?"
-      answer: "I'll identify which factors most strongly influence overall guest experience."
+    
+    # Guest Arrivals & VIP Watchlist (Proactive Service)
+    - question: "Show me Diamond guests arriving tomorrow with past service issues"
+      answer: "I'll query confirmed bookings for tomorrow, filter for Diamond loyalty tier guests, and cross-reference with their service case history to identify VIPs requiring special attention."
+    - question: "Which high-value guests are checking in this week?"
+      answer: "I'll analyze arrivals in the next 7 days and identify guests with Diamond or Platinum status or high lifetime spend."
+    - question: "List all VIP arrivals in the next 3 days with prior complaints"
+      answer: "I'll create a watchlist of high-tier loyalty guests arriving soon who have had service issues in the past 90 days."
+    - question: "Who's checking in tomorrow at our New York properties?"
+      answer: "I'll show all confirmed arrivals for tomorrow in New York hotels with guest details and loyalty status."
+    - question: "Show me next week's arrivals who prefer high floors"
+      answer: "I'll query upcoming bookings and cross-reference with guest room preferences to show high-floor preference guests."
+    - question: "Which Platinum members are arriving this weekend?"
+      answer: "I'll filter weekend arrivals (next Saturday-Sunday) for Platinum tier guests across all properties."
+    - question: "Give me a VIP watchlist for tomorrow's check-ins"
+      answer: "I'll compile a priority list of tomorrow's arrivals including Diamond/Platinum guests, guests with service history, and high-value repeat customers."
+    - question: "Show me international guests checking in this week by region"
+      answer: "I'll analyze this week's arrivals by guest nationality and show international arrival patterns by property region."
+    - question: "Which guests checking in today have spa preferences?"
+      answer: "I'll identify today's arrivals with spa service preferences or history to enable proactive spa upsell offers."
+    - question: "List next 30 days arrivals with late check-out requests"
+      answer: "I'll query future bookings with special requests for late check-out to help with room availability planning."
 
 tools:
+  # Existing guest & personalization tools
   - tool_spec:
       type: "cortex_analyst_text_to_sql"
       name: "guest_intelligence"
@@ -395,14 +514,38 @@ tools:
   - tool_spec:
       type: "cortex_analyst_text_to_sql"
       name: "amenity_intelligence"
+  # Intelligence Hub tools
+  - tool_spec:
+      type: "cortex_analyst_text_to_sql"
+      name: "portfolio_intelligence"
+  - tool_spec:
+      type: "cortex_analyst_text_to_sql"
+      name: "loyalty_intelligence"
+  - tool_spec:
+      type: "cortex_analyst_text_to_sql"
+      name: "cx_service_intelligence"
+  # Guest Arrivals & VIP Watchlist tool
+  - tool_spec:
+      type: "cortex_analyst_text_to_sql"
+      name: "guest_arrivals_intelligence"
 
 tool_resources:
+  # Existing resources
   guest_intelligence:
     semantic_view: "HOTEL_PERSONALIZATION.SEMANTIC_VIEWS.GUEST_ANALYTICS_VIEW"
   personalization_intelligence:
     semantic_view: "HOTEL_PERSONALIZATION.SEMANTIC_VIEWS.PERSONALIZATION_INSIGHTS_VIEW"
   amenity_intelligence:
     semantic_view: "HOTEL_PERSONALIZATION.SEMANTIC_VIEWS.AMENITY_ANALYTICS_VIEW"
+  # Intelligence Hub resources
+  portfolio_intelligence:
+    semantic_view: "HOTEL_PERSONALIZATION.SEMANTIC_VIEWS.PORTFOLIO_INTELLIGENCE_VIEW"
+  loyalty_intelligence:
+    semantic_view: "HOTEL_PERSONALIZATION.SEMANTIC_VIEWS.LOYALTY_INTELLIGENCE_VIEW"
+  cx_service_intelligence:
+    semantic_view: "HOTEL_PERSONALIZATION.SEMANTIC_VIEWS.CX_SERVICE_INTELLIGENCE_VIEW"
+  guest_arrivals_intelligence:
+    semantic_view: "HOTEL_PERSONALIZATION.SEMANTIC_VIEWS.GUEST_ARRIVALS_VIEW"
 $$;
 
 -- ============================================================================
@@ -452,30 +595,11 @@ SELECT
 -- ============================================================================
 -- This makes agents appear in the Snowflake Intelligence UI section
 -- Users can interact with agents through the unified intelligence interface
+-- NOTE: Agent registration handled by deploy.sh script to manage duplicates gracefully
 
 USE ROLE ACCOUNTADMIN;
 
 -- Create Snowflake Intelligence object (if not exists)
 CREATE SNOWFLAKE INTELLIGENCE IF NOT EXISTS SNOWFLAKE_INTELLIGENCE_OBJECT_DEFAULT;
 
--- Register all 5 Hotel Personalization agents
--- Register all 5 Hotel Personalization agents
-SET AGENT_PATH = $FULL_PREFIX || '.GOLD."Hotel Guest Analytics Agent"';
-ALTER SNOWFLAKE INTELLIGENCE IF EXISTS SNOWFLAKE_INTELLIGENCE_OBJECT_DEFAULT 
-  ADD AGENT IDENTIFIER($AGENT_PATH);
-
-SET AGENT_PATH = $FULL_PREFIX || '.GOLD."Hotel Personalization Specialist"';
-ALTER SNOWFLAKE INTELLIGENCE IF EXISTS SNOWFLAKE_INTELLIGENCE_OBJECT_DEFAULT 
-  ADD AGENT IDENTIFIER($AGENT_PATH);
-
-SET AGENT_PATH = $FULL_PREFIX || '.GOLD."Hotel Amenities Intelligence Agent"';
-ALTER SNOWFLAKE INTELLIGENCE IF EXISTS SNOWFLAKE_INTELLIGENCE_OBJECT_DEFAULT 
-  ADD AGENT IDENTIFIER($AGENT_PATH);
-
-SET AGENT_PATH = $FULL_PREFIX || '.GOLD."Guest Experience Optimizer"';
-ALTER SNOWFLAKE INTELLIGENCE IF EXISTS SNOWFLAKE_INTELLIGENCE_OBJECT_DEFAULT 
-  ADD AGENT IDENTIFIER($AGENT_PATH);
-
-SET AGENT_PATH = $FULL_PREFIX || '.GOLD."Hotel Intelligence Master Agent"';
-ALTER SNOWFLAKE INTELLIGENCE IF EXISTS SNOWFLAKE_INTELLIGENCE_OBJECT_DEFAULT 
-  ADD AGENT IDENTIFIER($AGENT_PATH);
+SELECT 'Agent registration will be handled by deploy script' AS NOTE;

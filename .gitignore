@@ -72,5 +72,5 @@ credentials/
 *.cache
 
 # Streamlit build artifacts
-streamlit_apps/output/
+streamlit/output/
 

@@ -164,13 +164,13 @@ SELECT SNOWFLAKE.CORTEX.COMPLETE_AGENT(
 ### Platform Components
 
 **SQL Files** (Numbered for execution order):
-- `sql/01_account_setup.sql` - Database, schemas, roles, warehouse
-- `sql/02_schema_setup.sql` - All table definitions (23 tables across Bronze/Silver/Gold)
-- `sql/03_data_generation.sql` - Synthetic data generation for all Bronze tables
-- `sql/03b_refresh_silver_gold.sql` - Refresh Silver and Gold tables after data load
-- `sql/04_semantic_views.sql` - 3 semantic views for natural language querying
-- `sql/05_intelligence_agents.sql` - 5 AI agents with granular RBAC
-- `sql/08_sample_queries.sql` - Example BI queries across all layers
+- `scripts/01_account_setup.sql` - Database, schemas, roles, warehouse
+- `scripts/02_schema_setup.sql` - All table definitions (23 tables across Bronze/Silver/Gold)
+- `scripts/03_data_generation.sql` - Synthetic data generation for all Bronze tables
+- `scripts/03b_refresh_silver_gold.sql` - Refresh Silver and Gold tables after data load
+- `scripts/04_semantic_views.sql` - 3 semantic views for natural language querying
+- `scripts/05_intelligence_agents.sql` - 5 AI agents with granular RBAC
+- `scripts/08_sample_queries.sql` - Example BI queries across all layers
 
 **Documentation:**
 - `README.md` - This file, complete platform overview
@@ -600,6 +600,182 @@ https://app.snowflake.com/[your-account-locator]/#/streamlit-apps/HOTEL_PERSONAL
 ./deploy.sh --only-dashboards
 ```
 
+---
+
+### **🌐 Hotel Intelligence Hub - Executive Dashboard**
+
+**"Hotel Intelligence Hub"** - A standalone executive dashboard for portfolio-level intelligence across Summit Hospitality Group's global operations.
+
+#### **Application Details**
+- **Location**: `HOTEL_PERSONALIZATION.GOLD.HOTEL_INTELLIGENCE_HUB`
+- **Title**: Hotel Intelligence Hub
+- **Purpose**: Executive command center for portfolio performance, loyalty intelligence, and CX operations
+- **Technology**: Streamlit in Snowflake with KPI definition tooltips
+- **Data Scope**: 100 properties globally (50 AMER, 30 EMEA, 20 APAC), 18 months history + 30 days future
+- **Warehouse**: `HOTEL_PERSONALIZATION_WH` (auto-resume/suspend)
+
+#### **📊 Dashboard Tabs**
+
+##### **1. Portfolio Overview** 📈
+**Purpose**: Executive command center for regional and brand-level performance
+
+**Features**:
+- **5 KPI Cards** (with definition tooltips):
+  - Occupancy % - Rooms occupied vs available
+  - ADR - Average Daily Rate
+  - RevPAR - Revenue Per Available Room
+  - Repeat Stay Rate % - Guest retention metric
+  - Guest Satisfaction Index - Average score (1-5 scale)
+- **Performance Charts**:
+  - RevPAR by Brand/Region (bar charts)
+  - Occupancy & ADR trends (dual-axis time series)
+  - Experience Health Heatmap (Brand × Region satisfaction)
+- **Outliers & Exceptions Table**:
+  - Properties with RevPAR deviations >15% vs brand average
+  - Satisfaction gaps vs regional norms
+  - High service case rates (>100 per 1K stays)
+  - Personalization coverage levels
+- **AI Prompts**: Pre-configured questions for Hotel Intelligence Master Agent
+
+**Filters**: Region (AMER/EMEA/APAC), Brand, Time Period
+
+**Access**: Brand Leadership, Portfolio Leadership, Admins
+
+##### **2. Loyalty Intelligence** 🎯
+**Purpose**: Segment-level behavior, spend patterns, and retention opportunities
+
+**Features**:
+- **5 KPI Cards** (with tooltips):
+  - Active Loyalty Members - Members with stays in period
+  - Repeat Stay Rate - Segment retention %
+  - Avg Spend per Stay - Guest value indicator
+  - High-Value Guest Share % - Revenue concentration
+  - At-Risk Segments - Low repeat rate segments
+- **Segment Analysis Charts**:
+  - Repeat Rate by Loyalty Tier (bar chart)
+  - Spend Mix by Tier (stacked bar: Room/F&B/Spa/Other)
+  - Experience Affinity Distribution (pie chart)
+- **Top Loyalty Opportunities Table**:
+  - 15 segments by revenue with metrics and recommendations
+  - Strategic focus areas (Retention/Upsell/Engagement)
+  - Experience affinity tags (Dining/Wellness/Convenience)
+  - Growth opportunities (underutilized services)
+- **High/At-Risk Segment Breakouts**: Quick identification of action items
+- **AI Prompts**: Segment-specific analysis questions
+
+**Filters**: None (global portfolio view)
+
+**Access**: Loyalty Strategy, CMO, VP Customer, Admins
+
+##### **3. CX & Service Signals** 💬
+**Purpose**: Operational intelligence on service quality and VIP guest management
+
+**Features**:
+- **5 KPI Cards** (with tooltips):
+  - Service Case Rate - Cases per 1,000 stays
+  - Avg Resolution Time - Hours to resolve
+  - Negative Sentiment Rate % - Feedback quality
+  - Service Recovery Success % - Recovery effectiveness
+  - At-Risk High-Value Guests - VIPs with issues
+- **Service Intelligence Charts**:
+  - Top Service Issue Drivers (ranked bar)
+  - Service Case Rate by Brand (comparison bar)
+  - Recovery Success by Brand (performance bar)
+- **VIP Watchlist Table** (Next 7 Days):
+  - Upcoming high-value guest arrivals
+  - Past service issue counts (last 90 days)
+  - Guest preference tags (room, floor, amenities)
+  - Churn risk scores (0-100) with color coding
+  - Risk level indicators (🔴 High / 🟡 Medium / 🟢 Low)
+  - Lifetime value and loyalty tier
+- **Proactive Action Recommendations**: Immediate and operational improvement actions
+- **AI Prompts**: Service quality and VIP management questions
+- **CSV Export**: Download VIP watchlist for operational teams
+
+**Filters**: Region, Brand
+
+**Access**: Guest Services Leadership, CX Teams, Service Recovery, Admins
+
+#### **🎨 Intelligence Hub Features**
+
+**User Experience**:
+- ✅ **Self-Explanatory KPIs** - Tooltip definitions for all metrics (hover over ℹ️)
+- ✅ **Executive-Friendly Formatting** - $1.2M, 85.3%, 4.5/5.0 notation
+- ✅ **Actionable Tables** - Sorted by priority (risk, revenue, performance)
+- ✅ **Color-Coded Alerts** - Red/Yellow/Green indicators for quick assessment
+- ✅ **AI Integration** - Pre-configured prompts for Hotel Intelligence Master Agent
+- ✅ **Export Capabilities** - Download VIP watchlist and segment data as CSV
+
+**Performance**:
+- ✅ **Cached Queries** (5-minute TTL from Gold tables)
+- ✅ **Pre-Aggregated Metrics** - Daily portfolio KPIs, segment summaries, service signals
+- ✅ **Real-Time Future Bookings** - 30-day lookahead for VIP arrivals
+
+**Data Quality**:
+- ✅ **18 Months Historical Data** - Service cases, sentiment, issue tracking
+- ✅ **~3,000 Future Bookings** - Distributed daily for next 30 days
+- ✅ **~40K Intelligence Hub Records** - Service cases, sentiment, recovery actions
+- ✅ **100 Properties** - Complete regional coverage (AMER/EMEA/APAC)
+
+#### **📍 How to Access Intelligence Hub**
+
+**Via Snowsight UI**:
+1. Log in to Snowsight: `https://app.snowflake.com`
+2. Navigate to: **Projects** → **Streamlit**
+3. Select: `HOTEL_PERSONALIZATION.GOLD` → **"Hotel Intelligence Hub"**
+
+**Direct URL Pattern**:
+```
+https://app.snowflake.com/[your-account-locator]/#/streamlit-apps/HOTEL_PERSONALIZATION.GOLD.HOTEL_INTELLIGENCE_HUB
+```
+
+**Via CLI**:
+```bash
+# Check Intelligence Hub status and data volumes
+./run.sh intel-hub
+
+# Deploy/Redeploy Intelligence Hub
+./deploy.sh --only-intel-hub
+
+# Deploy everything (main dashboard + Intelligence Hub)
+./deploy.sh
+```
+
+#### **🔄 Deployment Options**
+
+```bash
+# Full deployment (includes Intelligence Hub)
+./deploy.sh
+
+# Deploy only Intelligence Hub SQL + Streamlit
+./deploy.sh --only-intel-hub
+
+# Deploy SQL infrastructure only (no Streamlit apps)
+./deploy.sh --only-sql
+
+# Skip Intelligence Hub (deploy main platform only)
+./deploy.sh --skip-intel-hub
+```
+
+#### **📊 Target Personas**
+
+**1. Brand & Portfolio Leadership** (COO, EVP Operations, Regional Leaders)
+- **Use Case**: Portfolio performance monitoring, regional consistency, outlier identification
+- **Primary Tab**: Portfolio Overview
+- **Key Questions**: "Where are we winning/losing and why?"
+
+**2. Loyalty & Customer Strategy** (CMO, VP Loyalty, VP Customer)
+- **Use Case**: Segment behavior analysis, retention strategies, lifetime value optimization
+- **Primary Tab**: Loyalty Intelligence
+- **Key Questions**: "What drives loyalty—and where should we invest?"
+
+**3. Guest Services Leadership** (CX Leaders, Service Recovery Teams)
+- **Use Case**: VIP recognition, proactive service, issue trend identification, recovery effectiveness
+- **Primary Tab**: CX & Service Signals
+- **Key Questions**: "Do we know our best guests and prevent churn?"
+
+---
+
 ### **🔐 Security & Governance**
 
 #### **Role-Based Access Control**
@@ -720,13 +896,13 @@ https://app.snowflake.com/[your-account-locator]/#/streamlit-apps/HOTEL_PERSONAL
 ```
 Hotel-Personalization-System/
 ├── 📊 SQL Scripts (Deployment Order)
-│   ├── sql/01_account_setup.sql           # Database, schemas, roles, warehouse
-│   ├── sql/02_schema_setup.sql            # 23 tables (Bronze, Silver, Gold)
-│   ├── sql/03_data_generation.sql         # Synthetic data for Bronze tables
-│   ├── sql/03b_refresh_silver_gold.sql    # Refresh Silver/Gold after data load
-│   ├── sql/04_semantic_views.sql          # 3 semantic views
-│   ├── sql/05_intelligence_agents.sql     # 5 AI agents with RBAC
-│   └── sql/08_sample_queries.sql          # Example BI queries
+│   ├── scripts/01_account_setup.sql           # Database, schemas, roles, warehouse
+│   ├── scripts/02_schema_setup.sql            # 23 tables (Bronze, Silver, Gold)
+│   ├── scripts/03_data_generation.sql         # Synthetic data for Bronze tables
+│   ├── scripts/03b_refresh_silver_gold.sql    # Refresh Silver/Gold after data load
+│   ├── scripts/04_semantic_views.sql          # 3 semantic views
+│   ├── scripts/05_intelligence_agents.sql     # 5 AI agents with RBAC
+│   └── scripts/08_sample_queries.sql          # Example BI queries
 │
 ├── 🚀 Deployment Scripts
 │   ├── deploy.sh                          # Main deployment script
@@ -941,7 +1117,7 @@ This **Hotel Guest Personalization System** represents a **complete transformati
   - `docs/AGENT_DETAILED_QUESTIONS.md` - Detailed questions by business category
   - `docs/references/AGENT_SAMPLE_QUESTIONS.md` - Practical staff guide with 100+ questions
   - `docs/references/AGENT_QUICK_REFERENCE.md` - Quick reference card
-- **🔐 Security Guide**: Role management in `sql/security/` folder
+- **🔐 Security Guide**: Role management in `scripts/security/` folder
 - **🚀 Deployment Guide**: Step-by-step instructions in `DEPLOYMENT_GUIDE.md`
 
 ---

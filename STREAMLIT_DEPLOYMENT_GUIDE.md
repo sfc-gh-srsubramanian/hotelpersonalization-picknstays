@@ -14,10 +14,10 @@
 
 ## 📁 Dashboard Files
 
-All dashboards are located in the `streamlit_apps/` directory:
+All dashboards are located in the `streamlit/` directory:
 
 ```
-streamlit_apps/
+streamlit/
 ├── guest_360_dashboard.py          # Guest 360 Dashboard
 ├── personalization_hub.py           # Personalization Hub
 ├── amenity_performance.py           # Amenity Performance
@@ -51,7 +51,7 @@ This will:
 If automated deployment encounters issues, deploy manually:
 
 ```bash
-cd streamlit_apps
+cd streamlit
 
 # Deploy Guest 360 Dashboard
 snow streamlit deploy \
@@ -317,7 +317,7 @@ Extend `shared/viz_components.py` to:
 For issues or questions:
 1. Check this guide first
 2. Review Snowflake Streamlit documentation
-3. Check `streamlit_apps/` code for inline comments
+3. Check `streamlit/` code for inline comments
 4. Review deployment logs for error messages
 
 ---

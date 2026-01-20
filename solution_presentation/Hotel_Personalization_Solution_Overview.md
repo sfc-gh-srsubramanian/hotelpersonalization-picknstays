@@ -564,7 +564,171 @@ Strategic business intelligence and KPI dashboard for Summit Hospitality Group p
 
 ---
 
-## 9. Unified Amenity Analytics
+## 9b. Hotel Intelligence Hub - Executive Dashboard
+
+### Global Portfolio Intelligence for C-Suite Decision Making
+
+A specialized executive dashboard providing portfolio-level intelligence across Summit Hospitality Group's **100 global properties** (50 AMER, 30 EMEA, 20 APAC), designed specifically for Brand Leadership, Loyalty Strategy, and Guest Services Leadership.
+
+#### Application Architecture
+
+**Deployment**:
+- **Location**: `HOTEL_PERSONALIZATION.GOLD.HOTEL_INTELLIGENCE_HUB`
+- **Technology**: Streamlit in Snowflake with KPI definition tooltips
+- **Data Scope**: 100 properties globally, 18 months history + 30 days future bookings
+- **Performance**: Cached queries (5-min TTL) from pre-aggregated Gold tables
+
+**Access**:
+- **Via Snowsight**: Projects → Streamlit → "Hotel Intelligence Hub"
+- **CLI**: `./run.sh intel-hub` for status and validation
+- **Target Users**: COO, EVP Operations, Regional Leaders, CMO, VP Loyalty, CX Leadership
+
+#### Dashboard Tabs
+
+**1. 📈 Portfolio Overview** - *Executive Command Center*
+
+**Purpose**: Regional and brand-level performance monitoring for portfolio consistency and outlier identification
+
+**Key Features**:
+- **5 KPI Cards** (with self-explanatory tooltips):
+  - Occupancy % - Industry benchmark: 65-75%
+  - ADR (Average Daily Rate) - Premium positioning indicator
+  - RevPAR - Primary portfolio performance metric
+  - Repeat Stay Rate % - Loyalty strength indicator  
+  - Guest Satisfaction Index - Target: 4.0+ on 5-point scale
+- **Performance Visualizations**:
+  - RevPAR by Brand/Region with color-coded performance
+  - Occupancy & ADR dual-axis trend analysis
+  - Experience Health Heatmap (Brand × Region satisfaction matrix)
+- **Outliers & Exceptions Table**:
+  - Properties with >15% RevPAR deviation vs brand average
+  - Satisfaction gaps exceeding ±0.3 vs regional norms
+  - Service case rates >100 per 1,000 stays (operational red flags)
+  - Personalization coverage levels (Low/Medium/High guest knowledge)
+- **AI-Powered Analysis**:
+  - Pre-configured prompts for Hotel Intelligence Master Agent
+  - Natural language questions: "What's driving RevPAR changes across brands?"
+
+**Business Value**: Enables executive teams to quickly identify performance outliers, regional inconsistencies, and operational issues requiring leadership attention across the global portfolio.
+
+**2. 🎯 Loyalty Intelligence** - *Segment Behavior & Retention*
+
+**Purpose**: Understanding what drives guest loyalty and identifying retention opportunities across customer segments
+
+**Key Features**:
+- **5 KPI Cards** (with tooltips):
+  - Active Loyalty Members - Program engagement indicator
+  - Repeat Stay Rate - Retention success by segment
+  - Avg Spend per Stay - Guest value and upsell effectiveness
+  - High-Value Guest Share % - Revenue concentration metric
+  - At-Risk Segments - Low repeat rate segments requiring action
+- **Segment Analysis Charts**:
+  - Repeat Rate by Loyalty Tier (Diamond > Platinum > Gold > Silver)
+  - Spend Mix by Tier (stacked bar: Room/F&B/Spa/Other revenue)
+  - Experience Affinity Distribution (what drives loyalty: Dining/Wellness/Convenience)
+- **Top Loyalty Opportunities Table** (15 segments):
+  - Strategic focus recommendations (Retention/Upsell/Engagement)
+  - Experience affinity tags (preferred amenity categories)
+  - Top friction drivers (most common issues per segment)
+  - Underutilized opportunities (growth potential services)
+- **High-Performing vs. At-Risk Segment Breakouts**:
+  - Segments with >50% repeat rate (best practices to replicate)
+  - Segments with <30% repeat rate (immediate intervention needed)
+
+**Business Value**: Empowers loyalty strategy teams to allocate resources effectively, replicate successful engagement patterns, and prevent high-value segment churn through targeted interventions.
+
+**3. 💬 CX & Service Signals** - *Operational Excellence & VIP Management*
+
+**Purpose**: Service quality monitoring, issue trend identification, and proactive VIP guest management
+
+**Key Features**:
+- **5 KPI Cards** (with tooltips):
+  - Service Case Rate - Benchmark: 50-100 per 1,000 stays
+  - Avg Resolution Time - Target: <4h critical, <8h high priority
+  - Negative Sentiment Rate % - Target: <5%
+  - Service Recovery Success % - Target: >70% for VIPs
+  - At-Risk High-Value Guests - $10K+ LTV guests with recent issues
+- **Service Intelligence Visualizations**:
+  - Top 10 Service Issue Drivers (ranked by frequency)
+  - Service Case Rate by Brand (operational consistency check)
+  - Recovery Success by Brand (effectiveness comparison)
+- **VIP Watchlist** - Next 7 Days Arrivals:
+  - **Anonymized Guest IDs** with loyalty tier (Diamond/Platinum/Gold)
+  - **Past Issue Count** (last 90 days) - 2+ flags require attention
+  - **Preference Tags** (room type, floor, quiet room, high speed WiFi)
+  - **Churn Risk Score** (0-100) with color coding:
+    - 🔴 High Risk (75+): Immediate pre-arrival contact needed
+    - 🟡 Medium Risk (50-74): Service team briefing recommended
+    - 🟢 Low Risk (<50): Standard service protocol
+  - **Lifetime Value** and arrival date for prioritization
+  - **CSV Export** for operational team distribution
+- **Proactive Action Recommendations**:
+  - Immediate actions: Pre-arrival contact for churn risk >75
+  - Operational improvements: Root cause analysis for top issue drivers
+
+**Business Value**: Enables service recovery teams to proactively manage VIP arrivals, prevent churn among high-value guests, and identify systemic service quality issues requiring operational fixes.
+
+#### Technical Innovations
+
+**Self-Explanatory KPIs**:
+- **Tooltip Definitions** for all metrics (hover over ℹ️ icon)
+- **Industry Benchmarks** provided in each tooltip
+- **Calculation Methods** explained in plain language
+- **Target Values** specified for performance assessment
+
+**Executive-Friendly Formatting**:
+- **Smart Number Formatting**: $1.2M, 85.3%, 4.5/5.0
+- **Color-Coded Indicators**: 🔴 Red (urgent), 🟡 Yellow (attention), 🟢 Green (healthy)
+- **Actionable Prioritization**: Tables sorted by risk, revenue impact, or performance deviation
+
+**AI Integration**:
+- **Pre-Configured Prompts** for Hotel Intelligence Master Agent
+- **Natural Language Access**: "Which properties have declining satisfaction trends?"
+- **6 Semantic Views**: Portfolio, Loyalty, CX Intelligence + 3 core guest/amenity views
+
+#### Data Foundation
+
+**Scale**:
+- **100 Properties Globally**: 50 AMER (US, Canada, Mexico), 30 EMEA (UK, Europe, Middle East), 20 APAC (Asia, Oceania)
+- **~40K Intelligence Hub Records**: Service cases, sentiment data, recovery actions
+- **~3,000 Future Bookings**: Distributed daily for next 30 days (VIP arrival visibility)
+- **18 Months History**: Complete service case, sentiment, and issue tracking
+
+**Quality**:
+- **Bronze Layer** (Raw Data):
+  - `SERVICE_CASES`: ~22K cases across 18 months
+  - `ISSUE_TRACKING`: Detailed issue driver categorization
+  - `SENTIMENT_DATA`: Multi-source sentiment from reviews, surveys, social
+  - `SERVICE_RECOVERY_ACTIONS`: Recovery attempts and guest responses
+- **Silver Layer** (Enriched):
+  - `SERVICE_CASES_ENRICHED`: VIP flags, repeat issue detection, sentiment correlation
+  - `ISSUE_DRIVERS_AGGREGATED`: Property-level issue trending
+  - `SENTIMENT_PROCESSED`: High-value guest sentiment analysis
+- **Gold Layer** (Analytics):
+  - `PORTFOLIO_PERFORMANCE_KPIS`: Daily metrics by property, brand, region
+  - `LOYALTY_SEGMENT_INTELLIGENCE`: Segment behavior with strategic recommendations
+  - `EXPERIENCE_SERVICE_SIGNALS`: 30-day operational intelligence
+
+#### Business Impact
+
+**Executive Decision Velocity**:
+- **Real-Time Portfolio Health**: Identify outliers across 100 properties in <2 minutes
+- **Proactive VIP Management**: 7-day lookahead for high-value guest arrivals
+- **Regional Consistency Monitoring**: Compare satisfaction across AMER/EMEA/APAC at a glance
+
+**Strategic Insights**:
+- **Loyalty Investment ROI**: Identify which segments deliver highest repeat rates vs. cost
+- **Operational Excellence**: Track service recovery effectiveness by brand
+- **Risk Mitigation**: Detect declining sentiment among $10K+ LTV guests before churn
+
+**Cost Optimization**:
+- **Native Snowflake Deployment**: No separate executive BI tool licensing required
+- **Pre-Aggregated Gold Tables**: Sub-second query response times
+- **Auto-Suspend Warehouse**: Compute costs only when dashboard is actively used
+
+---
+
+## 10. Unified Amenity Analytics
 
 ### Single Source of Truth for All Services
 
