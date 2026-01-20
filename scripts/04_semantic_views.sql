@@ -280,8 +280,6 @@ DIMENSIONS (
 )
 METRICS (
     PUBLIC SENTIMENT.sentiment_score AS AVG(sentiment.sentiment_score),
-    PUBLIC SENTIMENT.sentiment_score AS MIN(sentiment.sentiment_score),
-    PUBLIC SENTIMENT.sentiment_score AS MAX(sentiment.sentiment_score),
     PUBLIC SENTIMENT.sentiment_id AS COUNT(sentiment.sentiment_id),
     PUBLIC STAYS.total_charges AS SUM(stays.total_charges),
     PUBLIC STAYS.stay_id AS COUNT(DISTINCT stays.stay_id)
