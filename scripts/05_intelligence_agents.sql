@@ -387,6 +387,16 @@ instructions:
     - Room preferences and special requests for arriving guests
     - Proactive service preparation and personalized welcome planning
     
+    **Guest Preferences Intelligence** (NEW - Detailed Preferences):
+    - Room preferences: type, floor, view, bed type, pillow type
+    - Temperature preferences and comfort settings (68-79°F range)
+    - Lighting, noise level, and accessibility needs
+    - Service preferences: dining, spa, fitness, business services
+    - Communication preferences and check-in/check-out times
+    - Preference analysis by loyalty tier, nationality, and demographics
+    - Track preference completeness scores and coverage
+    - Enable queries like "What are the most common pillow preferences for Diamond guests?"
+    
     **Your Capabilities**:
     - Answer questions about guest behavior, preferences, and lifetime value
     - Provide personalization and upsell recommendations
@@ -517,6 +527,24 @@ instructions:
       answer: "I'll identify today's arrivals with spa service preferences or history to enable proactive spa upsell offers."
     - question: "List next 30 days arrivals with late check-out requests"
       answer: "I'll query future bookings with special requests for late check-out to help with room availability planning."
+    
+    # Guest Preferences Intelligence (NEW - Detailed Preferences Analysis)
+    - question: "What are the most common pillow preferences for Diamond guests?"
+      answer: "I'll analyze pillow type preferences (firm, soft, memory foam, feather) for Diamond loyalty tier members."
+    - question: "Which room types do Gold members prefer?"
+      answer: "I'll show room type preference distribution (Standard King, Suite, Executive, etc.) for Gold tier guests."
+    - question: "What percentage of guests prefer high floors vs low floors?"
+      answer: "I'll break down floor preference distribution across all guests with preferences."
+    - question: "Show me temperature preferences by loyalty tier"
+      answer: "I'll analyze average preferred room temperature (68-79°F range) for each loyalty tier."
+    - question: "What are the most requested room views?"
+      answer: "I'll rank view preferences (ocean, city, garden, mountain, pool) by popularity."
+    - question: "Which guests need accessibility accommodations?"
+      answer: "I'll identify guests with accessibility_needs flagged for proactive room assignment."
+    - question: "What is the preferred communication method for European guests?"
+      answer: "I'll analyze communication preferences (email, SMS, phone, app) for guests from European nationalities."
+    - question: "Show me preference completeness scores by loyalty tier"
+      answer: "I'll calculate average preference completeness scores to identify which segments have the most complete preference data."
 
 tools:
   # Existing guest & personalization tools
@@ -547,6 +575,10 @@ tools:
   - tool_spec:
       type: "cortex_analyst_text_to_sql"
       name: "guest_arrivals_intelligence"
+  # Guest Preferences tool (NEW - detailed preferences analysis)
+  - tool_spec:
+      type: "cortex_analyst_text_to_sql"
+      name: "guest_preferences_intelligence"
 
 tool_resources:
   # Existing resources
@@ -569,6 +601,9 @@ tool_resources:
   # Guest Arrivals
   guest_arrivals_intelligence:
     semantic_view: "HOTEL_PERSONALIZATION.SEMANTIC_VIEWS.GUEST_ARRIVALS_VIEW"
+  # Guest Preferences (NEW - enables detailed preference queries)
+  guest_preferences_intelligence:
+    semantic_view: "HOTEL_PERSONALIZATION.SEMANTIC_VIEWS.GUEST_PREFERENCES_VIEW"
 $$;
 
 -- ============================================================================

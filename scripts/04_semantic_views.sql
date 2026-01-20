@@ -337,11 +337,56 @@ METRICS (
 )
 COMMENT='Future guest arrivals (confirmed bookings) with loyalty status, service history, and property context. Enables VIP watchlist queries, service recovery planning, and proactive personalized service preparation for upcoming arrivals.';
 
+-- =====================================================================
+-- 9. GUEST_PREFERENCES_VIEW (Room & Service Preferences)
+-- Purpose: Natural language access to guest preferences for personalization
+-- Enables queries like "What are the most common pillow preferences for Diamond guests?"
+-- =====================================================================
+
+CREATE OR REPLACE SEMANTIC VIEW GUEST_PREFERENCES_VIEW
+TABLES (
+    PREFS AS GOLD.PREFERENCES_CONSOLIDATED PRIMARY KEY (guest_id),
+    GUESTS AS BRONZE.GUEST_PROFILES PRIMARY KEY (guest_id),
+    LOYALTY AS BRONZE.LOYALTY_PROGRAM PRIMARY KEY (guest_id)
+)
+RELATIONSHIPS (
+    PREFS_TO_GUESTS AS PREFS(guest_id) REFERENCES GUESTS(guest_id),
+    GUESTS_TO_LOYALTY AS GUESTS(guest_id) REFERENCES LOYALTY(guest_id)
+)
+DIMENSIONS (
+    PUBLIC PREFS.guest_id AS guest_id,
+    PUBLIC GUESTS.first_name AS first_name,
+    PUBLIC GUESTS.last_name AS last_name,
+    PUBLIC GUESTS.nationality AS nationality,
+    PUBLIC GUESTS.language_preference AS language_preference,
+    PUBLIC LOYALTY.tier_level AS loyalty_tier,
+    PUBLIC PREFS.room_type_preference AS room_type_preference,
+    PUBLIC PREFS.floor_preference AS floor_preference,
+    PUBLIC PREFS.view_preference AS view_preference,
+    PUBLIC PREFS.bed_type_preference AS bed_type_preference,
+    PUBLIC PREFS.smoking_preference AS smoking_preference,
+    PUBLIC PREFS.accessibility_needs AS accessibility_needs,
+    PUBLIC PREFS.temperature_category AS temperature_category,
+    PUBLIC PREFS.lighting_preference AS lighting_preference,
+    PUBLIC PREFS.pillow_type_preference AS pillow_type_preference,
+    PUBLIC PREFS.noise_level_preference AS noise_level_preference,
+    PUBLIC PREFS.preferred_communication_method AS communication_method,
+    PUBLIC PREFS.last_updated AS preference_last_updated
+)
+METRICS (
+    PUBLIC PREFS.temperature_preference AS AVG(prefs.temperature_preference),
+    PUBLIC PREFS.temperature_preference AS MIN(prefs.temperature_preference),
+    PUBLIC PREFS.temperature_preference AS MAX(prefs.temperature_preference),
+    PUBLIC PREFS.preference_completeness_score AS AVG(prefs.preference_completeness_score),
+    PUBLIC PREFS.guest_id AS COUNT(DISTINCT prefs.guest_id)
+)
+COMMENT='Guest room and service preferences for personalized experiences. Track preferences by loyalty tier, nationality, and demographics. Query pillow types, room preferences, temperature settings, and communication methods for targeted service delivery.';
+
 -- ============================================================================
 -- Summary
 -- ============================================================================
 SELECT 'All semantic views created successfully!' AS STATUS;
 SELECT 
-    '8 semantic views: Guest Analytics, Personalization, Amenity Analytics, Portfolio Intelligence, Loyalty Intelligence, CX & Service Intelligence, Guest Sentiment Intelligence, Guest Arrivals' AS VIEWS_CREATED,
+    '9 semantic views: Guest Analytics, Personalization, Amenity Analytics, Portfolio Intelligence, Loyalty Intelligence, CX & Service Intelligence, Guest Sentiment Intelligence, Guest Arrivals, Guest Preferences' AS VIEWS_CREATED,
     'Ready for Intelligence Agents setup' AS NEXT_STEP;
 
