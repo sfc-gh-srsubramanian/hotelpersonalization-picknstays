@@ -44,7 +44,7 @@ def load_portfolio_kpis(days_back=30, hotel_id=None, region=None, brand=None):
     
     return session.sql(query).to_pandas()
 
-@st.cache_data(ttl=300)
+@st.cache_data(ttl=0)  # No cache - always fresh data for debugging
 def load_loyalty_segments():
     """
     Load loyalty segment intelligence from Gold table

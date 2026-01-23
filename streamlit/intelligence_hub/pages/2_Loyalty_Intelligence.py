@@ -26,6 +26,12 @@ if df_segments.empty:
     st.warning("No loyalty segment data available.")
     st.stop()
 
+# DEBUG: Show what data we loaded
+with st.expander("🔍 DEBUG: View Raw Data"):
+    st.write(f"**Rows loaded:** {len(df_segments)}")
+    st.write(f"**Columns:** {list(df_segments.columns)}")
+    st.dataframe(df_segments[['LOYALTY_TIER', 'ACTIVE_MEMBERS', 'REPEAT_RATE_PCT', 'AVG_SPEND_PER_STAY']].head())
+
 # =====================================================================
 # KPI Cards
 # =====================================================================
