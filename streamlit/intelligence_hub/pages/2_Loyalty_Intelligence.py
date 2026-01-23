@@ -97,14 +97,15 @@ with chart_col1:
     # Since we have one row per tier, just select and order the data
     tier_data = df_segments[['LOYALTY_TIER', 'REPEAT_RATE_PCT', 'ACTIVE_MEMBERS']].copy()
     
-    # Define proper tier order (Diamond should be highest)
-    tier_order = ['Diamond', 'Gold', 'Silver', 'Blue', 'Non-Member']
-    tier_data['LOYALTY_TIER'] = pd.Categorical(tier_data['LOYALTY_TIER'], categories=tier_order, ordered=True)
-    tier_data = tier_data.sort_values('LOYALTY_TIER').reset_index(drop=True)
+    # Define proper tier order with manual sort key
+    tier_order_map = {'Diamond': 0, 'Gold': 1, 'Silver': 2, 'Blue': 3, 'Non-Member': 4}
+    tier_data['sort_order'] = tier_data['LOYALTY_TIER'].map(tier_order_map)
+    tier_data = tier_data.sort_values('sort_order').drop('sort_order', axis=1).reset_index(drop=True)
     
     # DEBUG
     st.write("**DEBUG tier_data before chart:**")
     st.dataframe(tier_data)
+    st.write(f"**Data types:** {tier_data.dtypes.to_dict()}")
     
     fig1 = px.bar(
         tier_data,
@@ -125,10 +126,10 @@ with chart_col2:
     # Since we have one row per tier, just select and order the data
     spend_data = df_segments[['LOYALTY_TIER', 'AVG_SPEND_PER_STAY', 'ACTIVE_MEMBERS']].copy()
     
-    # Define proper tier order (Diamond should be highest)
-    tier_order = ['Diamond', 'Gold', 'Silver', 'Blue', 'Non-Member']
-    spend_data['LOYALTY_TIER'] = pd.Categorical(spend_data['LOYALTY_TIER'], categories=tier_order, ordered=True)
-    spend_data = spend_data.sort_values('LOYALTY_TIER')
+    # Define proper tier order with manual sort key
+    tier_order_map = {'Diamond': 0, 'Gold': 1, 'Silver': 2, 'Blue': 3, 'Non-Member': 4}
+    spend_data['sort_order'] = spend_data['LOYALTY_TIER'].map(tier_order_map)
+    spend_data = spend_data.sort_values('sort_order').drop('sort_order', axis=1).reset_index(drop=True)
     
     fig2 = px.bar(
         spend_data,
@@ -150,10 +151,10 @@ st.caption("Breakdown of revenue sources: Room, F&B, Spa, Other")
 # Since we have one row per tier, just select and order the data
 spend_mix_data = df_segments[['LOYALTY_TIER', 'ROOM_REVENUE_PCT', 'FB_REVENUE_PCT', 'SPA_REVENUE_PCT', 'OTHER_REVENUE_PCT']].copy()
 
-# Apply tier ordering
-tier_order = ['Diamond', 'Gold', 'Silver', 'Blue', 'Non-Member']
-spend_mix_data['LOYALTY_TIER'] = pd.Categorical(spend_mix_data['LOYALTY_TIER'], categories=tier_order, ordered=True)
-spend_mix_data = spend_mix_data.sort_values('LOYALTY_TIER')
+# Apply tier ordering with manual sort key
+tier_order_map = {'Diamond': 0, 'Gold': 1, 'Silver': 2, 'Blue': 3, 'Non-Member': 4}
+spend_mix_data['sort_order'] = spend_mix_data['LOYALTY_TIER'].map(tier_order_map)
+spend_mix_data = spend_mix_data.sort_values('sort_order').drop('sort_order', axis=1).reset_index(drop=True)
 
 fig3 = go.Figure()
 fig3.add_trace(go.Bar(name='Room', x=spend_mix_data['LOYALTY_TIER'], y=spend_mix_data['ROOM_REVENUE_PCT']))
