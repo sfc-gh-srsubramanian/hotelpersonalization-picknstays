@@ -116,8 +116,8 @@ with chart_col2:
     # Set LOYALTY_TIER as index for simple bar chart
     spend_data = spend_data.set_index('LOYALTY_TIER')
     
-    # Use Streamlit's simple bar chart
-    st.bar_chart(spend_data['AVG_SPEND_PER_STAY'], height=350, color='#10B981')
+    # Use Streamlit's simple bar chart (no color param - not supported in Snowflake Streamlit)
+    st.bar_chart(spend_data['AVG_SPEND_PER_STAY'], height=350)
 
 # Spend Mix by Tier
 st.markdown("#### Revenue Mix by Loyalty Tier")
