@@ -119,9 +119,9 @@ with chart_col2:
     # Use Streamlit's simple bar chart (no color param - not supported in Snowflake Streamlit)
     st.bar_chart(spend_data['AVG_SPEND_PER_STAY'], height=350)
 
-# Spend Mix by Tier
-st.markdown("#### Revenue Mix by Loyalty Tier")
-st.caption("Breakdown of revenue sources: Room, F&B, Spa, Other")
+# Spend Mix by Tier - LINE CHART to show trends
+st.markdown("#### Revenue Mix by Loyalty Tier (Trends)")
+st.caption("How each revenue source changes across loyalty tiers - notice Spa/F&B trends")
 
 # Since we have one row per tier, just select and order the data
 spend_mix_data = df_segments[['LOYALTY_TIER', 'ROOM_REVENUE_PCT', 'FB_REVENUE_PCT', 'SPA_REVENUE_PCT', 'OTHER_REVENUE_PCT']].copy()
@@ -142,8 +142,8 @@ spend_mix_data = spend_mix_data.rename(columns={
 # Set LOYALTY_TIER as index
 spend_mix_data = spend_mix_data.set_index('LOYALTY_TIER')
 
-# Use Streamlit's bar chart (stack param not supported in Snowflake Streamlit, but multiple columns auto-group)
-st.bar_chart(spend_mix_data[['Room', 'F&B', 'Spa', 'Other']], height=350)
+# Use LINE CHART to show trends across tiers (makes Spa/Other trends visible!)
+st.line_chart(spend_mix_data[['Room', 'F&B', 'Spa', 'Other']], height=350)
 
 # =====================================================================
 # Top Loyalty Opportunities Table
