@@ -159,12 +159,13 @@ st.markdown("---")
 st.markdown("### 🎯 Top Loyalty Opportunities")
 st.caption("Segment-level insights and strategic recommendations")
 
-# Prepare table data with tooltips
+# Prepare table data with strategic insights per tier
 opportunities_df = df_segments[[
     'SEGMENT', 'REPEAT_RATE_PCT', 'AVG_SPEND_PER_STAY', 'TOP_FRICTION_DRIVER',
     'RECOMMENDED_FOCUS', 'EXPERIENCE_AFFINITY', 'UNDERUTILIZED_OPPORTUNITY'
 ]].copy()
 
+# Rename columns
 opportunities_df = opportunities_df.rename(columns={
     'SEGMENT': 'Segment',
     'REPEAT_RATE_PCT': 'Repeat Rate (%)',
@@ -173,7 +174,15 @@ opportunities_df = opportunities_df.rename(columns={
     'RECOMMENDED_FOCUS': 'Focus Area',
     'EXPERIENCE_AFFINITY': 'Experience Affinity',
     'UNDERUTILIZED_OPPORTUNITY': 'Growth Opportunity'
-}).sort_values('Avg Spend ($)', ascending=False).head(15)
+})
+
+# Extract loyalty tier from segment (e.g., "Diamond - Leisure" -> "Diamond")
+opportunities_df['tier_only'] = opportunities_df['Segment'].str.split(' - ').str[0]
+
+# Sort by tier order: Blue → Silver → Gold → Diamond → Non-Member
+tier_order_map = {'Blue': 0, 'Silver': 1, 'Gold': 2, 'Diamond': 3, 'Non-Member': 4}
+opportunities_df['sort_order'] = opportunities_df['tier_only'].map(tier_order_map)
+opportunities_df = opportunities_df.sort_values('sort_order').drop(['sort_order', 'tier_only'], axis=1).reset_index(drop=True)
 
 st.caption("💡 **Repeat Rate**: % of guests who made multiple stays | **Top Friction Point**: Most common service issue | **Experience Affinity**: Primary service preference | **Growth Opportunity**: High appeal, low penetration service")
 
@@ -182,7 +191,8 @@ st.dataframe(
         'Repeat Rate (%)': '{:.1f}%',
         'Avg Spend ($)': '${:,.0f}'
     }),
-    height=400
+    hide_index=True,
+    use_container_width=True
 )
 
 # =====================================================================
