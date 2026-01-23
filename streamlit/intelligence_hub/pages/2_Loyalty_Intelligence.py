@@ -148,7 +148,6 @@ st.dataframe(
         'Spa %': '{:.1f}%',
         'Other %': '{:.1f}%'
     }),
-    hide_index=True,
     use_container_width=True
 )
 
@@ -191,7 +190,6 @@ st.dataframe(
         'Repeat Rate (%)': '{:.1f}%',
         'Avg Spend ($)': '${:,.0f}'
     }),
-    hide_index=True,
     use_container_width=True
 )
 
