@@ -26,12 +26,6 @@ if df_segments.empty:
     st.warning("No loyalty segment data available.")
     st.stop()
 
-# DEBUG: Show what data we loaded
-with st.expander("🔍 DEBUG: View Raw Data"):
-    st.write(f"**Rows loaded:** {len(df_segments)}")
-    st.write(f"**Columns:** {list(df_segments.columns)}")
-    st.dataframe(df_segments[['LOYALTY_TIER', 'ACTIVE_MEMBERS', 'REPEAT_RATE_PCT', 'AVG_SPEND_PER_STAY']].head())
-
 # =====================================================================
 # KPI Cards
 # =====================================================================
@@ -95,54 +89,35 @@ with chart_col1:
     # Repeat Rate by Loyalty Tier
     st.markdown("#### Repeat Rate by Loyalty Tier")
     # Since we have one row per tier, just select and order the data
-    tier_data = df_segments[['LOYALTY_TIER', 'REPEAT_RATE_PCT', 'ACTIVE_MEMBERS']].copy()
+    tier_data = df_segments[['LOYALTY_TIER', 'REPEAT_RATE_PCT']].copy()
     
     # Define proper tier order with manual sort key
     tier_order_map = {'Diamond': 0, 'Gold': 1, 'Silver': 2, 'Blue': 3, 'Non-Member': 4}
     tier_data['sort_order'] = tier_data['LOYALTY_TIER'].map(tier_order_map)
     tier_data = tier_data.sort_values('sort_order').drop('sort_order', axis=1).reset_index(drop=True)
     
-    # DEBUG
-    st.write("**DEBUG tier_data before chart:**")
-    st.dataframe(tier_data)
-    st.write(f"**Data types:** {tier_data.dtypes.to_dict()}")
+    # Set LOYALTY_TIER as index for simple bar chart
+    tier_data = tier_data.set_index('LOYALTY_TIER')
     
-    fig1 = px.bar(
-        tier_data,
-        x='LOYALTY_TIER',
-        y='REPEAT_RATE_PCT',
-        title='Average Repeat Rate by Tier',
-        template='plotly_white',
-        color='REPEAT_RATE_PCT',
-        color_continuous_scale='Blues'
-    )
-    fig1.update_layout(height=350, showlegend=False)
-    fig1.update_yaxes(title='Repeat Rate (%)', range=[0, 100])
-    st.plotly_chart(fig1, use_container_width=True)
+    # Use Streamlit's simple bar chart
+    st.bar_chart(tier_data['REPEAT_RATE_PCT'], height=350)
 
 with chart_col2:
     # Spend by Tier
     st.markdown("#### Avg Spend per Stay by Tier")
     # Since we have one row per tier, just select and order the data
-    spend_data = df_segments[['LOYALTY_TIER', 'AVG_SPEND_PER_STAY', 'ACTIVE_MEMBERS']].copy()
+    spend_data = df_segments[['LOYALTY_TIER', 'AVG_SPEND_PER_STAY']].copy()
     
     # Define proper tier order with manual sort key
     tier_order_map = {'Diamond': 0, 'Gold': 1, 'Silver': 2, 'Blue': 3, 'Non-Member': 4}
     spend_data['sort_order'] = spend_data['LOYALTY_TIER'].map(tier_order_map)
     spend_data = spend_data.sort_values('sort_order').drop('sort_order', axis=1).reset_index(drop=True)
     
-    fig2 = px.bar(
-        spend_data,
-        x='LOYALTY_TIER',
-        y='AVG_SPEND_PER_STAY',
-        title='Average Spend per Stay by Tier',
-        template='plotly_white',
-        color='AVG_SPEND_PER_STAY',
-        color_continuous_scale='Greens'
-    )
-    fig2.update_layout(height=350, showlegend=False)
-    fig2.update_yaxes(title='Avg Spend ($)', range=[0, 1000])
-    st.plotly_chart(fig2, use_container_width=True)
+    # Set LOYALTY_TIER as index for simple bar chart
+    spend_data = spend_data.set_index('LOYALTY_TIER')
+    
+    # Use Streamlit's simple bar chart
+    st.bar_chart(spend_data['AVG_SPEND_PER_STAY'], height=350, color='#10B981')
 
 # Spend Mix by Tier
 st.markdown("#### Revenue Mix by Loyalty Tier")
@@ -156,20 +131,19 @@ tier_order_map = {'Diamond': 0, 'Gold': 1, 'Silver': 2, 'Blue': 3, 'Non-Member':
 spend_mix_data['sort_order'] = spend_mix_data['LOYALTY_TIER'].map(tier_order_map)
 spend_mix_data = spend_mix_data.sort_values('sort_order').drop('sort_order', axis=1).reset_index(drop=True)
 
-fig3 = go.Figure()
-fig3.add_trace(go.Bar(name='Room', x=spend_mix_data['LOYALTY_TIER'], y=spend_mix_data['ROOM_REVENUE_PCT']))
-fig3.add_trace(go.Bar(name='F&B', x=spend_mix_data['LOYALTY_TIER'], y=spend_mix_data['FB_REVENUE_PCT']))
-fig3.add_trace(go.Bar(name='Spa', x=spend_mix_data['LOYALTY_TIER'], y=spend_mix_data['SPA_REVENUE_PCT']))
-fig3.add_trace(go.Bar(name='Other', x=spend_mix_data['LOYALTY_TIER'], y=spend_mix_data['OTHER_REVENUE_PCT']))
+# Rename columns for chart legend
+spend_mix_data = spend_mix_data.rename(columns={
+    'ROOM_REVENUE_PCT': 'Room',
+    'FB_REVENUE_PCT': 'F&B',
+    'SPA_REVENUE_PCT': 'Spa',
+    'OTHER_REVENUE_PCT': 'Other'
+})
 
-fig3.update_layout(
-    barmode='stack',
-    height=350,
-    template='plotly_white',
-    yaxis_title='Revenue Mix (%)',
-    xaxis_title='Loyalty Tier'
-)
-st.plotly_chart(fig3, use_container_width=True)
+# Set LOYALTY_TIER as index
+spend_mix_data = spend_mix_data.set_index('LOYALTY_TIER')
+
+# Use Streamlit's area chart for stacked view
+st.bar_chart(spend_mix_data[['Room', 'F&B', 'Spa', 'Other']], height=350, stack=True)
 
 # =====================================================================
 # Top Loyalty Opportunities Table
