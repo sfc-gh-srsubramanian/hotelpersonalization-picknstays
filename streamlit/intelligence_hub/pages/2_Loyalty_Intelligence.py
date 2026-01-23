@@ -119,9 +119,9 @@ with chart_col2:
     # Use Streamlit's simple bar chart (no color param - not supported in Snowflake Streamlit)
     st.bar_chart(spend_data['AVG_SPEND_PER_STAY'], height=350)
 
-# Spend Mix by Tier - LINE CHART to show trends
-st.markdown("#### Revenue Mix by Loyalty Tier (Trends)")
-st.caption("How each revenue source changes across loyalty tiers - notice Spa/F&B trends")
+# Spend Mix by Tier - Simple Table
+st.markdown("#### Revenue Mix by Loyalty Tier")
+st.caption("Revenue breakdown across tiers (Room dominates ~75-80% for all)")
 
 # Since we have one row per tier, just select and order the data
 spend_mix_data = df_segments[['LOYALTY_TIER', 'ROOM_REVENUE_PCT', 'FB_REVENUE_PCT', 'SPA_REVENUE_PCT', 'OTHER_REVENUE_PCT']].copy()
@@ -131,19 +131,26 @@ tier_order_map = {'Blue': 0, 'Silver': 1, 'Gold': 2, 'Diamond': 3, 'Non-Member':
 spend_mix_data['sort_order'] = spend_mix_data['LOYALTY_TIER'].map(tier_order_map)
 spend_mix_data = spend_mix_data.sort_values('sort_order').drop('sort_order', axis=1).reset_index(drop=True)
 
-# Rename columns for chart legend
-spend_mix_data = spend_mix_data.rename(columns={
-    'ROOM_REVENUE_PCT': 'Room',
-    'FB_REVENUE_PCT': 'F&B',
-    'SPA_REVENUE_PCT': 'Spa',
-    'OTHER_REVENUE_PCT': 'Other'
+# Rename columns for display
+spend_mix_display = spend_mix_data.rename(columns={
+    'LOYALTY_TIER': 'Loyalty Tier',
+    'ROOM_REVENUE_PCT': 'Room %',
+    'FB_REVENUE_PCT': 'F&B %',
+    'SPA_REVENUE_PCT': 'Spa %',
+    'OTHER_REVENUE_PCT': 'Other %'
 })
 
-# Set LOYALTY_TIER as index
-spend_mix_data = spend_mix_data.set_index('LOYALTY_TIER')
-
-# Use LINE CHART to show trends across tiers (makes Spa/Other trends visible!)
-st.line_chart(spend_mix_data[['Room', 'F&B', 'Spa', 'Other']], height=350)
+# Show as formatted table
+st.dataframe(
+    spend_mix_display[['Loyalty Tier', 'Room %', 'F&B %', 'Spa %', 'Other %']].style.format({
+        'Room %': '{:.1f}%',
+        'F&B %': '{:.1f}%',
+        'Spa %': '{:.1f}%',
+        'Other %': '{:.1f}%'
+    }),
+    hide_index=True,
+    use_container_width=True
+)
 
 # =====================================================================
 # Top Loyalty Opportunities Table
