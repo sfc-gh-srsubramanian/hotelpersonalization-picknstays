@@ -947,6 +947,7 @@ hotel_dates AS (
     SELECT 
         ds.performance_date,
         hp.hotel_id,
+        hp.hotel_name,
         hp.brand,
         hp.category,
         hp.region,
@@ -976,6 +977,7 @@ daily_performance AS (
     SELECT 
         hd.performance_date,
         hd.hotel_id,
+        hd.hotel_name,
         hd.brand,
         hd.category,
         hd.region,

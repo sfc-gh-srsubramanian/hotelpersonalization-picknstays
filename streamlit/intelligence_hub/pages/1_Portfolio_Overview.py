@@ -261,12 +261,12 @@ outliers = property_metrics[
 ].copy()
 
 if not outliers.empty:
-    # Use Hotel Name (Brand + Region) instead of IDs
-    outliers['Hotel'] = outliers['BRAND'] + ' - ' + outliers['REGION']
+    # Use actual hotel name from the database (includes unique city/location)
     outliers_display = outliers[[
-        'Hotel', 'BRAND', 'REGION', 'revpar_delta_pct', 'satisfaction_delta',
+        'HOTEL_NAME', 'BRAND', 'REGION', 'revpar_delta_pct', 'satisfaction_delta',
         'SERVICE_CASE_RATE_PER_1000_STAYS', 'PERSONALIZATION_COVERAGE_PCT'
     ]].rename(columns={
+        'HOTEL_NAME': 'Hotel',
         'revpar_delta_pct': 'RevPAR Δ vs Brand (%)',
         'satisfaction_delta': 'Satisfaction Δ vs Region',
         'SERVICE_CASE_RATE_PER_1000_STAYS': 'Service Case Rate',
