@@ -88,13 +88,8 @@ chart_col1, chart_col2 = st.columns(2)
 with chart_col1:
     # Repeat Rate by Loyalty Tier
     st.markdown("#### Repeat Rate by Loyalty Tier")
-    # Group by tier and calculate weighted average
-    tier_data = df_segments.groupby('LOYALTY_TIER').apply(
-        lambda x: pd.Series({
-            'REPEAT_RATE_PCT': (x['REPEAT_RATE_PCT'] * x['ACTIVE_MEMBERS']).sum() / x['ACTIVE_MEMBERS'].sum(),
-            'ACTIVE_MEMBERS': x['ACTIVE_MEMBERS'].sum()
-        })
-    ).reset_index()
+    # Since we have one row per tier, just select and order the data
+    tier_data = df_segments[['LOYALTY_TIER', 'REPEAT_RATE_PCT', 'ACTIVE_MEMBERS']].copy()
     
     # Define proper tier order (Diamond should be highest)
     tier_order = ['Diamond', 'Gold', 'Silver', 'Blue', 'Non-Member']
@@ -111,19 +106,14 @@ with chart_col1:
         color_continuous_scale='Blues'
     )
     fig1.update_layout(height=350, showlegend=False)
-    fig1.update_yaxes(title='Repeat Rate (%)')
+    fig1.update_yaxes(title='Repeat Rate (%)', range=[0, 100])
     st.plotly_chart(fig1, use_container_width=True)
 
 with chart_col2:
     # Spend by Tier
     st.markdown("#### Avg Spend per Stay by Tier")
-    # Group by tier and calculate weighted average
-    spend_data = df_segments.groupby('LOYALTY_TIER').apply(
-        lambda x: pd.Series({
-            'AVG_SPEND_PER_STAY': (x['AVG_SPEND_PER_STAY'] * x['ACTIVE_MEMBERS']).sum() / x['ACTIVE_MEMBERS'].sum(),
-            'ACTIVE_MEMBERS': x['ACTIVE_MEMBERS'].sum()
-        })
-    ).reset_index()
+    # Since we have one row per tier, just select and order the data
+    spend_data = df_segments[['LOYALTY_TIER', 'AVG_SPEND_PER_STAY', 'ACTIVE_MEMBERS']].copy()
     
     # Define proper tier order (Diamond should be highest)
     tier_order = ['Diamond', 'Gold', 'Silver', 'Blue', 'Non-Member']
@@ -140,20 +130,15 @@ with chart_col2:
         color_continuous_scale='Greens'
     )
     fig2.update_layout(height=350, showlegend=False)
-    fig2.update_yaxes(title='Avg Spend ($)')
+    fig2.update_yaxes(title='Avg Spend ($)', range=[0, 1000])
     st.plotly_chart(fig2, use_container_width=True)
 
 # Spend Mix by Tier
 st.markdown("#### Revenue Mix by Loyalty Tier")
 st.caption("Breakdown of revenue sources: Room, F&B, Spa, Other")
 
-# Prepare data for stacked bar
-spend_mix_data = df_segments.groupby('LOYALTY_TIER').agg({
-    'ROOM_REVENUE_PCT': 'mean',
-    'FB_REVENUE_PCT': 'mean',
-    'SPA_REVENUE_PCT': 'mean',
-    'OTHER_REVENUE_PCT': 'mean'
-}).reset_index()
+# Since we have one row per tier, just select and order the data
+spend_mix_data = df_segments[['LOYALTY_TIER', 'ROOM_REVENUE_PCT', 'FB_REVENUE_PCT', 'SPA_REVENUE_PCT', 'OTHER_REVENUE_PCT']].copy()
 
 # Apply tier ordering
 tier_order = ['Diamond', 'Gold', 'Silver', 'Blue', 'Non-Member']
