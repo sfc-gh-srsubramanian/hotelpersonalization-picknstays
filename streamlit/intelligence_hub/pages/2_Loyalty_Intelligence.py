@@ -88,9 +88,18 @@ chart_col1, chart_col2 = st.columns(2)
 with chart_col1:
     # Repeat Rate by Loyalty Tier
     st.markdown("#### Repeat Rate by Loyalty Tier")
-    tier_data = df_segments.groupby('LOYALTY_TIER').agg({
-        'REPEAT_RATE_PCT': lambda x: (x * df_segments.loc[x.index, 'ACTIVE_MEMBERS']).sum() / df_segments.loc[x.index, 'ACTIVE_MEMBERS'].sum()
-    }).reset_index().sort_values('REPEAT_RATE_PCT', ascending=False)
+    # Group by tier and calculate weighted average
+    tier_data = df_segments.groupby('LOYALTY_TIER').apply(
+        lambda x: pd.Series({
+            'REPEAT_RATE_PCT': (x['REPEAT_RATE_PCT'] * x['ACTIVE_MEMBERS']).sum() / x['ACTIVE_MEMBERS'].sum(),
+            'ACTIVE_MEMBERS': x['ACTIVE_MEMBERS'].sum()
+        })
+    ).reset_index()
+    
+    # Define proper tier order (Diamond should be highest)
+    tier_order = ['Diamond', 'Gold', 'Silver', 'Blue', 'Non-Member']
+    tier_data['LOYALTY_TIER'] = pd.Categorical(tier_data['LOYALTY_TIER'], categories=tier_order, ordered=True)
+    tier_data = tier_data.sort_values('LOYALTY_TIER')
     
     fig1 = px.bar(
         tier_data,
@@ -108,9 +117,18 @@ with chart_col1:
 with chart_col2:
     # Spend by Tier
     st.markdown("#### Avg Spend per Stay by Tier")
-    spend_data = df_segments.groupby('LOYALTY_TIER').agg({
-        'AVG_SPEND_PER_STAY': lambda x: (x * df_segments.loc[x.index, 'ACTIVE_MEMBERS']).sum() / df_segments.loc[x.index, 'ACTIVE_MEMBERS'].sum()
-    }).reset_index().sort_values('AVG_SPEND_PER_STAY', ascending=False)
+    # Group by tier and calculate weighted average
+    spend_data = df_segments.groupby('LOYALTY_TIER').apply(
+        lambda x: pd.Series({
+            'AVG_SPEND_PER_STAY': (x['AVG_SPEND_PER_STAY'] * x['ACTIVE_MEMBERS']).sum() / x['ACTIVE_MEMBERS'].sum(),
+            'ACTIVE_MEMBERS': x['ACTIVE_MEMBERS'].sum()
+        })
+    ).reset_index()
+    
+    # Define proper tier order (Diamond should be highest)
+    tier_order = ['Diamond', 'Gold', 'Silver', 'Blue', 'Non-Member']
+    spend_data['LOYALTY_TIER'] = pd.Categorical(spend_data['LOYALTY_TIER'], categories=tier_order, ordered=True)
+    spend_data = spend_data.sort_values('LOYALTY_TIER')
     
     fig2 = px.bar(
         spend_data,
@@ -136,6 +154,11 @@ spend_mix_data = df_segments.groupby('LOYALTY_TIER').agg({
     'SPA_REVENUE_PCT': 'mean',
     'OTHER_REVENUE_PCT': 'mean'
 }).reset_index()
+
+# Apply tier ordering
+tier_order = ['Diamond', 'Gold', 'Silver', 'Blue', 'Non-Member']
+spend_mix_data['LOYALTY_TIER'] = pd.Categorical(spend_mix_data['LOYALTY_TIER'], categories=tier_order, ordered=True)
+spend_mix_data = spend_mix_data.sort_values('LOYALTY_TIER')
 
 fig3 = go.Figure()
 fig3.add_trace(go.Bar(name='Room', x=spend_mix_data['LOYALTY_TIER'], y=spend_mix_data['ROOM_REVENUE_PCT']))
