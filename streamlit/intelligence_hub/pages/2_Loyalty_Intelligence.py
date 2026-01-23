@@ -91,8 +91,8 @@ with chart_col1:
     # Since we have one row per tier, just select and order the data
     tier_data = df_segments[['LOYALTY_TIER', 'REPEAT_RATE_PCT']].copy()
     
-    # Define proper tier order with manual sort key
-    tier_order_map = {'Diamond': 0, 'Gold': 1, 'Silver': 2, 'Blue': 3, 'Non-Member': 4}
+    # Define tier order: Blue → Silver → Gold → Diamond → Non-Member (ascending loyalty + non-member last)
+    tier_order_map = {'Blue': 0, 'Silver': 1, 'Gold': 2, 'Diamond': 3, 'Non-Member': 4}
     tier_data['sort_order'] = tier_data['LOYALTY_TIER'].map(tier_order_map)
     tier_data = tier_data.sort_values('sort_order').drop('sort_order', axis=1).reset_index(drop=True)
     
@@ -108,8 +108,8 @@ with chart_col2:
     # Since we have one row per tier, just select and order the data
     spend_data = df_segments[['LOYALTY_TIER', 'AVG_SPEND_PER_STAY']].copy()
     
-    # Define proper tier order with manual sort key
-    tier_order_map = {'Diamond': 0, 'Gold': 1, 'Silver': 2, 'Blue': 3, 'Non-Member': 4}
+    # Define tier order: Blue → Silver → Gold → Diamond → Non-Member (ascending loyalty + non-member last)
+    tier_order_map = {'Blue': 0, 'Silver': 1, 'Gold': 2, 'Diamond': 3, 'Non-Member': 4}
     spend_data['sort_order'] = spend_data['LOYALTY_TIER'].map(tier_order_map)
     spend_data = spend_data.sort_values('sort_order').drop('sort_order', axis=1).reset_index(drop=True)
     
@@ -126,8 +126,8 @@ st.caption("Breakdown of revenue sources: Room, F&B, Spa, Other")
 # Since we have one row per tier, just select and order the data
 spend_mix_data = df_segments[['LOYALTY_TIER', 'ROOM_REVENUE_PCT', 'FB_REVENUE_PCT', 'SPA_REVENUE_PCT', 'OTHER_REVENUE_PCT']].copy()
 
-# Apply tier ordering with manual sort key
-tier_order_map = {'Diamond': 0, 'Gold': 1, 'Silver': 2, 'Blue': 3, 'Non-Member': 4}
+# Define tier order: Blue → Silver → Gold → Diamond → Non-Member (ascending loyalty + non-member last)
+tier_order_map = {'Blue': 0, 'Silver': 1, 'Gold': 2, 'Diamond': 3, 'Non-Member': 4}
 spend_mix_data['sort_order'] = spend_mix_data['LOYALTY_TIER'].map(tier_order_map)
 spend_mix_data = spend_mix_data.sort_values('sort_order').drop('sort_order', axis=1).reset_index(drop=True)
 
@@ -142,8 +142,8 @@ spend_mix_data = spend_mix_data.rename(columns={
 # Set LOYALTY_TIER as index
 spend_mix_data = spend_mix_data.set_index('LOYALTY_TIER')
 
-# Use Streamlit's area chart for stacked view
-st.bar_chart(spend_mix_data[['Room', 'F&B', 'Spa', 'Other']], height=350, stack=True)
+# Use Streamlit's bar chart (stack param not supported in Snowflake Streamlit, but multiple columns auto-group)
+st.bar_chart(spend_mix_data[['Room', 'F&B', 'Spa', 'Other']], height=350)
 
 # =====================================================================
 # Top Loyalty Opportunities Table
