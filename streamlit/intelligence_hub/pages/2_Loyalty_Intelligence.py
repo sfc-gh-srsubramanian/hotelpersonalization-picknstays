@@ -100,7 +100,11 @@ with chart_col1:
     # Define proper tier order (Diamond should be highest)
     tier_order = ['Diamond', 'Gold', 'Silver', 'Blue', 'Non-Member']
     tier_data['LOYALTY_TIER'] = pd.Categorical(tier_data['LOYALTY_TIER'], categories=tier_order, ordered=True)
-    tier_data = tier_data.sort_values('LOYALTY_TIER')
+    tier_data = tier_data.sort_values('LOYALTY_TIER').reset_index(drop=True)
+    
+    # DEBUG
+    st.write("**DEBUG tier_data before chart:**")
+    st.dataframe(tier_data)
     
     fig1 = px.bar(
         tier_data,
